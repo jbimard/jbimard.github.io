@@ -130,27 +130,21 @@
                     </div>
                 </div>
              </div>
-
+            
              <div class="Contact_Form">
-                <div class="Input_Area">
-                    <div class="Column">
-                    <input class="Name" type="text" placeholder="Your Name"></input>
-                    <input class="Email" type="text" placeholder="Email"></input>
-                    <textarea class="Message" rows="4" cols="50" placeholder="Message"></textarea>
-                </div>
-                <div class="Buttons">
-                    <button class="Send">Get In Touch</button>
-                    <a href="https://www.linkedin.com/in/joseph-posas/" target="_blank">
-                    <button class="MediaBox2"><img class="linkedin" src="img/icon/linkedin.png" alt="linkedin"></button> 
-                     </a>
-                     <a href="https://github.com/jbimard" target="_blank">
-                        <button><img class="Github" src="img/icon/Github.png" alt="linkedin"></button>
-                    </a>
+                <form action="https://api.web3forms.com/submit" method="POST" class="contact-left">
+                    <div class="Input_Area">
+                        <div class="Column">
+                        <input type="hidden" name="access_key" value="c45685a9-149e-4ffa-94ab-fcc91a1ac0ba">
+                        <input class="Name" name="name" type="text" placeholder="Your Name" required></input>
+                        <input class="Email" name="email" type="email" placeholder="Email" required></input>
+                        <textarea class="Message" name="message" rows="4" cols="50" placeholder="Message" required></textarea>
+                        <button type="submit" class="Send">Get In Touch</button>
+                    </div>
+                </form>
                 </div>
 
                
-                </div>
-                
                 <div class="Text">
                     <div class="Lets_talk">
                         <h1>Let's</h1>
@@ -159,14 +153,26 @@
 
                     <p>I seek to push the limits of creativity to create high-engaging, user-friendly, and 
                         memorable interactive experiences.</p>
-                    <text>Joseph.posasm@gmail.com</text> 
+                    <text class="Email_input">Joseph.posasm@gmail.com</text> 
+
+                    <div class="Buttons">
+
+                        <a href="https://www.linkedin.com/in/joseph-posas/" target="_blank">
+                        <button class="MediaBox2"><img class="linkedin" src="img/icon/linkedin.png" alt="linkedin"></button> 
+                         </a>
+                         
+                         <a href="https://github.com/jbimard" target="_blank">
+                            <button><img class="Github" src="img/icon/Github.png" alt="linkedin"></button>
+                        </a>
+                    </div>
                     
 
                     
                 </div>
     
              </div>
-            
+            </div>
+
                 
            
     </body>
