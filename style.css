@@ -34,7 +34,6 @@ header{
 }
 
 .Logo{
-    cursor: pointer;
     width: 39.906px;
     height: 40px;
 }
@@ -263,13 +262,14 @@ h4 {
 }
 
 
-.Java, .Javascript, .webDevelopment, .Python{
+.SwiftUI, .Java, .webDevelopment, .Python{
     width: 56px;
     height: 56px;
     flex-shrink: 0;
 }
 
-.Javatext, .webText{
+
+.SwiftUItext, .webText{
     color: var(--Primary-Black, #000);
     text-align: center;
     /* Heading H5/Bold */
