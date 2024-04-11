@@ -95,6 +95,7 @@ button{
     flex: 1; /* Let the text container take the available space */
     width: 100%;
     justify-content: flex-end;
+    
 }
 
 .ImageContainer {
@@ -415,9 +416,10 @@ body, html {
 }
 
 .AboutMe_frame{
-    height: 572px;
-    width: 710px;
-    align-items: flex-start;
+    width: 90%; /* Adjust the percentage as needed */
+    margin: auto; /* Center the frame horizontally */
+    max-width: 700px; /* Set a maximum width for larger screens */
+
 }
 
 .About_Me h1{
@@ -437,8 +439,6 @@ body, html {
     margin-bottom: 30px;
 }
 
-
-
 .AboutMe_Description{
     color: var(--Zinc-500, #71717A);
     /* Paragraph P2/Regular */
@@ -448,6 +448,8 @@ body, html {
     font-weight: 400;
     line-height: 24px; /* 150% */
     letter-spacing: 0.32px;
+    max-width: 700px; /* Adjust the max-width according to your layout */
+    overflow-wrap: break-word; /* Allow the text to wrap within the container */
 }
 
 .Projects{
@@ -558,6 +560,8 @@ body, html {
     padding: 70px 0px;
     flex-direction: row;
     gap: 180px;
+
+   
 }
 
 .Frame_DescriptionETP{
@@ -799,4 +803,38 @@ body, html {
     font-weight: 600;
     line-height: 32px; /* 114.286% */
     letter-spacing: -0.56px;
+}
+
+@media screen and (max-width: 768px) {
+    /* CSS rules for smaller screens */
+    header {
+        padding: 20px;
+    }
+    .HeroSection {
+        padding: 40px;
+        flex-direction: column;
+    }
+    /* Add more media query rules for other sections */
+
+    body {
+        font-size: 16px;
+    }
+}
+
+
+@media screen and (max-width: 600px) {
+    /* Styles for mobile devices */
+
+    header {
+        padding: 20px;
+    }
+    .HeroSection {
+        padding: 40px;
+        flex-direction: column;
+    }
+    /* Add more media query rules for other sections */
+
+    body {
+        font-size: 16px;
+    }
 }
