@@ -24,7 +24,6 @@ The site serves as an introduction to who I am — a Computer Science student sp
 
 - HTML5
 - CSS3
-- JavaScript (if applicable)
 - GitHub Pages for hosting
 
 ---
