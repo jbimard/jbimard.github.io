@@ -57,7 +57,8 @@ const Hero=()=>{
   return (
     <section id="top" className="mx-auto max-w-7xl px-0 pt-12 md:pt-24">
       <h1 className="text-left font-medium leading-tight text-4xl md:text-8xl tracking-tight md:pb-10 ml-4 md:ml-0">
-        Designing from a desk, dreaming beyond walls.
+        Designing from a desk, 
+        dreaming beyond walls.
       </h1>
 
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
