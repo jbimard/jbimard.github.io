@@ -1,69 +1,27 @@
-# React + TypeScript + Vite
+# jbimard.github.io
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This repository hosts my personal portfolio website, built to showcase projects, goals, and technical content. The website leverages modern frontend technologies and integrates Notion for dynamic content rendering.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React + TypeScript:** A robust frontend framework with strict typing for scalable and maintainable code.
+- **Vite:** Fast development and build tooling for optimal performance.
+- **Tailwind CSS:** Utility-first styling for quick and responsive UI design.
+- **PrismJS:** Syntax highlighting for code blocks (theme: `prism-tomorrow.css`).
+- **KaTeX:** Render complex math formulas seamlessly.
+- **react-notion-x:** Rich Notion page rendering with support for collections, code, and equations.
+- **Notion Embed Iframes:** Simple embedding of Notion pages using v2-embednotion.com.
 
-## Expanding the ESLint configuration
+## Development Tools
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **ESLint:** Enforces consistent coding standards and formatting.
+- **TypeScript Compiler (tsc):** Builds `.ts` and `.tsx` files.
+- **concurrently (optional):** Run Vite alongside an API server during development.
+- **npm:** Manages project dependencies.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Getting Started
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/jbimard/jbimard.github.io.git
+   cd jbimard.github.io
