@@ -19,9 +19,3 @@ This repository hosts my personal portfolio website, built to showcase projects,
 - **concurrently (optional):** Run Vite alongside an API server during development.
 - **npm:** Manages project dependencies.
 
-## Getting Started
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/jbimard/jbimard.github.io.git
-   cd jbimard.github.io
