@@ -110,7 +110,7 @@ export const Work = () => {
                     In addition to connectivity, the project emphasized scalability and security. Logical and physical diagrams were created to document the design, making future troubleshooting and expansion easier. Access control lists (ACLs), wireless encryption, and firewall rules were incorporated to safeguard the network against unauthorized access. Overall, the design demonstrates a strong balance of functionality, efficiency, and security within a professional IT setting.
                   </p>
                   <p>
-                    If you want access to the Packet Tracer file, you can find it on my <a href="https://github.com/jbimard/jbimard.github.io/blob/main/src/images/projectsImg/Packet-Tracer-File.pkt">GitHub</a>.
+                    If you want access to the Packet Tracer file, you can find it on my <a href="https://github.com/jbimard/Network-Infrastructure-Project" target="_blank" className="underline">GitHub</a>.
                   </p>
                   <p>
                     If you are looking for the documentation that was specifically prepared and targeted for the company, you can find it in the attached file:
