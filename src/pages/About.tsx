@@ -90,9 +90,9 @@ const About=()=>{
                 greater detail, feel free to check out my resume. It provides a full overview of the
                 work I’ve done, the tools I’ve used, and the goals I’m working toward.
               </p>
-              {/* This section displays my resume link */}
+              {/* This section shows my resume link */}
               <a
-                href="../public/files/JosephPosasResume.pdf"
+                href="../public/files/JosephPosasResume1.pdf"
                 className="inline-flex items-center underline underline-offset-2 hover:opacity-80"
               >Download<span aria-hidden>⤓</span>
               </a>
