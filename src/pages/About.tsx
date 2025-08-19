@@ -92,7 +92,7 @@ const About=()=>{
               </p>
               {/* This section shows my resume link */}
               <a
-                href="../public/files/JosephPosasResume1.pdf"
+                href="/files/JosephPosasResume1.pdf"
                 className="inline-flex items-center underline underline-offset-2 hover:opacity-80"
               >Download<span aria-hidden>⤓</span>
               </a>
