@@ -91,6 +91,7 @@ const About=()=>{
                 work I’ve done, the tools I’ve used, and the goals I’m working toward.
               </p>
               <a
+              {/* This section displays my resume link */}
                 href="../public/files/JosephPosasResume.pdf"
                 className="inline-flex items-center underline underline-offset-2 hover:opacity-80"
               >Download<span aria-hidden>⤓</span>
