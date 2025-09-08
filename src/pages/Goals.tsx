@@ -20,7 +20,7 @@ const Goals = () => {
           </p>
           {/* Live Notion table */}
           <NotionIframe
-            pageId="250726348d9c80eb97d1cf27040e31b7"
+            pageId="248726348d9c8031aa97fcfd4ed2a67b"
             title="Notion Embed - Certifications"
             height={600}
           />
@@ -55,7 +55,7 @@ const Goals = () => {
           </p>
           {/* Live Notion table*/}
           <NotionIframe
-  pageId="250726348d9c809eba41cdd025de7df7"
+  pageId="23a726348d9c80a8bc39f310d6432e49"
   title="Notion Embed - Projects"
   height={600}
 />
