@@ -1,62 +1,118 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react';
 
 const cards = [
   { src: '/images/Work.png', alt: 'Work', title: 'Work', href: '/workinterface' },
   { src: '/images/Projects.png', alt: 'Projects', title: 'Projects', href: '/projectsinterface' },
   { src: '/images/Certs.png', alt: 'Certs', title: 'Certs', href: '/certsinterface' },
-]
+];
+
+const isTouchDevice = () =>
+  typeof window !== 'undefined' &&
+  (window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches);
+
+const isIPad = () => {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+  // iPadOS 13+ identifies as Mac but with touch points
+  const isIPadOS13Up = navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1;
+  const isIPadUA = /iPad/.test(ua);
+  return isIPadOS13Up || isIPadUA;
+};
+
+// Treat wider touch devices as tablet-like (covers many emulations)
+const isTabletLike = () =>
+  typeof window !== 'undefined' &&
+  isTouchDevice() &&
+  window.innerWidth >= 768 && window.innerWidth <= 1366;
 
 const Card = ({ src, alt, title, href }: { src: string; alt: string; title: string; href: string }) => {
-  const [isVisible, setIsVisible] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const cardRef = useRef<HTMLElement>(null)
+  const [isVisible, setIsVisible] = useState(false);
+  const [isTouch, setIsTouch] = useState(false);
+  const [isPhone, setIsPhone] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const cardRef = useRef<HTMLElement | null>(null);
+  const hideTimeoutRef = useRef<number | null>(null);
 
+  // Detect device capabilities and size
   useEffect(() => {
-    // Check if device is mobile
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768) // md breakpoint
-    }
-    
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+    const update = () => {
+      const touch = isTouchDevice();
+      setIsTouch(touch);
+      setIsPhone(touch && window.innerWidth < 768);
+      setIsTablet(isIPad() || isTabletLike());
+    };
 
+    update();
+
+    const mqHover = window.matchMedia('(hover: none)');
+    const mqPointer = window.matchMedia('(pointer: coarse)');
+    mqHover.addEventListener?.('change', update);
+    mqPointer.addEventListener?.('change', update);
+    window.addEventListener('resize', update);
+
+    return () => {
+      mqHover.removeEventListener?.('change', update);
+      mqPointer.removeEventListener?.('change', update);
+      window.removeEventListener('resize', update);
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    };
+  }, []);
+
+  // Phones: reveal overlay based on scroll visibility
   useEffect(() => {
-    if (!isMobile || !cardRef.current) return
+    if (!isPhone || !cardRef.current) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        // Show overlay when card is 50% visible
-        setIsVisible(entry.intersectionRatio > 0.5)
-      },
-      {
-        threshold: [0, 0.5, 1],
-        rootMargin: '-10% 0px -10% 0px' // Trigger when card is well within viewport
+      ([entry]) => setIsVisible(entry.intersectionRatio > 0.5),
+      { threshold: [0, 0.5, 1], rootMargin: '-10% 0px -10% 0px' }
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [isPhone]);
+
+  // Tap handling
+  const onTouchClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
+    if (!isTouch) return;
+
+    // Tablet/iPad: first tap shows, auto-hide after 3s; second tap within 3s navigates
+    if (isTablet) {
+      if (!isVisible) {
+        e.preventDefault();
+        setIsVisible(true);
+        if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = window.setTimeout(() => {
+          setIsVisible(false);
+          hideTimeoutRef.current = null;
+        }, 3000);
       }
-    )
+      return; // when visible, allow navigation
+    }
 
-    observer.observe(cardRef.current)
-
-    return () => observer.disconnect()
-  }, [isMobile])
+    // Phones: if overlay not visible yet, show it and prevent nav; scroll observer manages hiding
+    if (!isVisible) {
+      e.preventDefault();
+      setIsVisible(true);
+    }
+  };
 
   return (
-    <figure 
-      ref={cardRef}
+    <figure
+      ref={cardRef as any}
       className="relative w-full border border-black/0 bg-white group touch-overlay"
     >
       <a
         href={href}
+        onClick={onTouchClick}
         className="block relative focus:outline-none focus-visible:ring-2 focus-visible:ring-black/50"
       >
         <img src={src} alt={alt} loading="lazy" className="w-full h-full object-cover" />
-        {/* Overlay on hover/focus for desktop and on scroll visibility for mobile */}
         <div
           className={`overlay absolute inset-0 flex items-center justify-center p-6 bg-black/70 transition-opacity duration-300 ${
-            isMobile 
-              ? (isVisible ? 'opacity-100' : 'opacity-0')
+            isTouch
+              ? isVisible
+                ? 'opacity-100'
+                : 'opacity-0'
               : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
           }`}
         >
@@ -66,8 +122,8 @@ const Card = ({ src, alt, title, href }: { src: string; alt: string; title: stri
         </div>
       </a>
     </figure>
-  )
-}
+  );
+};
 
 const Hero = () => {
   return (
@@ -77,12 +133,12 @@ const Hero = () => {
         dreaming beyond walls.
       </h1>
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map(card => (
+        {cards.map((card) => (
           <Card key={card.alt} {...card} />
         ))}
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Hero
+export default Hero;
