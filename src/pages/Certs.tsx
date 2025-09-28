@@ -5,11 +5,11 @@ import Footer from "../components/Footer";
 import pythonCover from "/images/Covers/Python-cover.jpg";
 
 
-import mastercard1Img from "/images/certsImg/ForageMastercard.png";
-import mastercard2Img from "/images/certsImg/MastercardCert.png";
+import mastercard1Img from "/images/certsImg/ForageMastercard.webp";
+import mastercard2Img from "/images/certsImg/MastercardCert.webp";
 
-import python1Img from "/images/certsImg/PythonCert.png";
-import python2Img from "/images/certsImg/Courserainfo.png";
+import python1Img from "/images/certsImg/PythonCert.webp";
+import python2Img from "/images/certsImg/Courserainfo.webp";
 
 
 
