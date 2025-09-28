@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 
 const cards = [
-  { src: '/images/Work.png', alt: 'Work', title: 'Work', href: '/workinterface' },
-  { src: '/images/Projects.png', alt: 'Projects', title: 'Projects', href: '/projectsinterface' },
-  { src: '/images/Certs.png', alt: 'Certs', title: 'Certs', href: '/certsinterface' },
+  { src: '/images/Work.webp', alt: 'Work', title: 'Work', href: '/workinterface' },
+  { src: '/images/Projects.webp', alt: 'Projects', title: 'Projects', href: '/projectsinterface' },
+  { src: '/images/Certs.webp', alt: 'Certs', title: 'Certs', href: '/certsinterface' },
 ];
 
 const isTouchDevice = () =>
