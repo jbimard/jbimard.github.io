@@ -3,14 +3,14 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 
-import CityDiagram from "/images/projectsImg/City-Diagram.png";
-import HRoffcie from "/images/projectsImg/HR-office.png";
-import logicDiagram from "/images/projectsImg/Logic-Diagram.png";
-import RoutetIT from "/images/projectsImg/Router-IT.png";
-import PCcommand from "/images/projectsImg/PC-command.png";
-import CableManagement from "/images/projectsImg/Cable-management.png";
-import IToffice from "/images/projectsImg/IT-office.png";
-import DHCP from "/images/projectsImg/DHCP.png";
+import CityDiagram from "/images/projectsImg/City-Diagram.webp";
+import HRoffcie from "/images/projectsImg/HR-office.webp";
+import logicDiagram from "/images/projectsImg/Logic-Diagram.webp";
+import RoutetIT from "/images/projectsImg/Router-IT.webp";
+import PCcommand from "/images/projectsImg/PC-command.webp";
+import CableManagement from "/images/projectsImg/Cable-management.webp";
+import IToffice from "/images/projectsImg/IT-office.webp";
+import DHCP from "/images/projectsImg/DHCP.webp";
 
 
 
@@ -84,7 +84,7 @@ export const Work = () => {
           <img
             alt="Lecture hall cover"
             className="w-full h-[380px] sm:h-[520px] md:h-[680px] lg:h-[820px] xl:h-[700px] object-cover"
-            src="/images/Covers/Cisco-cover.jpg"
+            src="/images/Covers/Cisco-cover.webp"
           />
         </div>
 

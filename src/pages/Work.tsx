@@ -4,24 +4,24 @@ import Footer from "../components/Footer";
 
 
 
-import RACover from "/images/Covers/RA-cover.jpg";
-import PMCover from "/images/Covers/PM-cover.jpg";
-import LinxyCover from "/images/Covers/PM-cover.jpg";
+import RACover from "/images/Covers/RA-cover.webp";
+import PMCover from "/images/Covers/PM-cover.webp";
+import LinxyCover from "/images/Covers/PM-cover.webp";
 
 
-import ta1Img from "/images/workImg/TA1img.png";
-import ta2Img from "/images/workImg/TA2img.png";
+import ta1Img from "/images/workImg/TA1img.webp";
+import ta2Img from "/images/workImg/TA2img.webp";
 
-import ra1Img from "/images/workImg/RA1img.png";
-import ra2Img from "/images/workImg/RA2img.png";
-import ra3Img from "/images/workImg/RA3img.png";
+import ra1Img from "/images/workImg/RA1img.webp";
+import ra2Img from "/images/workImg/RA2img.webp";
+import ra3Img from "/images/workImg/RA3img.webp";
 
-import linxy1Img from "/images/workImg/Linxy1Img.png";
-import linxy2Img from "/images/workImg/Linxy2Img.png";
-import linxy3Img from "/images/workImg/Linxy3Img.png";
+import linxy1Img from "/images/workImg/Linxy1Img.webp";
+import linxy2Img from "/images/workImg/Linxy2Img.webp";
+import linxy3Img from "/images/workImg/Linxy3Img.webp";
 
-import pm1Img from "/images/workImg/PM1Img.png";
-import pm2Img from "/images/workImg/PM2Img.png";
+import pm1Img from "/images/workImg/PM1Img.webp";
+import pm2Img from "/images/workImg/PM2Img.webp";
 
 const SectionHeading = ({children}:{children:React.ReactNode}) => (
   <h2 className="text-black font-extrabold tracking-tight leading-none
@@ -78,7 +78,7 @@ export const Work = () => {
           <img
             alt="Lecture hall cover"
             className="w-full h-[380px] sm:h-[520px] md:h-[680px] lg:h-[820px] xl:h-[700px] object-cover"
-            src="/images/Covers/TA-cover.jpg"
+            src="/images/Covers/TA-cover.webp"
           />
         </div>
 

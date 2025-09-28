@@ -4,7 +4,7 @@ import Footer from "../components/Footer";
 
 // If these image files live next to this file, these imports will work.
 // If they live somewhere else, adjust the paths accordingly.
-import ciscoCover from "/images/Covers/Cisco-cover.jpg";
+import ciscoCover from "/images/Covers/Cisco-cover.webp";
 
 type CardProps = {
   title: string;

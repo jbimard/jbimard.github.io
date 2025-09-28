@@ -4,8 +4,8 @@ import Footer from "../components/Footer";
 
 // If these image files live next to this file, these imports will work.
 // If they live somewhere else, adjust the paths accordingly.
-import mastercardCover from "/images/Covers/Mastercard-cover.jpg";
-import pythonCover from "/images/Covers/Python-cover.jpg";
+import mastercardCover from "/images/Covers/Mastercard-cover.webp";
+import pythonCover from "/images/Covers/Python-cover.webp";
 
 
 type CardProps = {

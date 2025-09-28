@@ -4,10 +4,10 @@ import Footer from "../components/Footer";
 
 // If these image files live next to this file, these imports will work.
 // If they live somewhere else, adjust the paths accordingly.
-import pmCover from "/images/Covers/PM-cover.jpg";
-import raCover from "/images/Covers/RA-cover.jpg";
-import linxyCover from "/images/Covers/Linxy-cover.jpg";
-import taCover from "/images/Covers/TA-cover.jpg";
+import pmCover from "/images/Covers/PM-cover.webp";
+import raCover from "/images/Covers/RA-cover.webp";
+import linxyCover from "/images/Covers/Linxy-cover.webp";
+import taCover from "/images/Covers/TA-cover.webp";
 
 type CardProps = {
   title: string;

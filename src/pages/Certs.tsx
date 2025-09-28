@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
-import pythonCover from "/images/Covers/Python-cover.jpg";
+import pythonCover from "/images/Covers/Python-cover.webp";
 
 
 import mastercard1Img from "/images/certsImg/ForageMastercard.webp";
@@ -68,7 +68,7 @@ export const Work = () => {
           <img
             alt="Lecture hall cover"
             className="w-full h-[380px] sm:h-[520px] md:h-[680px] lg:h-[820px] xl:h-[700px] object-cover"
-            src="/images/Covers/Mastercard-cover.jpg"
+            src="/images/Covers/Mastercard-cover.webp"
           />
         </div>
 
