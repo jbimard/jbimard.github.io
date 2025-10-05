@@ -139,7 +139,7 @@ export const Work = () => {
                 }
               />
           </div>
-            <div className="mt-12 lg:mt-16 grid grid-cols-2 gap-4 lg:gap-6">
+            <div className="mt-12 lg:mt-16 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
             <img
               src={Challenges}
               alt="TA screenshot 1"
