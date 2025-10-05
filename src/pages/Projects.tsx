@@ -3,6 +3,8 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 
+
+import ciscoCover from "/images/Covers/Cisco-cover.webp";
 import CityDiagram from "/images/projectsImg/City-Diagram.webp";
 import HRoffcie from "/images/projectsImg/HR-office.webp";
 import logicDiagram from "/images/projectsImg/Logic-Diagram.webp";
@@ -139,7 +141,7 @@ export const Work = () => {
           </div>
             <div className="mt-12 lg:mt-16 grid grid-cols-2 gap-4 lg:gap-6">
             <img
-              src={Overview}
+              src={Challenges}
               alt="TA screenshot 1"
               className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
             />
@@ -149,7 +151,7 @@ export const Work = () => {
               className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[400px] object-cover lg:object-contain"
             />
             <img
-              src={Challenges}
+              src={Overview}
               alt="TA screenshot 1"
               className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
             />
@@ -160,102 +162,94 @@ export const Work = () => {
             />
           </div>
         </div>
+      </section>
 
-        <div
-          className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-10 mt-0 lg:-mt-32 pb-16 md:pb-24"
-          style={{ marginTop: "calc(env(safe-area-inset-top) + 1.5rem)" }}
-        >
-          <div className="lg:-mt-24">
-            <TwoCol
-              left={
-          <SectionHeading>
-            <span className="leading-tight">
-              Enterprise Office Network Simulation
-            </span>
-          </SectionHeading>
-              }
-              right={
-                <div className="text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 space-y-6 font-light">
-                  <p>
-                    This project focused on designing and implementing a complete network infrastructure for a medium-sized organization with two office locations, the IT department and the HR department. The network was structured to provide both wired and wireless connectivity, ensuring reliable communication between devices and departments while maintaining security through VLAN segmentation. Core components such as routers, switches, wireless LAN controllers, and access points were configured to support day-to-day operations, while essential services like DHCP, DNS, and file sharing were implemented to centralize and streamline resource management.
-                  </p>
-                  <p>
-                    In addition to connectivity, the project emphasized scalability and security. Logical and physical diagrams were created to document the design, making future troubleshooting and expansion easier. Access control lists (ACLs), wireless encryption, and firewall rules were incorporated to safeguard the network against unauthorized access. Overall, the design demonstrates a strong balance of functionality, efficiency, and security within a professional IT setting.
-                  </p>
-                  <p>
-                    If you want access to the Packet Tracer file, you can find it on my <a href="https://github.com/jbimard/Network-Infrastructure-Project" target="_blank" className="underline">GitHub</a>.
-                  </p>
-                  <p>
-                    If you are looking for the documentation that was specifically prepared and targeted for the company, you can find it in the attached file:
-                    <a href="/files/Network Infrastructure Project Documentation.pdf" target="_blank" className="underline">
-                      &nbsp;Network Infrastructure Project Documentation.pdf
-                    </a>.
-                  </p>
-                </div>
-              }
-            />
-
-            <TwoCol 
-            
+      <section className="relative pt-24" id="Cisco">
+        <img
+          src={ciscoCover}
+          alt="Enterprise network simulation cover"
+          className="w-full h-[380px] sm:h-[520px] md:h-[680px] lg:h-[820px] xl:h-[700px] object-cover"
+        />
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-10 mt-6 lg:-mt-32 pb-16 md:pb-24">
+          <TwoCol
+            left={<SectionHeading>Enterprise Office Network Simulation</SectionHeading>}
+            right={
+              <div className="text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 space-y-6 font-light">
+                <p>
+                  This project focused on designing and implementing a complete network infrastructure for a medium-sized organization with two office locations, the IT department and the HR department. The network was structured to provide both wired and wireless connectivity, ensuring reliable communication between devices and departments while maintaining security through VLAN segmentation. Core components such as routers, switches, wireless LAN controllers, and access points were configured to support day-to-day operations, while essential services like DHCP, DNS, and file sharing were implemented to centralize and streamline resource management.
+                </p>
+                <p>
+                  In addition to connectivity, the project emphasized scalability and security. Logical and physical diagrams were created to document the design, making future troubleshooting and expansion easier. Access control lists (ACLs), wireless encryption, and firewall rules were incorporated to safeguard the network against unauthorized access. Overall, the design demonstrates a strong balance of functionality, efficiency, and security within a professional IT setting.
+                </p>
+                <p>
+                  If you want access to the Packet Tracer file, you can find it on my <a href="https://github.com/jbimard/Network-Infrastructure-Project" target="_blank" className="underline">GitHub</a>.
+                </p>
+                <p>
+                  If you are looking for the documentation that was specifically prepared and targeted for the company, you can find it in the attached file:
+                  <a href="/files/Network Infrastructure Project Documentation.pdf" target="_blank" className="underline">
+                    &nbsp;Network Infrastructure Project Documentation.pdf
+                  </a>.
+                </p>
+              </div>
+            }
+          />
+          <TwoCol
             left={
-                  <SectionHeading>
-                    <span className="leading-tight font-normal">
-                      Simulation 
-                    </span>
-                  </SectionHeading>
-                }
-                right={
-                  <div className="text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 space-y-6 font-light">
-                    <p>
-                      To bring this design to life, the network was fully simulated in Cisco Packet Tracer, providing a hands-on environment to test configurations, troubleshoot connections, and validate system performance. This simulation included setting up IP addressing schemes, configuring VLANs for segmentation, and ensuring that both wired and wireless devices could communicate effectively across the IT and HR offices. By running the infrastructure virtually, I was able to replicate real-world IT challenges, such as managing device roles, configuring routing, and optimizing performance through DHCP, DNS, and access control rules.
-                    </p>
-                    <p>
-                      Working with Packet Tracer offered valuable IT experience by simulating the responsibilities of a network administrator. It required applying critical thinking and problem-solving skills to address issues like misconfigured ports, faulty device connections, and improper addressing. This hands-on practice is essential for building the skills needed in real-world IT environments, preparing me for situations where designing, deploying, and securing enterprise-level networks are crucial.
-                    </p>
-                  </div>
-                }
-              />
-          </div>
-            <div className="mt-12 lg:mt-16 grid grid-cols-2 gap-4 lg:gap-6">
+              <SectionHeading>
+                <span className="leading-tight font-normal">Simulation</span>
+              </SectionHeading>
+            }
+            right={
+              <div className="text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 space-y-6 font-light">
+                <p>
+                  To bring this design to life, the network was fully simulated in Cisco Packet Tracer, providing a hands-on environment to test configurations, troubleshoot connections, and validate system performance. This simulation included setting up IP addressing schemes, configuring VLANs for segmentation, and ensuring that both wired and wireless devices could communicate effectively across the IT and HR offices. By running the infrastructure virtually, I was able to replicate real-world IT challenges, such as managing device roles, configuring routing, and optimizing performance through DHCP, DNS, and access control rules.
+                </p>
+                <p>
+                  Working with Packet Tracer offered valuable IT experience by simulating the responsibilities of a network administrator. It required applying critical thinking and problem-solving skills to address issues like misconfigured ports, faulty device connections, and improper addressing. This hands-on practice is essential for building the skills needed in real-world IT environments, preparing me for situations where designing, deploying, and securing enterprise-level networks are crucial.
+                </p>
+              </div>
+            }
+          />
+          <div className="mt-12 lg:mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-0 items-start">
             <img
               src={HRoffcie}
-              alt="TA screenshot 1"
-              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
+              alt="HR office network equipment"
+              className="w-full h-full sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-full object-cover lg:object-contain"
             />
             <img
               src={CityDiagram}
-              alt="TA screenshot 2"
-              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[400px] object-cover lg:object-contain"
+              alt="City layout diagram"
+              className="w-full h-full sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-full object-cover lg:object-contain"
             />
             <img
               src={logicDiagram}
-              alt="TA screenshot 1"
-              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
+              alt="Logic diagram"
+              className="w-full h-full sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-full object-cover lg:object-contain"
             />
             <img
               src={RoutetIT}
-              alt="TA screenshot 1"
-              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
+              alt="Router configuration"
+              className="w-full h-full sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-full object-cover lg:object-contain"
             />
             <img
               src={PCcommand}
-              alt="TA screenshot 1"
-              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
+              alt="PC command window"
+              className="w-full h-full sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-full object-cover lg:object-contain"
             />
             <img
               src={CableManagement}
-              alt="TA screenshot 1"
-              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
+              alt="Cable management view"
+              className="w-full h-full sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-full object-cover lg:object-contain"
             />
             <img
               src={IToffice}
-              alt="TA screenshot 1"
-              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
+              alt="IT office overview"
+              className="w-full h-full sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-full object-cover lg:object-contain"
             />
             <img
               src={DHCP}
-              alt="TA screenshot 1"
-              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
+              alt="DHCP configuration"
+              className="w-full h-full sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-full object-cover lg:object-contain"
             />
           </div>
         </div>

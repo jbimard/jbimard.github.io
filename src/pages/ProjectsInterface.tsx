@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 // If these image files live next to this file, these imports will work.
 // If they live somewhere else, adjust the paths accordingly.
 import ciscoCover from "/images/Covers/Cisco-cover.webp";
+import tenableCover from "/images/Covers/Flag-cover.webp";
 
 type CardProps = {
   title: string;
@@ -40,7 +41,13 @@ const WorkInterface: React.FC = () => {
       <Navbar />
       <section className="w-full px-0 pt-6 sm:pt-24">
         <div className="grid grid-cols-1 gap-y-10">
-          <CoverCard title="Cisco - Enterprise Office Network Simulation " href="/Projects" bg={ciscoCover} />
+          <CoverCard title="Tenable - Cloud Security Capture the Flag" href="/Projects" bg={tenableCover} />
+        </div>
+      </section>
+
+      <section className="w-full px-0 pt-6 sm:pt-24">
+        <div className="grid grid-cols-1 gap-y-10">
+          <CoverCard title="Cisco - Enterprise Office Network Simulation" href="/Projects#Cisco" bg={ciscoCover} />
         </div>
       </section>
 
