@@ -12,6 +12,11 @@ import CableManagement from "/images/projectsImg/Cable-management.webp";
 import IToffice from "/images/projectsImg/IT-office.webp";
 import DHCP from "/images/projectsImg/DHCP.webp";
 
+import Challenges from "/images/projectsImg/Challenges.webp";
+import Scoreboard from "/images/projectsImg/Scoreboard.webp";
+import Overview from "/images/projectsImg/Tenable-Overview.webp";
+import Reports from "/images/projectsImg/Tenable-Reports.webp";
+
 
 
 
@@ -72,9 +77,8 @@ export const Work = () => {
   }, []);
   return (
     <main className="w-screen overflow-x-hidden bg-white">
-        
-      {/* Mastercard Cybersecurity Job Simulation */}
-      <section className="relative" id="mastercard">
+
+      <section className="relative" id="CTF">
         
         <div className="relative" style={{ marginTop: "calc(env(safe-area-inset-top) * -1)" }}>
           {/* Navbar over the cover with transparent background */}
@@ -84,8 +88,77 @@ export const Work = () => {
           <img
             alt="Lecture hall cover"
             className="w-full h-[380px] sm:h-[520px] md:h-[680px] lg:h-[820px] xl:h-[700px] object-cover"
-            src="/images/Covers/Cisco-cover.webp"
+            src="/images/Covers/Flag-cover.webp"
           />
+        </div>
+
+        <div
+          className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-10 mt-0 lg:-mt-32 pb-16 md:pb-24"
+          style={{ marginTop: "calc(env(safe-area-inset-top) + 1.5rem)" }}
+        >
+          <div className="lg:-mt-24">
+            <TwoCol
+              left={
+          <SectionHeading>
+            <span className="leading-tight">
+              Tenable <br />  Cloud Security Capture the Flag
+            </span>
+          </SectionHeading>
+              }
+              right={
+                <div className="text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 space-y-6 font-light">
+                  <p>
+                    This hands-on session, held during the UNC Charlotte Cybersecurity Symposium on September 30, 2025, focused on securing AI workloads in cloud environments, covering risks highlighted in Tenable’s 2025 Cloud AI Risk Report, including default-permission deployments, public access exposures, and weak governance around services like AWS SageMaker, Amazon Bedrock, and Google Vertex AI. The talk introduced Tenable AI Exposure, a framework for discovering shadow AI, prioritizing AI-specific risks (prompt injection, model abuse), and enforcing data protection policies.                  </p>
+                  <p>
+                    Following the briefing, I competed in the Tenable Cloud Security Capture the Flag, applying the concepts in a lab setting. Challenges included hunting misconfigurations, identifying over-privileged identities, and hardening insecure AI and cloud pipelines under time pressure.
+                  </p>
+                  
+                </div>
+              }
+            />
+
+            <TwoCol 
+            
+            left={
+                  <SectionHeading>
+                    <span className="leading-tight font-normal">
+                      Results & Skills 
+                    </span>
+                  </SectionHeading>
+                }
+                right={
+                 <div className="text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 font-light">
+                  <ul className="list-disc pl-6 space-y-2">
+                    <li>Placed 8th out of 100 participants.</li>
+                    <li>Resolved cloud misconfigurations across S3, IAM, Kubernetes, and SSH.</li>
+                    <li>Strengthened SOC skills in detection, triage, CSPM, and IAM/CIEM.</li>
+                  </ul>
+                </div>
+                }
+              />
+          </div>
+            <div className="mt-12 lg:mt-16 grid grid-cols-2 gap-4 lg:gap-6">
+            <img
+              src={Overview}
+              alt="TA screenshot 1"
+              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
+            />
+            <img
+              src={Scoreboard}
+              alt="TA screenshot 2"
+              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[400px] object-cover lg:object-contain"
+            />
+            <img
+              src={Challenges}
+              alt="TA screenshot 1"
+              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
+            />
+            <img
+              src={Reports}
+              alt="TA screenshot 1"
+              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:w-[700px] lg:h-[500px] object-cover lg:object-contain"
+            />
+          </div>
         </div>
 
         <div
