@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 
 import RACover from "/images/Covers/RA-cover.webp";
 import PMCover from "/images/Covers/PM-cover.webp";
-import LinxyCover from "/images/Covers/PM-cover.webp";
+import LinxyCover from "/images/Covers/Linxy-cover.webp";
 
 
 import ta1Img from "/images/workImg/TA1img.webp";
