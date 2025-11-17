@@ -14,7 +14,7 @@ const Goals = () => {
           <h2 className="font-bold tracking-tight text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight">
             Certifications I’m Working Toward
           </h2>
-          <p className="max-w-[1280px] text-sm md:text-base leading-6 md:leading-7 opacity-80">
+          <p className="max-w-[2000px] max-h-[2000px] text-sm md:text-base leading-6 md:leading-7 opacity-80">
             I’m currently focused on building a strong foundation in cybersecurity through industry‑recognized certifications. These help
             reinforce both practical skills and theoretical knowledge as I grow into the field.
           </p>
@@ -38,7 +38,7 @@ const Goals = () => {
           </p>
           <ul className="max-w-[1280px] text-sm md:text-base leading-6 md:leading-7 space-y-3">
             <li>🎓 Complete B.S. in Computer Science, Cybersecurity Concentration (Spring 2026)</li>
-            <li>🎯 Continue Early Entry M.S. in Cybersecurity (Full entry: Fall 2026)</li>
+            <li>🎯 Finish Early Entry M.S. in Cybersecurity (Spring 2027)</li>
             <li>💼 Pursue an MBA at UNC Chapel Hill later in my career to grow as a leader and decision‑maker in the tech industry. (Future)</li>
           </ul>
         </div>
