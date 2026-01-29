@@ -41,6 +41,20 @@ const About=()=>{
               </p>
             </Row>
 
+             <Row title="Resume">
+              <p className="mb-3">
+                If you’re interested in learning more about my background, experience, and skills in
+                greater detail, feel free to check out my resume. It provides a full overview of the
+                work I’ve done, the tools I’ve used, and the goals I’m working toward.
+              </p>
+              {/* This section shows my resume link */}
+              <a
+                href="/files/JosephPosasResume.pdf"
+                className="inline-flex items-center underline underline-offset-2 hover:opacity-80"
+              >Download<span aria-hidden>⤓</span>
+              </a>
+            </Row>
+
             <Row title="Work">
               <ul className="space-y-1">
                 <li>Dec 2024 – Now // TA / University of North Carolina at Charlotte</li>
@@ -84,19 +98,7 @@ const About=()=>{
               </ul>
             </Row>
 
-            <Row title="Resume">
-              <p className="mb-3">
-                If you’re interested in learning more about my background, experience, and skills in
-                greater detail, feel free to check out my resume. It provides a full overview of the
-                work I’ve done, the tools I’ve used, and the goals I’m working toward.
-              </p>
-              {/* This section shows my resume link */}
-              <a
-                href="/files/JosephPosasResume.pdf"
-                className="inline-flex items-center underline underline-offset-2 hover:opacity-80"
-              >Download<span aria-hidden>⤓</span>
-              </a>
-            </Row>
+           
 
             <Row title="Socials">
               <ul className="space-y-1">

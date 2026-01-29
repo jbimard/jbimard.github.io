@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 const cards = [
   { src: '/images/Work.webp', alt: 'Work', title: 'Work', href: '/workinterface' },
   { src: '/images/Projects.webp', alt: 'Projects', title: 'Projects', href: '/projectsinterface' },
-  { src: '/images/Certs.webp', alt: 'Certs', title: 'Certs', href: '/certsinterface' },
+  { src: '/images/Certs.webp', alt: 'Certs', title: 'Training', href: '/certsinterface' },
 ];
 
 const isTouchDevice = () =>

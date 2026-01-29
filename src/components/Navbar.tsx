@@ -47,7 +47,7 @@ const Navbar = ({ dark, transparent }: Props) => {
           <Link to="/workinterface" className="font-normal text-2xl hover:opacity-70">Work</Link>
           <Link to="/projectsinterface" className="font-normal text-2xl hover:opacity-70">Projects</Link>
           <Link to="/skills" className="font-normal text-2xl hover:opacity-70">Skills</Link>
-          <Link to="/certsinterface" className="font-normal text-2xl hover:opacity-70">Certs</Link>
+          <Link to="/certsinterface" className="font-normal text-2xl hover:opacity-70">Training</Link>
           <Link to="/goals" className="font-normal text-2xl hover:opacity-70">Goals</Link>
         </nav>
 
