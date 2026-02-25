@@ -96,7 +96,7 @@ const Navbar = ({ dark, transparent }: Props) => {
                 <Link to="/projectsinterface" onClick={() => setOpen(false)} className="text-2xl">Projects</Link>
               </li>
               <li>
-                <Link to="/certsinterface" onClick={() => setOpen(false)} className="text-2xl">Certs</Link>
+                <Link to="/certsinterface" onClick={() => setOpen(false)} className="text-2xl">Training</Link>
               </li>
               <li>
                 <Link to="/about" onClick={() => setOpen(false)} className="text-2xl">About</Link>

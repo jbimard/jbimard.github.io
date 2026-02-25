@@ -1,13 +1,13 @@
-import React from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import React from 'react';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 // If these image files live next to this file, these imports will work.
 // If they live somewhere else, adjust the paths accordingly.
-import ciscoCover from "/images/Covers/Cisco-cover.webp";
-import tenableCover from "/images/Covers/Flag-cover.webp";
-import inspectorCover from "/images/Covers/Inspector-cover.webp";
-
+import ciscoCover from '/images/Covers/Cisco-cover.webp';
+import tenableCover from '/images/Covers/Flag-cover.webp';
+import inspectorCover from '/images/Covers/Inspector-cover.webp';
+import cowrieCover from '/images/Covers/cowrie-honeypot.webp';
 
 type CardProps = {
   title: string;
@@ -43,19 +43,41 @@ const WorkInterface: React.FC = () => {
       <Navbar />
       <section className="w-full px-0 pt-6 sm:pt-24">
         <div className="grid grid-cols-1 gap-y-10">
-          <CoverCard title="NC OSFM - Licensed Inspector Lookup Platform" href="/Projects" bg={inspectorCover} />
+          <CoverCard
+            title="Cowrie Honeypot - Splunk SIEM Analysis Platform"
+            href="/Projects"
+            bg={cowrieCover}
+          />
         </div>
       </section>
 
       <section className="w-full px-0 pt-6 sm:pt-24">
         <div className="grid grid-cols-1 gap-y-10">
-          <CoverCard title="Tenable - Cloud Security Capture the Flag" href="/Projects#Tenable" bg={tenableCover} />
+          <CoverCard
+            title="NC OSFM - Licensed Inspector Lookup Platform"
+            href="/Projects#CTF"
+            bg={inspectorCover}
+          />
         </div>
       </section>
 
       <section className="w-full px-0 pt-6 sm:pt-24">
         <div className="grid grid-cols-1 gap-y-10">
-          <CoverCard title="Cisco - Enterprise Office Network Simulation" href="/Projects#Cisco" bg={ciscoCover} />
+          <CoverCard
+            title="Tenable - Cloud Security Capture the Flag"
+            href="/Projects#Tenable"
+            bg={tenableCover}
+          />
+        </div>
+      </section>
+
+      <section className="w-full px-0 pt-6 sm:pt-24">
+        <div className="grid grid-cols-1 gap-y-10">
+          <CoverCard
+            title="Cisco - Enterprise Office Network Simulation"
+            href="/Projects#Cisco"
+            bg={ciscoCover}
+          />
         </div>
       </section>
 

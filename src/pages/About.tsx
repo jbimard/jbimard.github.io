@@ -102,7 +102,7 @@ const About=()=>{
 
             <Row title="Socials">
               <ul className="space-y-1">
-                <li><a href="https://www.linkedin.com/in/joseph-posas/" target="_blank" rel="noreferrer" className="underline hover:opacity-80">LinkedIn</a></li>
+                <li><a href="https://www.linkedin.com/in/josephposas/" target="_blank" rel="noreferrer" className="underline hover:opacity-80">LinkedIn</a></li>
                 <li><a href="mailto:joseph.posasm@gmail.com" className="underline hover:opacity-80">Email</a></li>
                 <li><a href="https://github.com/jbimard" target="_blank" rel="noreferrer" className="underline hover:opacity-80">Github</a></li>
               </ul>
