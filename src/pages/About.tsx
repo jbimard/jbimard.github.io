@@ -44,21 +44,41 @@ const About=()=>{
              <Row title="Resume">
               <p className="mb-3">
                 If you’re interested in learning more about my background, experience, and skills in
-                greater detail, feel free to check out my resume. It provides a full overview of the
-                work I’ve done, the tools I’ve used, and the goals I’m working toward.
+                greater detail, feel free to check out my resume. I keep two versions depending on the
+                role: one weighted toward cloud/software engineering, one weighted toward security and IAM.
               </p>
-              {/* This section shows my resume link */}
-              <a
-                href="/files/JosephPosasResume.pdf"
-                className="inline-flex items-center underline underline-offset-2 hover:opacity-80"
-              >Download<span aria-hidden>⤓</span>
-              </a>
+              <ul className="space-y-1">
+                <li>
+                  <a
+                    href="/files/JosephPosas-CloudEngineerResume.pdf"
+                    className="inline-flex items-center underline underline-offset-2 hover:opacity-80"
+                  >Cloud Engineer Resume<span aria-hidden className="ml-1">⤓</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/files/JosephPosas-SecurityCloudResume.pdf"
+                    className="inline-flex items-center underline underline-offset-2 hover:opacity-80"
+                  >Security & Cloud Resume<span aria-hidden className="ml-1">⤓</span>
+                  </a>
+                </li>
+              </ul>
             </Row>
 
             <Row title="Work">
               <ul className="space-y-1">
-                <li>Dec 2024 – Now // TA / University of North Carolina at Charlotte</li>
-                <li>Sep 2023 – Dec 2024 // Research / University of North Carolina at Charlotte</li>
+                <li>
+                  Summer 2026 // Cybersecurity Rotational Intern /{' '}
+                  <a href="/truehomes" className="underline hover:opacity-80">True Homes</a>
+                </li>
+                <li>
+                  Dec 2024 – Now // TA /{' '}
+                  <a href="/unccharlotte" className="underline hover:opacity-80">University of North Carolina at Charlotte</a>
+                </li>
+                <li>
+                  Sep 2023 – Dec 2024 // Research /{' '}
+                  <a href="/unccharlotte" className="underline hover:opacity-80">University of North Carolina at Charlotte</a>
+                </li>
                 <li>Mar 2024 – Aug 2024 // Linxy</li>
                 <li>Dec 2023 – Jul 2024 // Honeywell / Central Piedmont Community College</li>
               </ul>
@@ -66,6 +86,8 @@ const About=()=>{
 
             <Row title="Tools">
               <ul className="space-y-1">
+                <li>Microsoft Entra ID, Microsoft Graph, Active Directory, Azure DevOps</li>
+                <li>C# / .NET, PowerShell, Terraform, T-SQL</li>
                 <li>Wireshark, Packet Tracer, GitHub, Xcode</li>
                 <li>Java, Python, HTML, CSS, Swift, JavaScript</li>
                 <li>Figma, Photoshop</li>
@@ -73,27 +95,10 @@ const About=()=>{
               </ul>
             </Row>
 
-            <Row title="Certs.">
-              <ul className="space-y-1">
-                <li>2024 // Forage – Mastercard Cybersecurity Job Simulation</li>
-                <li>2022 // Coursera – Python Data Structures</li>
-              </ul>
-            </Row>
-
-            <Row title="Awards">
-              <ul className="space-y-1">
-                <li>2025 // Latin Americans Working for Achievements Scholar</li>
-                <li>2024 // First Place Winner, STEM Tank Engineering Competition</li>
-                <li>2024 // NC Space Grant Recipient</li>
-                <li>2023 // Truist Honors Scholar</li>
-                <li>2023 // Phi Theta Kappa</li>
-              </ul>
-            </Row>
-
             <Row title="Education">
               <ul className="space-y-1">
-                <li>2027 // UNC Charlotte – Early Entry Master of Science in Cybersecurity</li>
-                <li>2026 // UNC Charlotte – B.S. in Computer Science, Cybersecurity Concentration</li>
+                <li>2027 // University of North Carolina at Charlotte – Early Entry Master of Science in Cybersecurity</li>
+                <li>2026 // University of North Carolina at Charlotte – B.S. in Computer Science, Cybersecurity Concentration</li>
                 <li>2024 // Central Piedmont Community College – Associate’s in Computer Science</li>
               </ul>
             </Row>
