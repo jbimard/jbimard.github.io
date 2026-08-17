@@ -360,16 +360,6 @@ export const Work = () => {
                     >
                       YouTube – NC OSFM Licensed Inspector Lookup Platform
                     </a>
-                    <br />
-                    Source Code:{' '}
-                    <a
-                      href="https://github.com/ITSC-4155-G1/Locate-Code-Inspector/tree/dev"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline"
-                    >
-                      GitHub – Locate Code Inspector Repository
-                    </a>
                   </p>
                 </div>
               }
@@ -433,23 +423,26 @@ export const Work = () => {
               right={
                 <div className="text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 space-y-6 font-light">
                   <p>
-                    This hands-on session, held during the UNC Charlotte
-                    Cybersecurity Symposium on September 30, 2025, focused on
-                    securing AI workloads in cloud environments, covering risks
+                    This session, held during the University of North
+                    Carolina at Charlotte Cybersecurity
+                    Symposium on September 30, 2025, focused on securing AI
+                    workloads in cloud environments, covering risks
                     highlighted in Tenable’s 2025 Cloud AI Risk Report,
-                    including default-permission deployments, public access
-                    exposures, and weak governance around services like AWS
-                    SageMaker, Amazon Bedrock, and Google Vertex AI. The talk
-                    introduced Tenable AI Exposure, a framework for discovering
-                    shadow AI, prioritizing AI-specific risks (prompt injection,
-                    model abuse), and enforcing data protection policies.{' '}
+                    including deployments with default permissions, public
+                    access exposures, and weak governance around services
+                    like AWS SageMaker, Amazon Bedrock, and Google Vertex AI.
+                    The talk introduced Tenable AI Exposure, a framework for
+                    discovering shadow AI, prioritizing risks specific to AI
+                    (prompt injection, model abuse), and enforcing data
+                    protection policies.{' '}
                   </p>
                   <p>
                     Following the briefing, I competed in the Tenable Cloud
                     Security Capture the Flag, applying the concepts in a lab
                     setting. Challenges included hunting misconfigurations,
-                    identifying over-privileged identities, and hardening
-                    insecure AI and cloud pipelines under time pressure.
+                    identifying identities with excessive privileges, and
+                    hardening insecure AI and cloud pipelines under time
+                    pressure.
                   </p>
                 </div>
               }

@@ -12,6 +12,12 @@ import Goals from './pages/Goals'
 import WorkInterface from './pages/WorkInterface'
 import Work from './pages/Work'
 import ProjectsInterface from './pages/ProjectsInterface'
+import UNCCharlotte from './pages/UNCCharlotte'
+import NCOSFM from './pages/NCOSFM'
+import CowrieHoneypot from './pages/CowrieHoneypot'
+import ConoceTuProfesor from './pages/ConoceTuProfesor'
+import TrueHomes from './pages/TrueHomes'
+import ComingSoon from './pages/ComingSoon'
 
 const router = createBrowserRouter([
   // Home page
@@ -25,6 +31,12 @@ const router = createBrowserRouter([
   { path: '/certsinterface', element: <CertsInterface/> },
   { path: '/certs', element: <Certs/> },
   { path: '/goals', element: <Goals/> },
+  { path: '/unccharlotte', element: <UNCCharlotte/> },
+  { path: '/ncosfm', element: <NCOSFM/> },
+  { path: '/cowriehoneypot', element: <CowrieHoneypot/> },
+  { path: '/conocetuprofesor', element: <ConoceTuProfesor/> },
+  { path: '/truehomes', element: <TrueHomes/> },
+  { path: '/comingsoon', element: <ComingSoon/> },
 ])
 
 createRoot(document.getElementById('root')!).render(

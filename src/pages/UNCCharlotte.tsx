@@ -1,13 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
-
-
 import RACover from "/images/Covers/RA-cover.webp";
-import PMCover from "/images/Covers/PM-cover.webp";
-import LinxyCover from "/images/Covers/Linxy-cover.webp";
-
 
 import ta1Img from "/images/workImg/TA1img.webp";
 import ta2Img from "/images/workImg/TA2img.webp";
@@ -15,13 +10,6 @@ import ta2Img from "/images/workImg/TA2img.webp";
 import ra1Img from "/images/workImg/RA1img.webp";
 import ra2Img from "/images/workImg/RA2img.webp";
 import ra3Img from "/images/workImg/RA3img.webp";
-
-import linxy1Img from "/images/workImg/Linxy1Img.webp";
-import linxy2Img from "/images/workImg/Linxy2Img.webp";
-import linxy3Img from "/images/workImg/Linxy3Img.webp";
-
-import pm1Img from "/images/workImg/PM1Img.webp";
-import pm2Img from "/images/workImg/PM2Img.webp";
 
 const SectionHeading = ({children}:{children:React.ReactNode}) => (
   <h2 className="text-black font-extrabold tracking-tight leading-none
@@ -37,39 +25,13 @@ const TwoCol = ({left,right}:{left:React.ReactNode; right:React.ReactNode}) => (
   </div>
 );
 
-export const Work = () => {
-  useEffect(() => {
-    const scrollToHash = () => {
-      const hash = window.location.hash?.slice(1);
-      if (!hash) return;
-      const el = document.getElementById(hash);
-      if (!el) return;
-
-      // Offset so headings aren’t hidden under the navbar/overlay
-      let OFFSET;
-      if (window.innerWidth < 640) {
-        OFFSET = -40; // mobile (< sm)
-      } else {
-        OFFSET = -60; // desktop (>= sm)
-      }
-      const y = el.getBoundingClientRect().top + window.pageYOffset - OFFSET;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    };
-
-    // initial scroll after first paint
-    requestAnimationFrame(scrollToHash);
-
-    // handle in-page hash changes
-    const onHashChange = () => scrollToHash();
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
-  }, []);
+const UNCCharlotte = () => {
   return (
     <main className="w-screen overflow-x-hidden bg-white">
-        
+
       {/* Teacher Assistant */}
       <section className="relative" id="ta">
-        
+
         <div className="relative" style={{ marginTop: "calc(env(safe-area-inset-top) * -1)" }}>
           {/* Navbar over the cover with transparent background */}
           <div className="absolute inset-x-0 top-0 z-20" style={{ paddingTop: "env(safe-area-inset-top)" }}>
@@ -143,70 +105,9 @@ export const Work = () => {
         </div>
       </section>
 
-      {/* Linxy */}
-      <section className="relative pt-24" id="linxy">
-        <img src={LinxyCover} alt="Workspace cover" className="w-full h-[360px] sm:h-[500px] md:h-[640px] lg:h-[760px] xl:h-[700px] object-cover" />
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-10 mt-6 lg:-mt-28 pb-16 md:pb-24">
-          <TwoCol
-            left={<SectionHeading>Linxy</SectionHeading>}
-            right={
-              <div className="text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 space-y-6 font-light">
-          <p>
-            From March to August 2024, I interned at Linxy, where I helped design and develop the beta version of both the customer-facing and internal admin dashboards. I used Figma to create wireframes and high-fidelity prototypes that focused on clean layout, usability, and information clarity. These dashboards were key to streamlining operational workflows and laid the foundation for user interactions across the platform. This experience is highly relevant in cybersecurity environments where clear data visualization is critical.
-          </p>
-          <p>
-            In addition to interface design, I conducted thorough QA testing across the app. I identified bugs, validated functionality, and worked closely with the development team to ensure a smooth, stable experience for both customers and internal users.
-          </p>
-              </div>
-            }
-          />
-          <div className="mt-12 lg:mt-16 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-0">
-            <img
-              src={linxy1Img}
-              alt="Linxy mobile UI"
-              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:h-[full] object-cover lg:object-contain"
-            />
-            <img
-              src={linxy2Img}
-              alt="Linxy desktop UI"
-              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:h-[full] object-cover lg:object-contain"
-            />
-            <img
-              src={linxy3Img}
-              alt="Linxy top banner"
-              className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:h-[500px] object-cover lg:object-contain lg:pb-70 "
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Peer Mentor */}
-      <section className="relative pt-24" id="pm">
-        <img src={PMCover} alt="Peer mentor cover" className="w-full h-[360px] sm:h-[500px] md:h-[640px] lg:h-[760px] xl:h-[700px] object-cover" />
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-10 mt-6 lg:-mt-28 pb-24">
-          <TwoCol
-            left={<SectionHeading>Peer Mentor</SectionHeading>}
-            right={
-              <div className="text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 space-y-6 font-light ">
-                <p>
-                  From December 2023 to July 2024, I served as a Peer Mentor for the Honeywell STEM Scholars Academy at Central Piedmont Community College, a program focused on increasing diversity and engagement in high-demand STEM fields. I supported and guided over 50 students pursuing academic credentials in Information Technology and Engineering Technologies, helping them navigate coursework and career pathways.
-                </p>
-                <p>
-                  My mentorship involved one-on-one academic coaching, assisting students with programming concepts in Java, Python, CSS, and foundational math, while also sharing tools to improve study habits and technical confidence. I worked closely with program staff to identify struggling students, increase academic readiness, and promote awareness of STEM opportunities in both industry and higher education.
-                </p>
-              </div>
-            }
-          />
-          <div className="mt-12 lg:mt-16 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            <img src={pm1Img} alt="Mentor photo 1" className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:h-[full] object-cover lg:object-contain lg:mt-50" />
-            <img src={pm2Img} alt="Mentor photo 2" className="w-full h-[full] sm:h-[320px] md:h-[420px] lg:h-[full] object-cover lg:object-contain" />
-          </div>
-        </div>
-      </section>
-
-       <Footer />
+      <Footer />
     </main>
   );
 };
 
-export default Work;
+export default UNCCharlotte;

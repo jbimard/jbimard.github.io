@@ -29,6 +29,10 @@ const About=()=>{
           <div className="grid gap-10 md:gap-14">
             <Row title="Cybersecurity">
               <ul className="list-none pl-0 space-y-2">
+              <li>Identity & Access Management (Microsoft Entra ID, Microsoft Graph, RBAC, Active Directory)</li>
+              <li>Privileged Access Review & Risk Modeling (NIST 800-53, least privilege)</li>
+              <li>SIEM & Threat Detection (Splunk, SentinelOne, Microsoft Defender XDR)</li>
+              <li>Email Security (Mimecast, SPF/DKIM/DMARC)</li>
               <li>Vulnerability Analysis</li>
               <li>Network Protocols (TCP/IP, OSI Model)</li>
               <li>Packet Analysis (Wireshark)</li>
@@ -45,16 +49,33 @@ const About=()=>{
               <ul className="space-y-1">
                 <li>Python</li>
                 <li>Java</li>
-                <li>JavaScript</li>
+                <li>C# / .NET</li>
+                <li>PowerShell</li>
+                <li>SQL / T-SQL</li>
+                <li>JavaScript / TypeScript</li>
                 <li>HTML & CSS</li>
-                <li>Swift(basics)</li>
+                <li>SwiftUI</li>
+              </ul>
+            </Row>
+
+            <Row title="Cloud & Infrastructure">
+              <ul className="space-y-1">
+                <li>Microsoft Azure, Microsoft Entra ID, Microsoft Graph</li>
+                <li>Terraform (Infrastructure as Code)</li>
+                <li>Microsoft Fabric, Power BI, Azure SQL</li>
+                <li>Supabase / PostgreSQL</li>
+                <li>Azure DevOps (Repos, Boards, Pipelines)</li>
+                <li>React, Node.js / Express, REST APIs</li>
               </ul>
             </Row>
 
             <Row title="Tools & Platforms">
               <ul className="space-y-1">
                 <li>Git & Github</li>
+                <li>Claude Code</li>
+                <li>Codex</li>
                 <li>Wireshark</li>
+                <li>Splunk</li>
                 <li>Cisco Packet Tracer</li>
                 <li>Figma</li>
                 <li>Xcode</li>

@@ -32,7 +32,7 @@ const Goals = () => {
             Academic Milestones
           </h2>
           <p className="max-w-[1280px] text-sm md:text-base leading-6 md:leading-7 opacity-80">
-            One of my key goals is to complete my undergraduate degree while continuing my graduate‑level coursework through UNC Charlotte’s
+            One of my key goals is to complete my undergraduate degree while continuing my graduate‑level coursework through the University of North Carolina at Charlotte’s
             Early Entry Cybersecurity M.S. program. This dual‑track path allows me to deepen my expertise while staying focused on the
             future of secure systems.
           </p>
@@ -50,7 +50,7 @@ const Goals = () => {
           </h2>
           <p className="max-w-[1280px] text-sm md:text-base leading-6 md:leading-7 opacity-80">
             I believe the best way to grow is by building. This section highlights projects I’m currently working on, experimenting with, or
-            planning next—ranging from security labs and dashboards to network simulations. You can view live updates and progress through
+            planning next, ranging from security labs and dashboards to network simulations. You can view live updates and progress through
             my Notion board below.
           </p>
           {/* Live Notion table*/}

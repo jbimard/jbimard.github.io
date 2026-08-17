@@ -44,11 +44,7 @@ const Navbar = ({ dark, transparent }: Props) => {
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-8 text-sm">
           <Link to="/about" className="font-normal text-2xl hover:opacity-70">About</Link>
-          <Link to="/workinterface" className="font-normal text-2xl hover:opacity-70">Work</Link>
-          <Link to="/projectsinterface" className="font-normal text-2xl hover:opacity-70">Projects</Link>
           <Link to="/skills" className="font-normal text-2xl hover:opacity-70">Skills</Link>
-          <Link to="/certsinterface" className="font-normal text-2xl hover:opacity-70">Training</Link>
-          <Link to="/goals" className="font-normal text-2xl hover:opacity-70">Goals</Link>
         </nav>
 
         {/* Mobile trigger */}
@@ -90,22 +86,10 @@ const Navbar = ({ dark, transparent }: Props) => {
           <div className="h-[calc(100vh-64px)] flex items-center justify-center">
             <ul className="text-center space-y-6">
               <li>
-                <Link to="/workinterface" onClick={() => setOpen(false)} className="text-2xl">Work</Link>
-              </li>
-              <li>
-                <Link to="/projectsinterface" onClick={() => setOpen(false)} className="text-2xl">Projects</Link>
-              </li>
-              <li>
-                <Link to="/certsinterface" onClick={() => setOpen(false)} className="text-2xl">Training</Link>
-              </li>
-              <li>
                 <Link to="/about" onClick={() => setOpen(false)} className="text-2xl">About</Link>
               </li>
               <li>
                 <Link to="/skills" onClick={() => setOpen(false)} className="text-2xl">Skills</Link>
-              </li>
-              <li>
-                <Link to="/goals" onClick={() => setOpen(false)} className="text-2xl">Goals</Link>
               </li>
             </ul>
           </div>
