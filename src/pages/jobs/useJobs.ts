@@ -48,6 +48,21 @@ export function useJobs(user: User | undefined) {
     setJobs((current) => [data as Job, ...current])
   }
 
+  const createJobsBulk = async (drafts: Omit<JobDraft, 'user_id'>[]) => {
+    if (!supabase || !user) throw new Error('You must be signed in to import jobs.')
+    if (drafts.length === 0) return []
+
+    const { data, error: insertError } = await supabase
+      .from('jobs')
+      .insert(drafts.map((draft) => ({ ...draft, user_id: user.id })))
+      .select('*')
+
+    if (insertError) throw insertError
+    const inserted = (data ?? []) as Job[]
+    setJobs((current) => [...inserted, ...current])
+    return inserted
+  }
+
   const updateJob = async (id: string, patch: JobUpdate) => {
     if (!supabase) throw new Error('Supabase is not configured.')
 
@@ -74,5 +89,5 @@ export function useJobs(user: User | undefined) {
     setJobs((current) => current.filter((job) => job.id !== id))
   }
 
-  return { jobs, loading, error, reload: loadJobs, createJob, updateJob, archiveJob, deleteJob }
+  return { jobs, loading, error, reload: loadJobs, createJob, createJobsBulk, updateJob, archiveJob, deleteJob }
 }

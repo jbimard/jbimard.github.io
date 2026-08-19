@@ -15,7 +15,7 @@ const isTouchDevice = () =>
 
 const isIPad = () => {
   if (typeof window === 'undefined') return false;
-  const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+  const ua = navigator.userAgent || navigator.vendor || (window as Window & typeof globalThis & { opera?: string }).opera || '';
   // iPadOS 13+ identifies as Mac but with touch points
   const isIPadOS13Up = navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1;
   const isIPadUA = /iPad/.test(ua);
@@ -112,7 +112,7 @@ const Card = ({ src, alt, title, href, logoCard }: { src?: string; alt: string; 
 
   return (
     <figure
-      ref={cardRef as any}
+      ref={cardRef}
       className="relative w-full aspect-[2/3] border border-black/0 bg-white group touch-overlay"
     >
       <a
