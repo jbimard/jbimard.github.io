@@ -29,6 +29,8 @@ const Badge = ({ children, className }: { children: string; className: string })
 const JobRow = ({ job, onEdit, onArchive, onUpdate }: JobRowProps) => {
   const [copied, setCopied] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [editingPriority, setEditingPriority] = useState(false)
+  const [editingStatus, setEditingStatus] = useState(false)
 
   const updateInline = async (patch: JobUpdate) => {
     setSaving(true)
@@ -37,6 +39,14 @@ const JobRow = ({ job, onEdit, onArchive, onUpdate }: JobRowProps) => {
     } finally {
       setSaving(false)
     }
+  }
+
+  const updateStatus = async (status: JobStatus) => {
+    const patch: JobUpdate = { status }
+    const today = new Date().toISOString().slice(0, 10)
+    if (status === 'Applied' && !job.date_applied) patch.date_applied = today
+    if (status === 'Follow-Up' && !job.follow_up_date) patch.follow_up_date = today
+    await updateInline(patch)
   }
 
   const copyPrompt = async (label: 'Claude' | 'ChatGPT') => {
@@ -51,33 +61,53 @@ const JobRow = ({ job, onEdit, onArchive, onUpdate }: JobRowProps) => {
       <td className="border-b border-slate-200 px-3 py-2">{job.role_title}</td>
       <td className="border-b border-slate-200 px-3 py-2">{job.location || '-'}</td>
       <td className="border-b border-slate-200 px-3 py-2">
-        <select
-          value={job.priority}
-          disabled={saving}
-          onChange={(event) => void updateInline({ priority: event.target.value as JobPriority })}
-          className="w-full min-w-24 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
-        >
-          {PRIORITY_OPTIONS.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
-        </select>
-        <div className="mt-1"><Badge className={priorityClass(job.priority)}>{job.priority}</Badge></div>
+        {editingPriority ? (
+          <select
+            autoFocus
+            value={job.priority}
+            disabled={saving}
+            onChange={(event) => {
+              void updateInline({ priority: event.target.value as JobPriority })
+              setEditingPriority(false)
+            }}
+            onBlur={() => setEditingPriority(false)}
+            className="w-full min-w-24 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+          >
+            {PRIORITY_OPTIONS.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
+          </select>
+        ) : (
+          <button type="button" onClick={() => setEditingPriority(true)}>
+            <Badge className={priorityClass(job.priority)}>{job.priority}</Badge>
+          </button>
+        )}
       </td>
       <td className="border-b border-slate-200 px-3 py-2">
-        <select
-          value={job.status}
-          disabled={saving}
-          onChange={(event) => void updateInline({ status: event.target.value as JobStatus })}
-          className="w-full min-w-36 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
-        >
-          {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
-        </select>
-        <div className="mt-1"><Badge className={statusClass(job.status)}>{job.status}</Badge></div>
+        {editingStatus ? (
+          <select
+            autoFocus
+            value={job.status}
+            disabled={saving}
+            onChange={(event) => {
+              void updateStatus(event.target.value as JobStatus)
+              setEditingStatus(false)
+            }}
+            onBlur={() => setEditingStatus(false)}
+            className="w-full min-w-36 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+          >
+            {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
+          </select>
+        ) : (
+          <button type="button" onClick={() => setEditingStatus(true)}>
+            <Badge className={statusClass(job.status)}>{job.status}</Badge>
+          </button>
+        )}
       </td>
       <td className="border-b border-slate-200 px-3 py-2 text-right">{job.match_score ?? '-'}</td>
-      <td className="border-b border-slate-200 px-3 py-2">{job.date_found || '-'}</td>
-      <td className="border-b border-slate-200 px-3 py-2">{job.date_applied || '-'}</td>
-      <td className="border-b border-slate-200 px-3 py-2">{job.follow_up_date || '-'}</td>
-      <td className="border-b border-slate-200 px-3 py-2">
-        <div className="flex flex-wrap items-center gap-1">
+      <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">{job.date_found || '-'}</td>
+      <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">{job.date_applied || '-'}</td>
+      <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">{job.follow_up_date || '-'}</td>
+      <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">
+        <div className="flex flex-nowrap items-center gap-1">
           <button type="button" onClick={() => onEdit(job)} className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">Edit</button>
           {job.job_link && (
             <a href={job.job_link} target="_blank" rel="noreferrer" className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">Open</a>

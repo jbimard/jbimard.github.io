@@ -56,6 +56,13 @@ const optionalString = (value: unknown) => {
   return trimmed === '' ? null : trimmed
 }
 
+const normalizeJobLink = (value: unknown) => {
+  const trimmed = optionalString(value)
+  if (trimmed === null) return null
+  const markdownLink = trimmed.match(/^\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)$/)
+  return markdownLink ? markdownLink[2] : trimmed
+}
+
 const requiredString = (value: unknown) => {
   if (typeof value !== 'string') return ''
   return value.trim()
@@ -90,7 +97,7 @@ export const normalizeJobIntakeRow = (raw: unknown): NormalizedJobIntake => {
     company: requiredString(row.company),
     role_title: requiredString(row.role_title),
     location: optionalString(row.location),
-    job_link: optionalString(row.job_link),
+    job_link: normalizeJobLink(row.job_link),
     status: enumish(row.status, 'Fit Check'),
     priority: enumish(row.priority, 'Medium'),
     job_type: optionalString(row.job_type),

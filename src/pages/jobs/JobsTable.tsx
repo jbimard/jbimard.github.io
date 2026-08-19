@@ -39,7 +39,7 @@ const JobsTable = ({ jobs, sort, onSort, onEdit, onArchive, onUpdate }: JobsTabl
             ))}
             <th className="border-b border-slate-200 px-3 py-2 font-semibold">Location</th>
             {columns.slice(2).map((column) => (
-              <th key={column.key} className={`border-b border-slate-200 px-3 py-2 ${column.align ?? ''}`}>
+              <th key={column.key} className={`whitespace-nowrap border-b border-slate-200 px-3 py-2 ${column.align ?? ''}`}>
                 <button type="button" onClick={() => onSort(column.key)} className="font-semibold hover:text-slate-950">
                   {column.label} {sort.key === column.key ? `(${sort.direction})` : ''}
                 </button>
