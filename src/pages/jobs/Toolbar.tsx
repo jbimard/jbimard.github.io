@@ -15,9 +15,10 @@ type ToolbarProps = {
   filters: JobFilters
   onFiltersChange: (filters: JobFilters) => void
   onAddJob: () => void
+  onBulkImport: () => void
 }
 
-const Toolbar = ({ filters, onFiltersChange, onAddJob }: ToolbarProps) => {
+const Toolbar = ({ filters, onFiltersChange, onAddJob, onBulkImport }: ToolbarProps) => {
   const setFilter = <Key extends keyof JobFilters>(key: Key, value: JobFilters[Key]) => {
     onFiltersChange({ ...filters, [key]: value })
   }
@@ -63,6 +64,9 @@ const Toolbar = ({ filters, onFiltersChange, onAddJob }: ToolbarProps) => {
             </button>
           ))}
         </div>
+        <button type="button" onClick={onBulkImport} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50">
+          Bulk Import
+        </button>
         <button type="button" onClick={onAddJob} className="rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
           + Add Job
         </button>

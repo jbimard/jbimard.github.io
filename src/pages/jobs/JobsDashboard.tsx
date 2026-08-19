@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import ConfirmDialog from './ConfirmDialog'
+import BulkImportDialog from './import/BulkImportDialog'
 import JobFormDrawer from './JobFormDrawer'
 import JobsTable, { type SortKey, type SortState } from './JobsTable'
 import SummaryBar from './SummaryBar'
@@ -46,11 +47,12 @@ const compareValues = (left: string | number | boolean | null, right: string | n
 }
 
 const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
-  const { jobs, loading, error, createJob, updateJob, archiveJob, deleteJob } = useJobs(session.user)
+  const { jobs, loading, error, createJob, createJobsBulk, updateJob, archiveJob, deleteJob } = useJobs(session.user)
   const [filters, setFilters] = useState<JobFilters>(initialFilters)
   const [sort, setSort] = useState<SortState>({ key: 'date_found', direction: 'desc' })
   const [editingJob, setEditingJob] = useState<Job | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [bulkImportOpen, setBulkImportOpen] = useState(false)
   const [archiveTarget, setArchiveTarget] = useState<Job | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -132,7 +134,12 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
         </header>
 
         <SummaryBar jobs={jobs} />
-        <Toolbar filters={filters} onFiltersChange={setFilters} onAddJob={openCreate} />
+        <Toolbar
+          filters={filters}
+          onFiltersChange={setFilters}
+          onAddJob={openCreate}
+          onBulkImport={() => setBulkImportOpen(true)}
+        />
 
         {(error || actionError) && (
           <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error || actionError}</p>
@@ -160,6 +167,14 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
           onCreate={createJob}
           onUpdate={async (id, payload) => updateJob(id, payload)}
           onDelete={deleteJob}
+        />
+      )}
+
+      {bulkImportOpen && (
+        <BulkImportDialog
+          existingJobs={jobs}
+          onImport={createJobsBulk}
+          onClose={() => setBulkImportOpen(false)}
         />
       )}
 
