@@ -18,6 +18,7 @@ import CowrieHoneypot from './pages/CowrieHoneypot'
 import ConoceTuProfesor from './pages/ConoceTuProfesor'
 import TrueHomes from './pages/TrueHomes'
 import ComingSoon from './pages/ComingSoon'
+import Jobs from './pages/jobs/Jobs'
 
 const router = createBrowserRouter([
   // Home page
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
   { path: '/conocetuprofesor', element: <ConoceTuProfesor/> },
   { path: '/truehomes', element: <TrueHomes/> },
   { path: '/comingsoon', element: <ComingSoon/> },
+  { path: '/jobs', element: <Jobs/> },
 ])
 
 createRoot(document.getElementById('root')!).render(
