@@ -10,7 +10,7 @@ Work through the steps in order. Update the status column as each step lands, an
 
 | # | Step | Status |
 |---|------|--------|
-| 1 | Ship daily discovery | In progress — code done on `feat/job-discovery`, not yet merged |
+| 1 | Ship daily discovery | In progress — PR #6 open; then add secrets + first real run |
 | 2 | Make the data more accurate | Not started |
 | 3 | Claude screening + preparation, review queue | Not started — **do this before 2** |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
