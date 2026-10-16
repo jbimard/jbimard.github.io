@@ -11,12 +11,17 @@ Work through the steps in order. Update the status column as each step lands, an
 | # | Step | Status |
 |---|------|--------|
 | 1 | Ship daily discovery | In progress — PR #6 open; then add secrets + first real run |
-| 2 | Make the data more accurate | Not started |
-| 3 | Claude screening + preparation, review queue | Not started — **do this before 2** |
+| 2a | Real H-1B sponsor data (USCIS) | Not started — **next** |
+| 3 | Claude screening + preparation, review queue | Not started — after 2a |
+| 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
 
-Recommended order: **1 → 3 → 2 (alongside) → 4 → 5.** October–November is peak season for 2027 new-grad openings, so screening (3) matters more than polish.
+Order: **1 → 2a → 3 → 2b → 4 → 5.**
+
+- 2a is small and gives step 3 real sponsorship data from day one.
+- Step 3 removes the daily bottleneck: reading, tailoring and answering by hand.
+- October–November is peak season for 2027 new-grad openings, so don't let 2b or polish delay step 3.
 
 ---
 
@@ -31,12 +36,16 @@ The work: `automation/` (the script), `.github/workflows/discover-jobs.yml` (the
 
 ## 2. Make the data more accurate
 
+### 2a. Real H-1B sponsor data (next)
+
 - **Real H-1B sponsor data:** use the **USCIS H-1B Employer Data Hub**, which is free, official, and gives per-company initial approvals.
   - Download the CSVs for the last 2–3 fiscal years and commit a trimmed copy (company → initial approvals per year).
   - Replace the hand-set `sponsorTier` with tiers based on real counts (e.g. 50+ = strong, 5–49 = some, 0 = none on record), and score sponsorship from that.
   - Match company names loosely ("Wells Fargo Bank NA" = "Wells Fargo"), so Simplify jobs at unlisted companies also get a real signal.
   - Show the count in the label, e.g. "USCIS: 212 initial H-1B approvals in FY2025."
   - Refresh once a year.
+### 2b. More local companies (after step 3)
+
 - **More local companies:** Bank of America, Lowe's corporate tech, Honeywell, Duke Energy IT, SAS, Lenovo and MetLife aren't reachable through the current boards. Some need a new adapter, such as SmartRecruiters.
 - **Optional, later:** salary data from the free DOL LCA disclosure files, to see what each company pays at entry level (the H-1B lottery favors higher wages).
 
@@ -103,4 +112,5 @@ Settled; don't reopen without a new reason.
   - Company boards on Greenhouse, Lever, Ashby and Workday, plus the SimplifyJobs lists.
   - No LinkedIn or Indeed scraping (terms of service).
 - **Privacy:** the repo is public, so CI logs print only counts, never company or job names. No visa details or resume text in committed files.
+- **Order (2026-10-15):** step 2 is split. 2a (USCIS sponsor data) goes before step 3 so screening uses real data; 2b (new board adapters) goes after step 3.
 - **H-1B data:** use the USCIS Employer Data Hub, not the Apify "H-1B Visa Salary Search" actor. That actor returns per-filing LCA salary records (not sponsorship counts), costs $0.05 per record, and doesn't clearly state its source.
