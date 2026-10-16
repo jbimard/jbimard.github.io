@@ -1,0 +1,181 @@
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
+import { test } from 'node:test'
+import type { Profile, RawPosting } from '../types.ts'
+import { detectFlags } from './flags.ts'
+import { evaluatePosting, titleGroup } from './score.ts'
+import { htmlToText, parseAnnualSalary, scoreLocation, shortLocation } from './text.ts'
+
+const profile = JSON.parse(readFileSync(path.join(import.meta.dirname, '../config/profile.json'), 'utf8')) as Profile
+
+const posting = (overrides: Partial<RawPosting> = {}): RawPosting => ({
+  source: 'test',
+  company: 'Acme',
+  title: 'Cloud Security Engineer, New Grad 2027',
+  url: 'https://example.com/jobs/1',
+  location: 'Charlotte, NC',
+  description: 'Build secure AWS infrastructure with Terraform and Python.',
+  workplaceHint: null,
+  salaryText: null,
+  sponsorTier: 'unknown',
+  simplifySponsorship: null,
+  ...overrides,
+})
+
+const evaluateKept = (overrides: Partial<RawPosting>) => {
+  const result = evaluatePosting(posting(overrides), profile)
+  assert.equal(result.kind, 'kept')
+  return result
+}
+
+test('clearance is the one hard block', () => {
+  for (const description of [
+    'Candidates must have an active Secret clearance.',
+    'Requires TS/SCI with polygraph.',
+    'Must be able to obtain and maintain a security clearance.',
+  ]) {
+    assert.equal(evaluatePosting(posting({ description }), profile).kind, 'blocked', description)
+  }
+  assert.equal(evaluatePosting(posting({ title: 'Security Engineer - Top Secret Clearance Required' }), profile).kind, 'blocked')
+  assert.equal(evaluatePosting(posting({ description: 'No security clearance required for this role.' }), profile).kind, 'kept')
+  assert.equal(evaluatePosting(posting({ description: 'This role may require a security clearance at the TS/SCI level.' }), profile).kind, 'blocked')
+})
+
+test('conditional clearance wording is labeled, not blocked', () => {
+  const result = evaluateKept({ description: 'Depending on work location, may be required to obtain a security clearance for site access.' })
+  if (result.kind !== 'kept') return
+  assert.match(result.job.sponsorship_notes ?? '', /Clearance possibly required/)
+})
+
+test('roles with no entry-level signal score low on level and do not get a pay boost', () => {
+  const result = evaluateKept({ title: 'Security Engineer, Detection', salaryText: '$300,000 - $400,000' })
+  if (result.kind !== 'kept') return
+  // Level 3 and capped pay 7, then the whole score is scaled by noLevelSignalFactor (0.8).
+  assert.deepEqual(
+    { role: result.breakdown.role, level: result.breakdown.level, pay: result.breakdown.pay },
+    { role: 24, level: 2, pay: 6 },
+  )
+  assert.equal(result.job.job_type, 'Other')
+  assert.match(result.job.notes, /no level signal ×0.8/)
+})
+
+test('citizenship requirements are kept, labeled and penalized', () => {
+  const plain = evaluateKept({})
+  const flagged = evaluateKept({ description: 'Applicants must be U.S. citizens due to export control regulations.' })
+  if (plain.kind !== 'kept' || flagged.kind !== 'kept') return
+  assert.match(flagged.job.sponsorship_notes ?? '', /Citizenship stated/)
+  assert.equal(plain.breakdown.sponsor - flagged.breakdown.sponsor, 20)
+})
+
+test('EEO boilerplate about citizenship status is not a requirement', () => {
+  const flags = detectFlags(posting({
+    description: 'We do not discriminate on the basis of race, religion, citizenship status, or any other protected characteristic.',
+  }))
+  assert.equal(flags.citizenship, null)
+})
+
+test('no-sponsorship postings are kept with a label', () => {
+  const result = evaluateKept({
+    sponsorTier: 'known',
+    description: 'Candidates must be authorized to work in the US without the need for current or future visa sponsorship.',
+  })
+  if (result.kind !== 'kept') return
+  assert.match(result.job.sponsorship_notes ?? '', /No sponsorship/)
+  assert.equal(result.breakdown.sponsor, 5) // known 20 − 15
+  const unknown = evaluateKept({ description: 'We are unable to sponsor visas for this role.' })
+  if (unknown.kind === 'kept') assert.equal(unknown.breakdown.sponsor, -5) // unknown 10 − 15
+})
+
+test('Simplify sponsorship labels feed the same flags', () => {
+  assert.ok(detectFlags(posting({ description: null, simplifySponsorship: 'U.S. Citizenship is Required' })).citizenship)
+  assert.ok(detectFlags(posting({ description: null, simplifySponsorship: 'Does Not Offer Sponsorship' })).noSponsorship)
+  assert.ok(detectFlags(posting({ description: null, simplifySponsorship: 'Offers Sponsorship' })).sponsorshipOffered)
+})
+
+test('internships are kept in their own lane', () => {
+  const result = evaluateKept({ title: 'Security Engineering Intern - Summer 2027' })
+  if (result.kind !== 'kept') return
+  assert.equal(result.job.job_type, 'Internship')
+  assert.equal(result.breakdown.level, 15)
+})
+
+test('internships requiring a return to school are labeled and scored lower', () => {
+  const result = evaluateKept({
+    title: 'Cloud Engineering Intern',
+    description: 'Candidates must be returning to school in the fall following the internship.',
+  })
+  if (result.kind !== 'kept') return
+  assert.equal(result.breakdown.level, 5)
+  assert.match(result.job.notes, /returning to school/)
+})
+
+test('seniority and irrelevant titles are dropped, not blocked', () => {
+  for (const title of ['Security and Derivatives Intermediate Associate Analyst', 'Trader Voice Engineer', 'Senior Security Engineer', 'Sr. Cloud Engineer', 'Staff SRE', 'Software Engineer II', 'Security Officer', 'Account Executive']) {
+    assert.equal(titleGroup(title, profile), null, title)
+  }
+  assert.equal(titleGroup('Technology Leadership Development Program', profile), 'B')
+  assert.equal(titleGroup('Data & Technology Track Associate - Rotational Program', profile), 'B')
+  assert.equal(titleGroup('2027 Early Talent Rotational Program: Retirement Solutions - Licensed', profile), null)
+  assert.equal(titleGroup('Finance Rotational Program', profile), null)
+  assert.equal(titleGroup('Cloud Security Engineer', profile), 'A')
+  assert.equal(titleGroup('Site Reliability Engineer', profile), 'B')
+  assert.equal(titleGroup('Software Engineer, New Grad', profile), 'C')
+  assert.equal(evaluatePosting(posting({ description: 'Requires 5+ years of professional experience.' }), profile).kind, 'irrelevant')
+})
+
+test('location scoring prefers Charlotte/Triangle, then Boston/NYC, then remote US', () => {
+  assert.equal(scoreLocation('Charlotte, NC', profile).points, 15)
+  assert.equal(scoreLocation('Austin, TX; Cary, NC', profile).points, 15)
+  assert.equal(scoreLocation('New York, NY', profile).points, 11)
+  assert.equal(scoreLocation('Remote (US)', profile).points, 9)
+  assert.equal(scoreLocation('Remote', profile).points, 9)
+  assert.equal(scoreLocation('Austin, TX', profile).points, 3)
+  assert.equal(scoreLocation('Hyderabad, IN', profile).points, null)
+  assert.equal(scoreLocation('Remote - Canada', profile).points, null)
+  assert.equal(scoreLocation('London, UK', profile).points, null)
+})
+
+test('title fit scales the other points so unrelated roles sink', () => {
+  const base = { sponsorTier: 'known' as const, location: 'New York, NY', salaryText: '$60/hr' }
+  const security = evaluateKept({ ...base, title: 'Cloud Security Intern' })
+  const generic = evaluateKept({ ...base, title: 'Software Engineer Intern' })
+  const offTarget = evaluateKept({ ...base, title: 'Analytics Engineer Intern' })
+  if (security.kind !== 'kept' || generic.kind !== 'kept' || offTarget.kind !== 'kept') return
+  assert.equal(security.breakdown.fit, 1)
+  assert.equal(generic.breakdown.fit, 0.75)
+  assert.equal(offTarget.breakdown.fit, 0.5)
+  assert.ok(security.job.match_score > generic.job.match_score)
+  assert.ok(generic.job.match_score > offTarget.job.match_score)
+  assert.ok(offTarget.job.match_score < profile.minScore)
+  // A security title is never off-target, even with "AI" in it.
+  const ai = evaluateKept({ ...base, title: 'AI Security Engineer' })
+  if (ai.kind === 'kept') assert.equal(ai.breakdown.fit, 1)
+})
+
+test('short location shows the best-scoring city plus a count', () => {
+  assert.equal(shortLocation('Spring, Texas, United States of America; Durham, North Carolina, United States of America; San Jose, CA', profile), 'Durham, North Carolina +2 more')
+  assert.equal(shortLocation('Charlotte, NC', profile), 'Charlotte, NC')
+})
+
+test('salary parsing handles ranges, k-suffixes, hourly and ignores company size', () => {
+  assert.equal(parseAnnualSalary('The base salary range is $100,000 - $140,000 per year.'), 120_000)
+  assert.equal(parseAnnualSalary('$211.4K – $290.6K • Offers Equity'), 251_000)
+  assert.equal(parseAnnualSalary('Pay: $40/hr'), 83_200)
+  assert.equal(parseAnnualSalary('We raised $100M from investors. Salary $90k'), 90_000)
+  assert.equal(parseAnnualSalary('No pay info'), null)
+})
+
+test('score adds up to the breakdown and maps to priority', () => {
+  const result = evaluateKept({ sponsorTier: 'known', salaryText: '$130,000 - $150,000' })
+  if (result.kind !== 'kept') return
+  const { role, sponsor, level, location, pay } = result.breakdown
+  assert.deepEqual({ role, sponsor, level, location, pay }, { role: 30, sponsor: 20, level: 15, location: 15, pay: 15 })
+  assert.equal(result.breakdown.fit, 1)
+  assert.equal(result.job.match_score, 95)
+  assert.equal(result.job.priority, 'High')
+})
+
+test('html is decoded, including Greenhouse double-escaping', () => {
+  assert.equal(htmlToText('&lt;p&gt;Hello &amp;amp; welcome&lt;/p&gt;&lt;ul&gt;&lt;li&gt;AWS&lt;/li&gt;&lt;/ul&gt;'), 'Hello & welcome\n• AWS')
+})

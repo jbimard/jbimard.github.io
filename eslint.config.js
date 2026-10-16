@@ -20,4 +20,12 @@ export default tseslint.config([
       globals: globals.browser,
     },
   },
+  {
+    // Daily discovery script runs in Node (GitHub Actions), not the browser.
+    files: ['automation/**/*.ts'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      globals: globals.node,
+    },
+  },
 ])

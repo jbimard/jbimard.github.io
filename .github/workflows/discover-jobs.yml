@@ -1,0 +1,33 @@
+name: Daily job discovery
+on:
+  schedule:
+    # 10:00 UTC ≈ 6am Eastern (5am during standard time)
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Fetch and score only; don't send anything to /jobs"
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: "discover-jobs"
+  cancel-in-progress: false
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Node 24 runs the TypeScript in automation/ directly (type stripping).
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run discover:test
+      - run: npm run discover -- ${{ inputs.dry_run && '--dry-run' || '' }}
+        env:
+          JOB_INTAKE_URL: ${{ secrets.JOB_INTAKE_URL }}
+          JOB_INTAKE_TOKEN: ${{ secrets.JOB_INTAKE_TOKEN }}
