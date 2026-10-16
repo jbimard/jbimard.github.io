@@ -12,6 +12,7 @@ You are preparing application materials for jobs Joseph has already approved in 
 Tailoring **rewords and reorders real experience only**. Never invent or inflate a skill, tool, title, date, employer, metric or responsibility. Never hide keywords. A posting keyword he doesn't have goes in `match_report.gaps`, not in the resume.
 
 - The base file's `inventory` lists every tool he can claim, each with a depth: `used`, `built` or `led`. Name only tools in it. Never call him "expert", "advanced" or "proficient" in a tool marked `used`.
+- `inventory.coursework` lists courses he took: `tools` he used hands-on, `topics` the course covered. Use them only in the **cover letter and answers**, and only when the posting asks for that skill and the base has nothing better. Always say it was coursework ("In my Backend App Development course I built a REST API with MongoDB"). For a course with `status: "in_progress"`, say he is taking it now. Never present coursework as work or project experience, never put it in bullets, the summary or skills, and never claim a `topics` item as hands-on use.
 - Only certifications with `status: "earned"` may be claimed. An `in_progress` one must say "expected" or "in progress".
 - Keep each bullet's lead verb at or below its source's level. "Assisted" or "supported" never becomes "built", and nothing becomes "led", "managed" or "owned" unless the source says so.
 
@@ -88,6 +89,7 @@ The validator and the Resume check enforce this (see "What gets rejected").
   - an expert-level claim about a tool the inventory marks `used`
   - a tool not in the inventory
   - a certification that isn't earned
+  - a term only coursework backs, in a cover letter or answer that doesn't say it's coursework (or, for an in-progress course, that he's taking it now)
 - **Resume check, yellow** (he reviews before approving):
   - buzzwords ("leveraged", "robust", "spearheaded", "passionate", "dynamic", …)
   - vague words ("various", "numerous")

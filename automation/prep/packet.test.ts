@@ -122,3 +122,25 @@ test('numbers written as words are checked too', () => {
   pronoun.cover_letter.paragraphs[0] = 'I am applying for the role, one I have wanted for a while.'
   assert.deepEqual(check(pronoun).errors, [])
 })
+
+test('coursework may back the cover letter and answers, never bullets or the summary', () => {
+  const b = base()
+  b.inventory = {
+    tools: [],
+    certifications: [],
+    coursework: [{ code: 'ITIS 5166', title: 'Backend App Development', term: 'Fall 2025', status: 'completed', topics: ['REST APIs'], tools: ['MongoDB'] }],
+  }
+  assert.deepEqual(validateBase(b).errors, [])
+  const run = (edit: (p: ReturnType<typeof packet>) => void) => {
+    const input = packet()
+    edit(input)
+    return validatePacket(input, b, buildVocabulary(b)).errors.join(' ')
+  }
+  assert.equal(run((p) => { p.answers.why_role = 'In my ITIS 5166 course I built a MongoDB backend.' }), '')
+  assert.equal(run((p) => { p.cover_letter.paragraphs[1] = 'In my Backend App Development course I used MongoDB.' }), '')
+  assert.match(run((p) => { p.summary.text = 'Engineer who uses MongoDB and Azure.' }), /summary: tools\/skills not in the source: MongoDB/)
+  assert.match(run((p) => { p.projects[0].bullets[0].text = 'Analyzed 475+ security events across 44 attack sessions in MongoDB.' }), /tools\/skills not in the source: MongoDB/)
+  const broken = base()
+  broken.inventory = { tools: [], certifications: [], coursework: [{ code: 'ITIS 5166' }] as never }
+  assert.match(validateBase(broken).errors.join(' '), /inventory.coursework\[0\] must be/)
+})
