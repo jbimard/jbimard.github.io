@@ -17,13 +17,13 @@ Work through the steps in order. Update the status column as each step lands, an
 | 1c | Closed-posting check: archive jobs whose posting is gone | Live — PR #14; deployed and secrets set 2026-10-16; workflow dry run checked 71 postings (67 open, 4 couldn't verify) |
 | 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Live — PR #15; deployed, base file uploaded, routine "Job preparation" daily at 14:00 UTC in its own environment (first run 2026-10-16: OK, 0 jobs) |
 | 3c-A | Resume check, preview, ATS score, Approve / Regenerate | Done — PR #16; deployed and the inventory uploaded 2026-10-16. Confirm on the next preparation run that new packets carry no "no inventory" flag |
-| 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | Done — **B1** PR #19 (plus #20–#22); **B2** voice memory on `feat/voice-memory`: pull returns his last 40 edits, `ROUTINE.md` follows them |
+| 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | Done — **B1** PR #19 (plus #20–#22); **B2** voice memory PR #26, deployed 2026-10-16: pull returns his last 40 edits, `ROUTINE.md` follows them |
 | 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | In progress — on `feat/packet-edit` with B1 |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
 
-Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 4 → 5.**
+Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 4 → 5.** Next: **2b**.
 
 - 2a is small and gives step 3 real sponsorship data from day one.
 - 1b comes before the workflow is turned back on, so the dashboard never gets flooded with the whole backlog.
