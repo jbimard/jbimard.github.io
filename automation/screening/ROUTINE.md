@@ -45,6 +45,7 @@ You are screening new job postings for Joseph's search. Discovery has already fi
    4. Score from 0 to 100, honestly:
       - **Role and skills fit** against the best-matching resume: tools, cloud platforms, security domains, real overlap with the projects and experience. Most of the score comes from this.
       - **Level fit:** new grad, 2027 graduation, or an internship scores well. Several years of required experience, or a senior title, scores poorly. An internship that requires returning to school after the summer is a poor fit, because he graduates in May 2027.
+      - **Graduation window:** if the posting gives a graduation range that doesn't include May 2027 (for example "graduating between Fall 2027 and Summer 2028"), or it's an internship that starts after May 2027 (Summer 2027 or later, which needs current enrollment), recommend `skip` and quote the requirement in `reason`. He has to answer the graduation question truthfully, so these fail the application's first screen.
       - **Location** priority, as listed above.
       - **Sponsorship:** strong USCIS history helps. `no_sponsorship` costs a lot, because there's no H-1B path after OPT, but it's still kept. Citizenship `required` costs more.
       - Clearance `required` always means `recommendation: "skip"` (the validator enforces this).

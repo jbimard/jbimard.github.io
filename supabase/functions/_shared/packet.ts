@@ -33,6 +33,7 @@ export const LIMITS = {
   gapNote: 200,
   qualifications: 25,
   qualification: 300,
+  postingText: 20000,
 } as const
 
 export type ResumeVersion = (typeof RESUME_VERSIONS)[number]
@@ -100,6 +101,9 @@ export type Packet = {
   answers: Record<(typeof ANSWER_KEYS)[number], string>
   // The posting's qualifications, each met or not. Optional so older packets stay valid.
   qualifications?: Qualification[]
+  // The posting text the routine read, when the job has no saved description: the ATS estimate scores against it
+  // and job-prep saves it on the job. Not kept in the stored packet.
+  posting_text?: string
   match_report: {
     coverage: number
     covered: string[]
@@ -470,6 +474,8 @@ export const validatePacket = (
       })
     }
   }
+
+  if (input.posting_text !== undefined) text('posting_text', input.posting_text, LIMITS.postingText)
 
   const allText = JSON.stringify([input.summary, input.experience, input.projects, input.cover_letter, input.answers])
   const dashes = (allText.match(/—/g) ?? []).length

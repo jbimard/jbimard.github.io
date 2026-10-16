@@ -22,6 +22,8 @@ export type Profile = {
   fitWeights: { A: number; B: number; C: number; offTarget: number }
   noLevelSignalFactor: number
   maxRequiredYears: number
+  // Joseph's expected graduation, "YYYY-MM": postings whose graduation window excludes it score low.
+  graduation: string
   // New Employment approvals in the latest complete fiscal year needed for each tier.
   sponsorTiers: { strong: number; some: number }
   sponsorPoints: Record<SponsorTier, number>

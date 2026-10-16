@@ -55,7 +55,8 @@ const CURRENT_WORDS = /\b(currently|this semester|this fall|this spring|in progr
 const LONG_SENTENCE_WORDS = 35
 const DUTY_OPENERS = /^(responsible for|duties included|tasked with|in charge of|worked on)\b/i
 const PASSIVE = /\b(?:was|were|is|are|been|being)\s+(?:[a-z]+ed|built|made|done|run|written|given|taken|set up)\b/i
-const PREFERRED_HEADING =/(preferred|nice[ -]to[ -]have|bonus|pluses|is a plus|would be a plus|desired|desirable)/i
+const ADMITS_GAP = /\b(have(n't| not) (yet )?(worked|used|had)|no (professional |prior |hands-on |direct )?experience (with|in)|lack(s|ing)? (of )?(experience|exposure)|(do|does)(n't| not) have (any )?(experience|exposure)|not (yet )?(familiar|experienced) with|limited (experience|exposure))\b/i
+const PREFERRED_HEADING = /(preferred|nice[ -]to[ -]have|bonus|pluses|is a plus|would be a plus|desired|desirable)/i
 const REQUIRED_HEADING = /(required|requirements|minimum|basic qualifications|what it takes|must have|you have|qualifications)/i
 
 // ---------- helpers ----------
@@ -419,6 +420,10 @@ export const checkPacket = (packet: Packet, base: BaseResumes, resume: ResolvedR
     const pattern = termPattern(name, 'i')
     const count = resumeLines.filter(({ text }) => pattern.test(text)).length
     if (count >= 3) add('yellow', 'tool_overuse', '*', `"${name}" appears in ${count} resume lines; keep it where it shows the most.`)
+  }
+  // Yellow: a cover letter or answer that volunteers a gap. Gaps belong in the match report, not in front of a recruiter.
+  for (const { path, text } of prose.filter((item) => item.path !== 'summary')) {
+    if (ADMITS_GAP.test(text)) add('yellow', 'admits_gap', path, 'Points out something he lacks; leave gaps to the match report and say what he has done instead.', text)
   }
   resume.projects.forEach((project, i) => {
     const org = project.right?.trim()

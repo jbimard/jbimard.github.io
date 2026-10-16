@@ -97,7 +97,8 @@ test('Simplify sponsorship labels feed the same flags', () => {
 })
 
 test('internships are kept in their own lane', () => {
-  const result = evaluateKept({ title: 'Security Engineering Intern - Summer 2027' })
+  // Spring 2027 ends before his May 2027 graduation; a Summer 2027 internship would start after it (see below).
+  const result = evaluateKept({ title: 'Security Engineering Intern - Spring 2027' })
   if (result.kind !== 'kept') return
   assert.equal(result.job.job_type, 'Internship')
   assert.equal(result.breakdown.level, 15)
@@ -184,3 +185,40 @@ test('score adds up to the breakdown and maps to priority', () => {
 test('html is decoded, including Greenhouse double-escaping', () => {
   assert.equal(htmlToText('&lt;p&gt;Hello &amp;amp; welcome&lt;/p&gt;&lt;ul&gt;&lt;li&gt;AWS&lt;/li&gt;&lt;/ul&gt;'), 'Hello & welcome\n• AWS')
 })
+
+test('graduation windows that exclude May 2027 stay under the cutoff, with a note', () => {
+  const marvell = evaluateKept({
+    title: 'AI-Native Development Platform Engineer Intern, MS - Summer 2027',
+    description: 'Currently pursuing a Master\'s Degree in Computer Science with an expected graduation date between Fall 2027 – Summer 2028. Python, CI/CD, Docker.',
+  }, strongSponsor)
+  assert.ok(marvell.job.match_score < profile.minScore)
+  assert.match(marvell.job.notes ?? '', /graduation window excludes 2027-05/)
+  assert.equal(marvell.breakdown.level, 0)
+
+  // Windows that include May 2027 are fine.
+  for (const description of [
+    'Open to students with an expected graduation between December 2026 and August 2027.',
+    'Candidates graduating in Spring 2027.',
+    'Must graduate by June 2027.',
+    'Class of 2027 graduates.',
+  ]) {
+    const kept = evaluateKept({ description }, strongSponsor)
+    assert.ok(!(kept.job.notes ?? '').includes('graduation window'), description)
+  }
+  // Tanium lists the later date first.
+  const tanium = evaluateKept({ title: 'Cloud Security Intern', description: 'Currently enrolled Bachelors degree candidate. Graduating Spring 2028 or Fall 2027.' }, strongSponsor)
+  assert.match(tanium.job.notes ?? '', /graduation window excludes/)
+  const either = evaluateKept({ description: 'Graduating Fall 2027 or Spring 2027.' }, strongSponsor)
+  assert.ok(!(either.job.notes ?? '').includes('graduation window'))
+  const late = evaluateKept({ description: 'For students graduating in December 2027.' }, strongSponsor)
+  assert.ok(late.job.match_score < profile.minScore)
+})
+
+test('internships that start after May 2027 stay under the cutoff; earlier ones are fine', () => {
+  const summer = evaluateKept({ title: 'Cloud Security Intern - Summer 2027', description: 'Build secure AWS infrastructure.' }, strongSponsor)
+  assert.ok(summer.job.match_score < profile.minScore)
+  assert.match(summer.job.notes ?? '', /internship starts after the 2027-05 graduation/)
+  const spring = evaluateKept({ title: 'Cloud Security Intern - Spring 2027', description: 'Build secure AWS infrastructure.' }, strongSponsor)
+  assert.ok(!(spring.job.notes ?? '').includes('internship starts after'))
+})
+
