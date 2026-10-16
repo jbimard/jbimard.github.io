@@ -4,14 +4,16 @@ You are screening new job postings for Joseph's search. Discovery has already fi
 
 ## Who the search is for
 
-- An F-1 international student finishing a BS in CS plus an MS in Cybersecurity (STEM), graduating **May 2027**.
+- An F-1 international student finishing a BS in CS plus an MS in Cybersecurity (STEM), graduating **May 2027**. Use only this date: don't state or assume any other graduation or degree dates.
 - Target roles: cloud security, cloud engineering, security engineering, plus adjacent roles (SRE/platform, security analyst). New-grad roles and internships only.
 - Locations, in order: Charlotte and the Triangle (Raleigh, Durham, Cary) first, then Boston and NYC, then remote US.
 - Work authorization: OPT, then STEM OPT (about 3 years total), and needs **H-1B sponsorship** after that. Employers with a real H-1B track record matter.
 
 ## Steps
 
-1. Check Node: `node --version`. Node 23.6 or newer runs the TypeScript directly. On older versions, add `--experimental-strip-types` after `node` in every command below.
+1. Set up Node, once per run:
+   - Run `export NODE_USE_ENV_PROXY=1`. The cloud session reaches the internet only through its proxy, and Node's `fetch` ignores the proxy unless this is set, which shows up as "fetch failed". The proxy also adds the API token.
+   - Run `node --version`. Node 23.6 or newer runs the TypeScript directly. On older versions (the cloud image has Node 22), add `--experimental-strip-types` after `node` in every command below.
 2. Pull the jobs waiting for screening:
    `node automation/screening/client.ts pull --limit=10 --out=/tmp/screening-jobs.json`
    If it reports 0 jobs, stop: there's nothing to do.
