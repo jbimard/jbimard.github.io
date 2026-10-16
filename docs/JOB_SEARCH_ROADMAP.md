@@ -10,16 +10,18 @@ Work through the steps in order. Update the status column as each step lands, an
 
 | # | Step | Status |
 |---|------|--------|
-| 1 | Ship daily discovery | Done — PR #6 merged, secrets set, 1-job test inserted OK. **Workflow paused** until 2a: re-enable with `gh workflow enable discover-jobs.yml` |
-| 2a | Real H-1B sponsor data (USCIS) | Not started — **next**; finish by re-enabling the workflow |
-| 3 | Claude screening + preparation, review queue | Not started — after 2a |
+| 1 | Ship daily discovery | Done — PR #6 merged, secrets set, 1-job test inserted OK. **Workflow paused** until 1b: re-enable with `gh workflow enable discover-jobs.yml` |
+| 2a | Real H-1B sponsor data (USCIS) | Not started — **next** |
+| 1b | Daily batch of 10 + "Next batch" button | Not started — after 2a; **finish by re-enabling the workflow** |
+| 3 | Claude screening + preparation (incl. ATS-optimized resumes), review queue | Not started — after 1b |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
 
-Order: **1 → 2a → 3 → 2b → 4 → 5.**
+Order: **1 → 2a → 1b → 3 → 2b → 4 → 5.**
 
 - 2a is small and gives step 3 real sponsorship data from day one.
+- 1b comes before the workflow is turned back on, so the dashboard never gets flooded with the whole backlog.
 - Step 3 removes the daily bottleneck: reading, tailoring and answering by hand.
 - October–November is peak season for 2027 new-grad openings, so don't let 2b or polish delay step 3.
 
@@ -33,6 +35,24 @@ The work: `automation/` (the script), `.github/workflows/discover-jobs.yml` (the
 2. Add the `JOB_INTAKE_URL` and `JOB_INTAKE_TOKEN` repository secrets in GitHub (Settings → Secrets and variables → Actions). Never paste them into chat.
 3. Go to Actions → Daily job discovery → Run workflow (not dry run). About 50 jobs should land in `/jobs` as `Found`. A second run should insert 0.
 4. Review them for a few days: archive the wrong ones and note any patterns. Use that to tune `automation/config/profile.json`.
+
+## 1b. Daily batch of 10 + "Next batch" button
+
+**Goal:** each morning `/jobs` shows only the **best 10 new jobs**, not every match. When those are reviewed and more are wanted, a **"Next batch"** button shows the next 10 best.
+
+**Recommended approach** (confirm in planning):
+
+- **Add a `Queued` status.** Discovery still finds and scores everything, but sends all of it as `Queued` instead of `Found`.
+  - This needs a migration on the `jobs` status check constraint, plus matching updates to `src/pages/jobs/types.ts` and both intake validation copies.
+  - The dashboard hides `Queued` rows by default.
+- **One Postgres function**, e.g. `promote_next_batch(n int default 10)`. It moves the caller's top `n` `Queued` rows, by `match_score`, to `Found`.
+  - **Daily:** Supabase `pg_cron` calls it for each user after the morning run.
+  - **"Next batch" button:** calls it as the signed-in user. Row-level security keeps it scoped to that user's rows, so no new token or Edge Function is needed.
+- **Ranking:** the best 10 are chosen from the **whole queue**, not just today's finds. A strong job found yesterday can still beat today's.
+- **Daily size:** 10 by default, as a setting rather than hard-coded.
+- **Show the queue size** on the button ("Next batch (37 waiting)").
+- **Clear out stale rows** automatically, e.g. archive `Queued` rows older than about 21 days, since postings close.
+- **After step 3**, Claude re-ranks the queue before each promotion, so the 10 are chosen by real fit, not just the rule score.
 
 ## 2. Make the data more accurate
 
@@ -59,7 +79,26 @@ A scheduled Claude routine that runs after discovery each morning and, for each 
 - drafts a cover letter and answers to the standard application questions
 - moves strong matches to `Ready to Apply`
 
-This step also needs a **review queue** view in `/jobs` where the day's top jobs get approved or rejected in about 15 minutes.
+This step also needs a **review queue** view in `/jobs` where the day's batch of 10 (from 1b) gets approved or rejected in about 15 minutes.
+
+### ATS-optimized resume for each application
+
+Most applications are screened by an Applicant Tracking System (Workday, Greenhouse, Lever, iCIMS…), and more and more by AI ranking tools. For each approved job, Claude tailors the chosen base resume so those systems read and rank it well:
+
+- **Match the posting's wording.** Pull the required and preferred skills, tools and titles from the posting. Use the posting's exact terms wherever they truthfully describe the experience. For example, write "AWS IAM" if the posting says that rather than "cloud permissions", and include both the acronym and the spelled-out form ("SIEM (Security Information and Event Management)").
+- **Reorder for relevance.** Put the most relevant projects and bullets first, keep a short skills section that mirrors the posting, and keep quantified results.
+- **Keep the format ATS-safe:**
+  - single column, standard section headings (Experience, Education, Skills, Projects)
+  - no tables, text boxes, graphics, or contact info in headers or footers
+  - common fonts, saved as `.docx` or a text-based PDF
+  - consistent file names
+- **Match report** for each job:
+  - estimated keyword coverage
+  - skills from the posting that are already covered
+  - real gaps, and which of those could be honestly added (because the experience exists) versus which are true gaps to mention or skip
+- **Strictly truthful.** Never invent skills, titles, dates or experience, and never hide keywords (white text, tiny fonts). That is dishonest, and ATS and AI screeners increasingly detect and penalize it. The tailoring only reorders and rewords real experience.
+- **Storage:** tailored resume files stay out of Supabase and out of this public repo. The database only records which tailored version was sent (label plus the match-report summary).
+- **Step 5** uploads this tailored file during supervised applying.
 
 Constraint: the resume text is never stored in Supabase. The routine reads it from local profile files; the database only records the resume label used.
 
@@ -112,5 +151,7 @@ Settled; don't reopen without a new reason.
   - Company boards on Greenhouse, Lever, Ashby and Workday, plus the SimplifyJobs lists.
   - No LinkedIn or Indeed scraping (terms of service).
 - **Privacy:** the repo is public, so CI logs print only counts, never company or job names. No visa details or resume text in committed files.
+- **Daily volume (2026-10-16):** the dashboard shows the best 10 per day; more come only on request with "Next batch" (step 1b). The workflow stays paused until 1b exists.
+- **Resume tailoring (2026-10-16):** each application gets an ATS-optimized version of the chosen base resume (step 3). Tailoring is strictly truthful: rewording and reordering real experience only.
 - **Order (2026-10-15):** step 2 is split. 2a (USCIS sponsor data) goes before step 3 so screening uses real data; 2b (new board adapters) goes after step 3.
 - **H-1B data:** use the USCIS Employer Data Hub, not the Apify "H-1B Visa Salary Search" actor. That actor returns per-filing LCA salary records (not sponsorship counts), costs $0.05 per record, and doesn't clearly state its source.
