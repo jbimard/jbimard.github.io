@@ -145,7 +145,7 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: 
       role_title: posting.title,
       location: posting.location || null,
       job_link: posting.url,
-      status: 'Found',
+      status: 'Queued',
       priority: priorityOf(score),
       job_type: jobTypeOf(flags),
       work_mode: flags.workMode,

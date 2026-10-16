@@ -177,6 +177,8 @@ test('score adds up to the breakdown and maps to priority', () => {
   assert.equal(result.breakdown.fit, 1)
   assert.equal(result.job.match_score, 95)
   assert.equal(result.job.priority, 'High')
+  // Discovery only fills the queue; the daily batch (or "Next batch") moves rows to Found.
+  assert.equal(result.job.status, 'Queued')
 })
 
 test('html is decoded, including Greenhouse double-escaping', () => {

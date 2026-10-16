@@ -1,4 +1,4 @@
-import { JOB_TYPE_OPTIONS, PRIORITY_OPTIONS, STATUS_OPTIONS, WORK_MODE_OPTIONS, type JobPriority, type JobStatus, type JobType, type WorkMode } from './types'
+import { JOB_TYPE_OPTIONS, PRIORITY_OPTIONS, PIPELINE_STATUS_OPTIONS, WORK_MODE_OPTIONS, type JobPriority, type JobStatus, type JobType, type WorkMode } from './types'
 
 export type ArchiveFilter = 'active' | 'archived' | 'all'
 
@@ -16,9 +16,12 @@ type ToolbarProps = {
   onFiltersChange: (filters: JobFilters) => void
   onAddJob: () => void
   onBulkImport: () => void
+  queuedCount: number
+  promoting: boolean
+  onNextBatch: () => void
 }
 
-const Toolbar = ({ filters, onFiltersChange, onAddJob, onBulkImport }: ToolbarProps) => {
+const Toolbar = ({ filters, onFiltersChange, onAddJob, onBulkImport, queuedCount, promoting, onNextBatch }: ToolbarProps) => {
   const setFilter = <Key extends keyof JobFilters>(key: Key, value: JobFilters[Key]) => {
     onFiltersChange({ ...filters, [key]: value })
   }
@@ -35,7 +38,7 @@ const Toolbar = ({ filters, onFiltersChange, onAddJob, onBulkImport }: ToolbarPr
         />
         <select value={filters.status} onChange={(event) => setFilter('status', event.target.value as JobFilters['status'])} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
           <option value="">All statuses</option>
-          {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
+          {PIPELINE_STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
         </select>
         <select value={filters.priority} onChange={(event) => setFilter('priority', event.target.value as JobFilters['priority'])} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
           <option value="">All priorities</option>
@@ -64,6 +67,15 @@ const Toolbar = ({ filters, onFiltersChange, onAddJob, onBulkImport }: ToolbarPr
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={onNextBatch}
+          disabled={queuedCount === 0 || promoting}
+          title="Move the best queued jobs from discovery into the pipeline"
+          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {promoting ? 'Loading batch...' : queuedCount === 0 ? 'Queue empty' : `Next batch (${queuedCount} waiting)`}
+        </button>
         <button type="button" onClick={onBulkImport} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50">
           Bulk Import
         </button>

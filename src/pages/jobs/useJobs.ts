@@ -7,21 +7,32 @@ export function useJobs(user: User | undefined) {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [queuedCount, setQueuedCount] = useState(0)
 
   const loadJobs = useCallback(async () => {
     if (!supabase || !user) return
     setLoading(true)
     setError(null)
 
-    const { data, error: loadError } = await supabase
-      .from('jobs')
-      .select('*')
-      .order('created_at', { ascending: false })
+    // Queued rows stay in the database until a batch promotes them; only their count is shown.
+    const [{ data, error: loadError }, { count, error: countError }] = await Promise.all([
+      supabase
+        .from('jobs')
+        .select('*')
+        .neq('status', 'Queued')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('jobs')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'Queued')
+        .eq('archived', false),
+    ])
 
-    if (loadError) {
-      setError(loadError.message)
+    if (loadError || countError) {
+      setError((loadError ?? countError)!.message)
     } else {
       setJobs((data ?? []) as Job[])
+      setQueuedCount(count ?? 0)
     }
 
     setLoading(false)
@@ -89,5 +100,15 @@ export function useJobs(user: User | undefined) {
     setJobs((current) => current.filter((job) => job.id !== id))
   }
 
-  return { jobs, loading, error, reload: loadJobs, createJob, createJobsBulk, updateJob, archiveJob, deleteJob }
+  // Moves the best queued jobs (daily_batch_size, default 10) to Found; see promote_next_batch in the migrations.
+  const promoteNextBatch = async () => {
+    if (!supabase) throw new Error('Supabase is not configured.')
+
+    const { data, error: promoteError } = await supabase.rpc('promote_next_batch')
+    if (promoteError) throw promoteError
+    await loadJobs()
+    return data as number
+  }
+
+  return { jobs, queuedCount, loading, error, reload: loadJobs, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob }
 }

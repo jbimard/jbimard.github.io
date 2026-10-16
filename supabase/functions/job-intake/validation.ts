@@ -2,6 +2,7 @@
 // Keep this Deno copy in sync manually when frontend intake rules change.
 
 export const STATUS_OPTIONS = [
+  'Queued',
   'Found',
   'Fit Check',
   'Tailoring',
