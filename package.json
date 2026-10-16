@@ -25,6 +25,7 @@
   "dependencies": {
     "@supabase/supabase-js": "2.109.0",
     "cors": "^2.8.5",
+    "docx-preview": "0.4.1",
     "express": "^5.1.0",
     "node-fetch": "^3.3.2",
     "notion-client": "^7.4.3",

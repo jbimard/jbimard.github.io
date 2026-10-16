@@ -49,7 +49,7 @@ const compareValues = (left: string | number | boolean | null, right: string | n
 }
 
 const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
-  const { jobs, queuedCount, packets, packetFileUrl, loading, error, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob } = useJobs(session.user)
+  const { jobs, queuedCount, packets, packetFileUrl, packetFile, approvePacket, regeneratePacket, loading, error, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob } = useJobs(session.user)
   const [filters, setFilters] = useState<JobFilters>(initialFilters)
   const [sort, setSort] = useState<SortState>({ key: 'date_found', direction: 'desc' })
   const [editingJob, setEditingJob] = useState<Job | null>(null)
@@ -60,7 +60,6 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
   const [promoting, setPromoting] = useState(false)
   const [view, setView] = useState<'pipeline' | 'review'>('pipeline')
   const [packetJob, setPacketJob] = useState<Job | null>(null)
-  const packetJobIds = useMemo(() => new Set(packets.keys()), [packets])
 
   // Screened by the Claude routine and waiting for a decision.
   const reviewJobs = useMemo(
@@ -221,7 +220,7 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
             onEdit={openEdit}
             onArchive={setArchiveTarget}
             onUpdate={handleUpdate}
-            packetJobIds={packetJobIds}
+            packets={packets}
             onOpenPacket={setPacketJob}
           />
         )}
@@ -247,7 +246,16 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
       )}
 
       {packetJob && packets.get(packetJob.id) && (
-        <PacketPanel job={packetJob} packet={packets.get(packetJob.id)!} fileUrl={packetFileUrl} onClose={() => setPacketJob(null)} />
+        <PacketPanel
+          key={packets.get(packetJob.id)!.id}
+          job={packetJob}
+          packet={packets.get(packetJob.id)!}
+          fileUrl={packetFileUrl}
+          fileBlob={packetFile}
+          onApprove={approvePacket}
+          onRegenerate={regeneratePacket}
+          onClose={() => setPacketJob(null)}
+        />
       )}
 
       {archiveTarget && (

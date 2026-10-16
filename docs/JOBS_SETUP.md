@@ -367,6 +367,41 @@ Contact details, titles, employers, dates and education are copied from the base
    - **Network access: Custom**, the same job-board list as screening (§11)
 5. Tell Claude the environment exists. The routine is then created daily at 14:00 UTC with the prompt `Follow automation/prep/ROUTINE.md exactly.`
 
+### Resume check (step 3c)
+
+Every packet is checked before it reaches you, with no AI involved (`automation/prep/check.ts`). It gets one of three verdicts:
+
+- **Blocked** (red flags), which can't be approved:
+  - a bullet claims more responsibility than its source ("assisted" → "led")
+  - "expert in" a tool your inventory marks `used`
+  - a tool that isn't in your inventory
+  - a certification you haven't earned
+  - contact details, titles or dates that differ from your base resumes
+
+  Use **Regenerate**: the packet is deleted and the next preparation run (or Run now) writes a new one. The routine itself never sends a packet with red flags, so this should be rare.
+- **Needs edits** (yellow flags only): buzzwords, vague words, many em dashes, repetitive bullet openings, heavy rewording. Tick each flag once you've read it, and **Approve** becomes available.
+- **Pass:** **Approve** right away.
+
+**What the Packet panel shows:**
+- **Check:** the flags, plus an estimated ATS score for the tailored resume next to the base resume's. The score is our own estimate: posting keywords covered, with required ones counting double, plus format safety. Employers' real ATS rankings aren't visible.
+- **Resume:** the stored .docx itself, rendered in the browser.
+- **Changes:** each tailored bullet next to the base bullet it rewords, with the changed words highlighted.
+
+Only an **approved** packet will be used for applying (step 5).
+
+**Your experience inventory** is the `inventory` section of `automation/private/base-resumes.json`, and the check treats it as the truth:
+- **`tools`:** each with a depth, `used`, `built` or `led`, and the bullet that shows it.
+- **`certifications`:** each `earned` or `in_progress`.
+
+A draft was built from your resumes and internship record: tools from your skill lists and bullets, `built` only where a bullet shows you building with the tool, no `led`, no certifications. Review it, add any certifications you hold, then re-upload:
+
+```bash
+npm run prep:base -- check
+JOB_PREP_URL=https://PROJECT_REF.supabase.co/functions/v1/job-prep JOB_PREP_TOKEN=… npm run prep:base -- upload
+```
+
+Until the inventory is uploaded, every packet carries one yellow "no inventory" flag.
+
 **Locally:**
 
 ```bash

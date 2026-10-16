@@ -11,8 +11,8 @@ const resume: ResolvedResume = {
   contact: { name: 'Test Person', location: 'Charlotte, NC', email: 'test@example.com', phone: '000-000-0000', links: ['example.com'] },
   summary: 'Cloud-focused engineer.',
   education: [{ school: 'Example University', location: 'Charlotte, NC', degrees: [{ degree: 'MS in Cybersecurity', date: 'May 2027' }] }],
-  experience: [{ heading: 'Acme, Charlotte, NC', subheading: 'Security Intern', right: 'May 2026 – Aug 2026', bullets: ['Built a tool & shipped it <safely>.'] }],
-  projects: [{ heading: 'SSH Honeypot', subheading: null, right: 'GitHub', bullets: ['Analyzed 475+ events.'] }],
+  experience: [{ heading: 'Acme, Charlotte, NC', subheading: 'Security Intern', right: 'May 2026 – Aug 2026', bullets: ['Built a tool & shipped it <safely>.'], sources: [] }],
+  projects: [{ heading: 'SSH Honeypot', subheading: null, right: 'GitHub', bullets: ['Analyzed 475+ events.'], sources: [] }],
   skills: [{ label: 'Tools', items: ['Azure', 'Terraform'] }],
 }
 
