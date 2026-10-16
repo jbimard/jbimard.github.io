@@ -14,16 +14,18 @@ Work through the steps in order. Update the status column as each step lands, an
 | 2a | Real H-1B sponsor data (USCIS) | Done — PR #8; USCIS FY2024–FY2026 (Q3) data in `automation/data/h1b-sponsors.json` |
 | 1b | Daily batch of 10 + "Next batch" button | Done — PR #9, deployed 2026-10-16; `Queued` status, 11:00 UTC batch via `pg_cron`, "Next batch" button; migration + intake deployed and **workflow re-enabled** |
 | 3a | Claude screening + review queue | Done — `job-screening` function, routine instructions in `automation/screening/ROUTINE.md`, Review tab in `/jobs`. Live once the function is deployed and the routine is created (`docs/JOBS_SETUP.md` §11) |
-| 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Not started — **next** |
+| 1c | Closed-posting check: archive jobs whose posting is gone | Not started — **next** (small; before 3b) |
+| 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Not started — after 1c |
 | 3c | Resume check screen, resume preview + estimated ATS score in the dashboard | Not started — after 3b |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
 
-Order: **1 → 2a → 1b → 3a → 3b → 3c → 2b → 4 → 5.**
+Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c → 2b → 4 → 5.**
 
 - 2a is small and gives step 3 real sponsorship data from day one.
 - 1b comes before the workflow is turned back on, so the dashboard never gets flooded with the whole backlog.
+- 1c is small and stops review time going to postings that have already closed, before 3b spends effort tailoring for them.
 - Step 3 removes the daily bottleneck: reading, tailoring and answering by hand.
 - October–November is peak season for 2027 new-grad openings, so don't let 2b or polish delay step 3.
 
@@ -55,6 +57,31 @@ The work: `automation/` (the script), `.github/workflows/discover-jobs.yml` (the
 - **Show the queue size** on the button ("Next batch (37 waiting)").
 - **Clear out stale rows** automatically, e.g. archive `Queued` rows older than about 21 days, since postings close.
 - **After step 3**, Claude re-ranks the queue before each promotion, so the 10 are chosen by real fit, not just the rule score.
+
+## 1c. Closed-posting check (next)
+
+**Problem:** jobs wait in the queue, in Review, and in `Ready to Apply` for days or weeks, and postings close in the meantime. The 21-day stale rule (1b) is only a guess. A closed job shown again wastes review time, and 3b would waste effort tailoring for it.
+
+**Goal:** check every open job's posting each day, and quietly archive the ones that are gone, before they reach the dashboard.
+
+**Recommended approach** (confirm in planning):
+
+- **Which rows are checked:** `Queued`, `Found`, `Fit Check` and `Ready to Apply`, not archived. Jobs already `Applied` or later are never archived. A closed posting there gets a note instead, since postings often close after the applicant pool is full.
+- **How each one is checked,** cheapest and most reliable first. These are all official public APIs, the same ones discovery already uses:
+  - **Board sources (Greenhouse, Lever, Ashby, Workday):** discovery already downloads each company's full list of open postings every morning. A job from that board that's no longer in the list is closed. No extra requests, and it only counts when that board's fetch succeeded, so an outage never closes anything.
+  - **Single-posting lookups** for jobs whose board wasn't in today's fetch: Greenhouse `boards-api.greenhouse.io/v1/boards/{board}/jobs/{id}` and Lever `api.lever.co/v0/postings/{company}/{id}` return 404 once a posting closes. Ashby and Workday have similar per-posting endpoints. Verify them in planning.
+  - **Simplify jobs:** Simplify's listing turns `active: false` when the role closes, and discovery already reads those lists.
+  - **Other career sites:** an HTTP 404 or 410 counts as closed. Anything unclear, like a redirect to a generic careers page or a timeout, is left alone and labeled "couldn't verify". It never auto-closes on a guess.
+- **Two strikes:** a job is closed only after **two checks in a row**, on different days, say it's gone. This avoids archiving on a one-off glitch. New columns: `link_checked_at`, `link_missing_count`, `link_status` (`open` / `missing` / `unverified`).
+- **What closing does:**
+  - status becomes `Closed`, `archived = true`
+  - a note in `notes`: "Posting closed (checked 2026-10-20 via greenhouse)"
+  - it shows up under the Archived filter, and Unarchive undoes it
+- **Where it runs:** as a step in the existing daily discovery workflow, after the fetch. It reads and writes through an Edge Function with its own token, in the same pattern as `job-intake` and `job-screening`, and it uses no AI.
+- **Order of the morning:** discovery 10:00 → closed check (same run) → batch promotion 11:00 → screening 11:30. Closed jobs then never get promoted, screened or reviewed.
+- **Dashboard:** a small "N closed postings archived today" line. An "Check link" action on a row can wait.
+- **Privacy:** CI logs print counts only, as with discovery.
+- **Promotion guard:** promotion skips rows with `link_status = 'missing'` (one strike), so a job that's probably closed isn't surfaced while it waits for its second check.
 
 ## 2. Make the data more accurate
 
