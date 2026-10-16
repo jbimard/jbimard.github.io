@@ -415,6 +415,10 @@ Until the inventory is uploaded, every packet carries one yellow "no inventory" 
 - **PDF copies:** each packet also gets a text-based PDF of the resume and the cover letter (**Resume PDF**, **Cover letter PDF**). Same content and order as the .docx, in standard fonts, with no images. Use them on forms that take PDF only.
 - **Parser test (optional):** open [open-resume.com/resume-parser](https://www.open-resume.com/resume-parser), which runs in your browser and uploads nothing, and drop in a Resume PDF. Check that your name, contact details, each job's title, company and dates, education and skills come out in the right fields. When you apply in step 5, Workday's and Greenhouse's own autofill is the real version of the same test.
 
+### Packet pending · Run now
+
+An approved job without a packet yet, either newly approved or just regenerated, shows **Packet pending · Run now** on its row. The routine writes the packet at 10:00 AM each day. To get it sooner, click the link: it opens your scheduled routines on claude.ai, then open **Job preparation** and click **Run now**. The dashboard can't start the routine itself, because that needs your claude.ai sign-in, which this public site never holds.
+
 ### One page and resume style
 
 - **One page is enforced.** The Resume check estimates the length from the same layout as the PDF and blocks anything longer (red). `job-prep` and `packet-edit` also measure the rendered PDF and refuse a second page. An edit that would push the resume onto page 2 is refused with how many lines to cut.
