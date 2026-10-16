@@ -122,3 +122,45 @@ test('numbers written as words are checked too', () => {
   pronoun.cover_letter.paragraphs[0] = 'I am applying for the role, one I have wanted for a while.'
   assert.deepEqual(check(pronoun).errors, [])
 })
+
+test('coursework may back the cover letter and answers, never bullets or the summary', () => {
+  const b = base()
+  b.inventory = {
+    tools: [],
+    certifications: [],
+    coursework: [{ code: 'ITIS 5166', title: 'Backend App Development', term: 'Fall 2025', status: 'completed', topics: ['REST APIs'], tools: ['MongoDB'] }],
+  }
+  assert.deepEqual(validateBase(b).errors, [])
+  const run = (edit: (p: ReturnType<typeof packet>) => void) => {
+    const input = packet()
+    edit(input)
+    return validatePacket(input, b, buildVocabulary(b)).errors.join(' ')
+  }
+  assert.equal(run((p) => { p.answers.why_role = 'In my ITIS 5166 course I built a MongoDB backend.' }), '')
+  assert.equal(run((p) => { p.cover_letter.paragraphs[1] = 'In my Backend App Development course I used MongoDB.' }), '')
+  assert.match(run((p) => { p.summary.text = 'Engineer who uses MongoDB and Azure.' }), /summary: tools\/skills not in the source: MongoDB/)
+  assert.match(run((p) => { p.projects[0].bullets[0].text = 'Analyzed 475+ security events across 44 attack sessions in MongoDB.' }), /tools\/skills not in the source: MongoDB/)
+  const broken = base()
+  broken.inventory = { tools: [], certifications: [], coursework: [{ code: 'ITIS 5166' }] as never }
+  assert.match(validateBase(broken).errors.join(' '), /inventory.coursework\[0\] must be/)
+})
+
+test('relevant coursework: inventory codes only, titles from the base, in-progress marked', () => {
+  const b = base()
+  b.inventory = {
+    tools: [],
+    certifications: [],
+    coursework: [
+      { code: 'ITCS 3160', title: 'Database Design and Implementation', term: 'Spring 2025', status: 'completed', topics: [], tools: ['MySQL'] },
+      { code: 'ITIS 6167', title: 'Network Security', term: 'Fall 2026', status: 'in_progress', topics: [], tools: [] },
+    ],
+  }
+  const run = (coursework: unknown) => validatePacket({ ...packet(), coursework }, b, buildVocabulary(b))
+  const ok = run(['ITIS 6167', 'ITCS 3160'])
+  assert.deepEqual(ok.errors, [])
+  assert.deepEqual(resolveResume(ok.packet!, b).coursework, ['Network Security (in progress)', 'Database Design and Implementation'])
+  assert.deepEqual(resolveResume(packet() as never, b).coursework, [])
+  assert.match(run(['ITSC 9999']).errors.join(' '), /not in inventory.coursework: ITSC 9999/)
+  assert.match(run(['ITCS 3160', 'ITCS 3160']).errors.join(' '), /twice/)
+  assert.match(run(Array(7).fill('ITCS 3160')).errors.join(' '), /at most 6/)
+})

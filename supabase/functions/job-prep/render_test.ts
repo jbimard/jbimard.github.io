@@ -11,6 +11,7 @@ const resume: ResolvedResume = {
   contact: { name: 'Test Person', location: 'Charlotte, NC', email: 'test@example.com', phone: '000-000-0000', links: ['example.com'] },
   summary: 'Cloud-focused engineer.',
   education: [{ school: 'Example University', location: 'Charlotte, NC', degrees: [{ degree: 'MS in Cybersecurity', date: 'May 2027' }] }],
+  coursework: ['Network Security (in progress)', 'Database Design'],
   experience: [{ heading: 'Acme, Charlotte, NC', subheading: 'Security Intern', right: 'May 2026 – Aug 2026', bullets: ['Built a tool & shipped it <safely>.'], sources: [] }],
   projects: [{ heading: 'SSH Honeypot', subheading: null, right: 'GitHub', bullets: ['Analyzed 475+ events.'], sources: [] }],
   skills: [{ label: 'Tools', items: ['Azure', 'Terraform'] }],
@@ -30,6 +31,9 @@ Deno.test('resume: single column, standard headings, contact in the body, no hea
   assert(!document.includes('<w:tbl>') && !document.includes('<w:drawing>') && !document.includes('<w:txbxContent>'), 'no tables, images or text boxes')
   assert(document.includes('Built a tool &amp; shipped it &lt;safely&gt;.'), 'text is escaped')
   assert(document.includes('May 2026 – Aug 2026'), 'dates come through')
+  assert(document.includes('Relevant Coursework: ') && document.includes('Network Security (in progress), Database Design'), 'coursework line')
+  const { document: without } = await unzip(await renderResume({ ...resume, coursework: [] }))
+  assert(!without.includes('Relevant Coursework'), 'no coursework line when none is picked')
 })
 
 Deno.test('cover letter: greeting, paragraphs and sign-off', async () => {

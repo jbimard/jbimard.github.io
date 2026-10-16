@@ -60,6 +60,7 @@ export const renderResume = async (resume: ResolvedResume): Promise<Uint8Array<A
       lineWithRight([run(`${school.school}${school.location ? `, ${school.location}` : ''}`, { bold: true })], null),
       ...school.degrees.map((degree) => lineWithRight([run(degree.degree)], degree.date)),
     ]),
+    ...(resume.coursework.length ? [new Paragraph({ children: [run('Relevant Coursework: ', { bold: true }), run(resume.coursework.join(', '))] })] : []),
     heading('Experience'),
     ...resume.experience.flatMap(entry),
     ...(resume.projects.length ? [heading('Projects'), ...resume.projects.flatMap(entry)] : []),

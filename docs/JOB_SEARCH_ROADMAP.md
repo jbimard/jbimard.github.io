@@ -311,3 +311,8 @@ Settled; don't reopen without a new reason.
   - **Numbers written as words** ("six", "forty-two") are compared like digits; "one" is skipped as a likely pronoun.
   - **ATS estimate:** posting keywords (the shared term list, base skills, required skills), classed required or preferred by section heading. Score = 85 × (2·required covered + preferred covered) / (2·required + preferred) + 15 for format safety. The full base version is scored the same way. With fewer than 3 keywords, no score.
   - **Preview:** the stored .docx rendered in the browser with `docx-preview` (lazy-loaded), so the preview is the exact file.
+- **Coursework (2026-10-16, between 3c-A and 3c-B):**
+  - Courses from his transcript live in the private base file as `inventory.coursework` (`code`, `title`, `term`, `completed` / `in_progress`, `topics` covered, `tools` used hands-on). There are no grades, and the transcript PDF isn't stored: it has his birth date, and the routine doesn't need either.
+  - Hands-on `tools` are only what he confirmed (C, Java OOP, MySQL, MongoDB, sockets). `topics` come from the catalog and syllabi and are never claimed as hands-on use.
+  - **Where it can appear:** the cover letter and answers, as coursework, plus a **Relevant Coursework** line under Education: up to 6 course codes per packet (`coursework`), with titles taken from the inventory and "(in progress)" added automatically. Bullets, the summary and skills still have to trace to the base resumes. The ATS estimate counts the coursework line.
+  - **Check:** a term only coursework backs is red (`coursework_framing`) unless the text says course/class, and for an in-progress course, that he's taking it now.

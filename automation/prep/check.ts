@@ -3,7 +3,9 @@
 // supabase/functions/job-prep/check.ts must stay an exact copy of this file (check.test.ts checks).
 import {
   RESUME_VERSIONS,
+  allBaseText,
   buildVocabulary,
+  courseText,
   resolveResume,
   retention,
   splitSkills,
@@ -46,6 +48,8 @@ const CERTIFICATIONS = [
   'CCNA', 'CCNP', 'AZ-900', 'AZ-104', 'AZ-500', 'SC-200', 'SC-300', 'SC-900', 'AWS Certified', 'CKA', 'CKAD', 'Terraform Associate',
 ]
 const PROGRESS_WORDS = /\b(in progress|expected|pursuing|studying for|preparing for|scheduled)\b/i
+const COURSE_WORDS = /\b(course|courses|coursework|class|classes)\b/i
+const CURRENT_WORDS = /\b(currently|this semester|this fall|this spring|in progress|taking|enrolled)\b/i
 const PREFERRED_HEADING = /(preferred|nice[ -]to[ -]have|bonus|pluses|is a plus|would be a plus|desired|desirable)/i
 const REQUIRED_HEADING = /(required|requirements|minimum|basic qualifications|what it takes|must have|you have|qualifications)/i
 
@@ -134,6 +138,7 @@ const atsScore = (required: string[], preferred: string[], text: string) => {
 
 const resumeText = (resume: ResolvedResume) => [
   resume.summary,
+  ...resume.coursework,
   ...[...resume.experience, ...resume.projects].flatMap((entry) => [entry.heading, entry.subheading ?? '', ...entry.bullets]),
   ...resume.skills.flatMap((group) => group.items),
 ].join('\n')
@@ -197,7 +202,11 @@ export const checkPacket = (packet: Packet, base: BaseResumes, resume: ResolvedR
   if (inventory) {
     // "Splunk" is covered by "Splunk Enterprise (SIEM)" and the reverse, but only as whole words ("Go" isn't in "Google").
     // Certifications count as known here; whether they're earned is the certification rule's job.
-    const names = [...inventory.tools.map((tool) => tool.name), ...inventory.certifications.map((cert) => cert.name)]
+    const names = [
+      ...inventory.tools.map((tool) => tool.name),
+      ...inventory.certifications.map((cert) => cert.name),
+      ...(inventory.coursework ?? []).flatMap((course) => [...course.tools, ...course.topics]),
+    ]
     const inInventory = (term: string) => names.some((name) => termPattern(term, 'i').test(name) || termPattern(name, 'i').test(term))
     for (const { path, text } of everything) {
       for (const { term, pattern } of vocabulary) {
@@ -207,6 +216,25 @@ export const checkPacket = (packet: Packet, base: BaseResumes, resume: ResolvedR
     }
   } else {
     add('yellow', 'no_inventory', '*', 'No experience inventory uploaded yet, so tools and certifications were checked against the base resumes only.')
+  }
+
+  // Red: a term only coursework backs, in a cover letter or answer that doesn't say it's coursework (or, for a course
+  // still in progress, that he's taking it now). Validation already keeps coursework out of bullets and the summary.
+  const coursework = inventory?.coursework ?? []
+  if (coursework.length) {
+    const fullBase = allBaseText(base)
+    for (const { path, text } of prose.filter((item) => item.path !== 'summary')) {
+      for (const { term, pattern } of vocabulary) {
+        if (!pattern.test(text) || pattern.test(fullBase)) continue
+        const courses = coursework.filter((course) => pattern.test(courseText(course)))
+        if (!courses.length) continue
+        const label = `${courses[0].title} (${courses[0].code})`
+        if (!COURSE_WORDS.test(text)) add('red', 'coursework_framing', path, `"${term}" comes only from coursework; say so, e.g. "in my ${label} course".`, text)
+        else if (courses.every((course) => course.status === 'in_progress') && !CURRENT_WORDS.test(text)) {
+          add('red', 'coursework_framing', path, `"${term}" comes from ${label}, which is still in progress; say you're taking it now.`, text)
+        }
+      }
+    }
   }
 
   // Red: certifications that aren't earned.
@@ -222,7 +250,7 @@ export const checkPacket = (packet: Packet, base: BaseResumes, resume: ResolvedR
 
   // Red: contact, titles, employers, dates or education differ from the base (they're copied, so this means drift).
   const expected = resolveResume(packet, base)
-  const locked = (r: ResolvedResume) => JSON.stringify([r.contact, r.education, [...r.experience, ...r.projects].map((e) => [e.heading, e.subheading, e.right])])
+  const locked = (r: ResolvedResume) => JSON.stringify([r.contact, r.education, r.coursework, [...r.experience, ...r.projects].map((e) => [e.heading, e.subheading, e.right])])
   if (locked(expected) !== locked(resume)) add('red', 'locked_fields', '*', 'Contact details, titles, employers, dates or education differ from the base resumes.')
 
   // Yellow: wording that reads like generated text.

@@ -392,6 +392,7 @@ Only an **approved** packet will be used for applying (step 5).
 **Your experience inventory** is the `inventory` section of `automation/private/base-resumes.json`, and the check treats it as the truth:
 - **`tools`:** each with a depth, `used`, `built` or `led`, and the bullet that shows it.
 - **`certifications`:** each `earned` or `in_progress`.
+- **`coursework`** (optional): courses from your transcript, each `{ code, title, term, status: completed|in_progress, topics, tools }`. `tools` lists only what you used hands-on; `topics` lists what the course covered. Cover letters and answers may cite them, always framed as coursework ("in my Operating Systems course…"), and in-progress courses as current. Each tailored resume may also show up to 6 of them, picked per posting, on a **Relevant Coursework** line under Education. In-progress courses are marked "(in progress)". Resume bullets, the summary and skills can't use them. Leave grades and the transcript itself out.
 
 A draft was built from your resumes and internship record: tools from your skill lists and bullets, `built` only where a bullet shows you building with the tool, no `led`, no certifications. Review it, add any certifications you hold, then re-upload:
 

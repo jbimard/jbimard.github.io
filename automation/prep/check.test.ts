@@ -131,3 +131,18 @@ test('the Edge Function copy is identical', () => {
   const read = (file: string) => readFileSync(path.join(import.meta.dirname, file), 'utf8')
   assert.equal(read('../../supabase/functions/job-prep/check.ts'), read('check.ts'))
 })
+
+test('coursework-only terms must be framed as coursework, and in-progress courses as current', () => {
+  const base = withInventory({
+    coursework: [
+      { code: 'ITIS 5166', title: 'Backend App Development', term: 'Fall 2025', status: 'completed', topics: [], tools: ['MongoDB'] },
+      { code: 'ITIS 6167', title: 'Network Security', term: 'Fall 2026', status: 'in_progress', topics: ['TCP/IP'], tools: [] },
+    ],
+  })
+  assert.deepEqual(rules(run((p) => { p.answers.why_role = 'In my Backend App Development course I built a MongoDB service.' }, base)), [])
+  assert.deepEqual(rules(run((p) => { p.answers.why_role = 'I have built MongoDB services.' }, base)), ['red:coursework_framing'])
+  assert.deepEqual(rules(run((p) => { p.answers.why_role = 'My Network Security class covered TCP/IP.' }, base)), ['red:coursework_framing'])
+  assert.deepEqual(rules(run((p) => { p.answers.why_role = 'I am currently taking a Network Security class that covers TCP/IP.' }, base)), [])
+  // Terms the base already backs need no framing.
+  assert.deepEqual(rules(run((p) => { p.answers.why_role = 'It matches my Azure work.' }, base)), [])
+})

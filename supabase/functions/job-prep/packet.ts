@@ -22,6 +22,7 @@ export const LIMITS = {
   bulletsPerEntry: 6,
   experience: 4,
   projects: 3,
+  coursework: 6,
   coverLetter: 2500,
   coverLetterParagraphs: [3, 5],
   answer: 1200,
@@ -65,9 +66,14 @@ export type BaseResumes = {
 
 export const TOOL_DEPTHS = ['used', 'built', 'led'] as const
 export const CERT_STATUSES = ['earned', 'in_progress'] as const
+export const COURSE_STATUSES = ['completed', 'in_progress'] as const
+// A course he took. Cover letters and answers may cite it as coursework, never as job experience; resume bullets,
+// the summary and skills can't use it. `tools` are what he used hands-on, `topics` what the course covered.
+export type Course = { code: string; title: string; term: string; status: (typeof COURSE_STATUSES)[number]; topics: string[]; tools: string[] }
 export type Inventory = {
   tools: Array<{ name: string; depth: (typeof TOOL_DEPTHS)[number]; evidence: string }>
   certifications: Array<{ name: string; status: (typeof CERT_STATUSES)[number]; date: string | null }>
+  coursework?: Course[]
 }
 
 export type PacketEntry = { id: string; bullets: Array<{ from: string; text: string }> }
@@ -78,6 +84,8 @@ export type Packet = {
   experience: PacketEntry[]
   projects: PacketEntry[]
   skills: Array<{ id: string; items: string[] }>
+  // Course codes from inventory.coursework for the "Relevant Coursework" line. Optional so older packets stay valid.
+  coursework?: string[]
   cover_letter: { paragraphs: string[] }
   answers: Record<(typeof ANSWER_KEYS)[number], string>
   match_report: {
@@ -160,6 +168,14 @@ export const validateBase = (input: unknown): { base: BaseResumes | null; errors
       inventory.certifications.forEach((cert, i) => {
         if (!isObj(cert) || !isText(cert.name) || !CERT_STATUSES.includes(cert.status as never) || (cert.date !== null && typeof cert.date !== 'string')) {
           errors.push(`inventory.certifications[${i}] must be { name, status: ${CERT_STATUSES.join('|')}, date }.`)
+        }
+      })
+      const coursework = inventory.coursework
+      if (coursework !== undefined && !Array.isArray(coursework)) errors.push('inventory.coursework must be an array.')
+      else coursework?.forEach((course, i) => {
+        const textList = (value: unknown) => Array.isArray(value) && value.every(isText)
+        if (!isObj(course) || !['code', 'title', 'term'].every((key) => isText(course[key])) || !COURSE_STATUSES.includes(course.status as never) || !textList(course.topics) || !textList(course.tools)) {
+          errors.push(`inventory.coursework[${i}] must be { code, title, term, status: ${COURSE_STATUSES.join('|')}, topics: [...], tools: [...] }.`)
         }
       })
     }
@@ -245,7 +261,7 @@ export const retention = (text: string, source: string) => {
   return [...sourceWords].filter((word) => kept.has(word)).length / sourceWords.size
 }
 
-const allBaseText = (base: BaseResumes) => RESUME_VERSIONS.map((version) => {
+export const allBaseText = (base: BaseResumes) => RESUME_VERSIONS.map((version) => {
   const doc = base.versions[version]
   return [
     doc.summary,
@@ -254,6 +270,9 @@ const allBaseText = (base: BaseResumes) => RESUME_VERSIONS.map((version) => {
     ...doc.skills.flatMap((group) => group.items),
   ].filter(Boolean).join('\n')
 }).join('\n')
+
+export const courseText = (course: Course) => [course.code, course.title, ...course.topics, ...course.tools].join('\n')
+const courseworkText = (base: BaseResumes) => (base.inventory?.coursework ?? []).map(courseText).join('\n')
 
 // Entry by id from the chosen version first, then the newest base that has it.
 const findEntry = (base: BaseResumes, kind: 'experience' | 'projects', id: string, chosen: ResumeVersion) => {
@@ -289,6 +308,8 @@ export const validatePacket = (
     else value.forEach((item, i) => text(`${path}[${i}]`, item, LIMITS.listItem))
   }
   const everything = allBaseText(base)
+  // The cover letter and answers may also cite coursework; the Resume check makes sure they say it's coursework.
+  const everythingAndCoursework = `${everything}\n${courseworkText(base)}`
 
   if (typeof input.job_id !== 'string' || !UUID.test(input.job_id)) errors.push('job_id must be a job UUID.')
   const version = input.resume_version as ResumeVersion
@@ -357,7 +378,20 @@ export const validatePacket = (
     })
   }
 
-  // Cover letter and answers: anything they name must exist somewhere in the base.
+  // Relevant coursework: codes from the inventory, each once. Titles come from the base, never from the packet.
+  if (input.coursework !== undefined) {
+    const known = new Set((base.inventory?.coursework ?? []).map((course) => course.code))
+    const codes = input.coursework
+    if (!Array.isArray(codes) || codes.length > LIMITS.coursework) {
+      errors.push(`coursework must be an array of at most ${LIMITS.coursework} course codes.`)
+    } else {
+      const extra = codes.filter((code) => typeof code !== 'string' || !known.has(code))
+      if (extra.length) errors.push(`coursework: not in inventory.coursework: ${extra.map(String).join(', ')}.`)
+      if (new Set(codes).size !== codes.length) errors.push('coursework lists a course twice.')
+    }
+  }
+
+  // Cover letter and answers: anything they name must exist somewhere in the base or the coursework.
   if (!isObj(input.cover_letter) || !Array.isArray(input.cover_letter.paragraphs)) {
     errors.push('cover_letter must be { paragraphs: [...] }.')
   } else {
@@ -367,14 +401,14 @@ export const validatePacket = (
     paragraphs.forEach((paragraph, i) => text(`cover_letter.paragraphs[${i}]`, paragraph, LIMITS.coverLetter))
     const letter = paragraphs.filter((p): p is string => typeof p === 'string').join('\n\n')
     if (letter.length > LIMITS.coverLetter) errors.push(`cover_letter must be at most ${LIMITS.coverLetter} characters in total.`)
-    for (const problem of unsupported(letter, everything, vocabulary)) errors.push(`cover_letter: ${problem}.`)
+    for (const problem of unsupported(letter, everythingAndCoursework, vocabulary)) errors.push(`cover_letter: ${problem}.`)
   }
   if (!isObj(input.answers)) {
     errors.push('answers must be an object.')
   } else {
     for (const key of ANSWER_KEYS) {
       const value = text(`answers.${key}`, input.answers[key], LIMITS.answer, key === 'anything_else')
-      for (const problem of unsupported(value, everything, vocabulary)) errors.push(`answers.${key}: ${problem}.`)
+      for (const problem of unsupported(value, everythingAndCoursework, vocabulary)) errors.push(`answers.${key}: ${problem}.`)
     }
   }
 
@@ -419,6 +453,7 @@ export type ResolvedResume = {
   contact: BaseResumes['contact']
   summary: string
   education: BaseEducation[]
+  coursework: string[]
   experience: ResolvedEntry[]
   projects: ResolvedEntry[]
   skills: Array<{ label: string; items: string[] }>
@@ -428,12 +463,17 @@ export type ResolvedResume = {
 export const resolveResume = (packet: Packet, base: BaseResumes): ResolvedResume => {
   const version = base.versions[packet.resume_version]
   const labels = new Map(RESUME_VERSIONS.flatMap((v) => base.versions[v].skills.map((group) => [group.id, group.label] as const)))
+  const courses = new Map((base.inventory?.coursework ?? []).map((course) => [course.code, course] as const))
   // Skill items are written exactly as the base spells them.
   const spelling = new Map(RESUME_VERSIONS.flatMap((v) => base.versions[v].skills.flatMap((group) => group.items.map((item) => [item.toLowerCase(), item] as const))))
   return {
     contact: base.contact,
     summary: packet.summary.text.trim(),
     education: version.education,
+    coursework: (packet.coursework ?? []).flatMap((code) => {
+      const course = courses.get(code)
+      return course ? [`${course.title}${course.status === 'in_progress' ? ' (in progress)' : ''}`] : []
+    }),
     experience: packet.experience.map((entry) => {
       const source = findEntry(base, 'experience', entry.id, packet.resume_version)!
       return {
