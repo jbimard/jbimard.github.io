@@ -156,3 +156,63 @@ Defaults when omitted or blank: `status` is `Fit Check`, `priority` is `Medium`,
 Warning: never put `service_role` or `JOB_INTAKE_TOKEN` in any frontend file, any committed `.env` file, or anywhere client-visible. This endpoint's entire security boundary is the bearer-token check plus server-only secrets.
 
 Automatic intake only adds new jobs. Everything else, including status changes, edits, archiving, and deleting, stays a dashboard or Bulk Import action.
+
+## 10. Daily Discovery (GitHub Actions)
+
+`automation/discover.ts` finds new postings every morning and sends them to the `job-intake` function above, so section 9 must be deployed first. It uses no AI: it applies fixed filter and scoring rules, and the jobs land in `/jobs` with status `Found`, ready for review.
+
+**Where postings come from:**
+
+- Company job boards listed in `automation/config/companies.json` (Greenhouse, Lever, Ashby, and Workday).
+- SimplifyJobs' New-Grad and Summer 2027 internship lists. For Simplify jobs on a supported board, the full description is fetched from that board.
+
+**Rules:**
+
+- **Only hard block: security clearance.** This covers TS/SCI, polygraph, "active/current clearance", and other unconditional clearance wording. Conditional wording ("may require… depending on location") is kept and labeled `⚠ Clearance possibly required`.
+- **Kept but labeled and penalized:**
+  - `⚠ Citizenship stated` (−20 points)
+  - `No sponsorship` (−15 points, and the sponsorship part can go below zero; OPT/STEM OPT work authorization still applies, but there's no H-1B path)
+- **Rotational and early-talent programs** count only when the title names a tech track (`rotationalTechWords`). For example "Finance Rotational Program" is dropped.
+- **Internships** are kept with `job_type: Internship`. They have their own slots each run (`maxInternshipsPerRun`).
+- **Dropped as irrelevant:**
+  - titles outside the three title groups, and senior titles
+  - postings outside the US
+  - postings that require more than `maxRequiredYears` of experience
+- **Score out of 100:** role 30 + sponsorship 25 + level 15 + location 15 + pay 15. The breakdown is written to each row's `notes`.
+  - **Title fit scales everything except role:** security/cloud titles ×1, adjacent titles ×0.9, generic engineering ×0.75, off-target fields such as analytics, data, ML, frontend or mobile ×0.5. A big salary or a known sponsor can't lift an unrelated role. Tune this with `fitWeights` and `offTargetTitle`.
+  - **Jobs with no level signal are scaled ×0.8 overall** (`noLevelSignalFactor`). That means no new-grad, intern or graduation-year wording, which usually indicates an experienced hire.
+  - Priority: High is 75 or more, Medium is 55–74, Low is anything lower.
+  - Only rows scoring at least `minScore` are sent.
+
+**One-time setup.** Add two **repository secrets** under Settings → Secrets and variables → Actions:
+
+| Secret | Value |
+|---|---|
+| `JOB_INTAKE_URL` | `https://PROJECT_REF.supabase.co/functions/v1/job-intake` |
+| `JOB_INTAKE_TOKEN` | the same token you set with `supabase secrets set JOB_INTAKE_TOKEN=…` |
+
+The workflow `.github/workflows/discover-jobs.yml` runs daily at 10:00 UTC. To run it by hand, use Actions → Daily job discovery → Run workflow; tick **dry_run** to fetch and score without sending anything. Because this repo is public, its Actions logs are public too. The script prints only counts in CI and never company or job names.
+
+**Running it locally:**
+
+```bash
+npm run discover -- --dry-run      # fetch + score, write automation/out/report.json, send nothing
+npm run discover:test              # rule unit tests
+npm run discover:typecheck
+JOB_INTAKE_URL=… JOB_INTAKE_TOKEN=… npm run discover   # real run
+```
+
+**Tuning.** Edit `automation/config/profile.json` to change:
+
+- title groups and excluded words
+- metro points
+- `minScore`, `maxPerRun`, `maxInternshipsPerRun`
+- the Simplify lookback window
+
+To add companies to `automation/config/companies.json`:
+
+- For Greenhouse, Lever, or Ashby, `board` is the slug in the board URL.
+- For Workday, `board` is `tenant/wdN/site`, taken from a URL like `https://tenant.wdN.myworkdayjobs.com/site`.
+- `sponsorTier: "known"` is a hand-kept starting list. Replace it with H-1B employer data later.
+
+Running again never creates duplicates: `job-intake` skips any `job_link` already in the table, including jobs you have archived or rejected.
