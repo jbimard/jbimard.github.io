@@ -50,16 +50,25 @@ const sponsorPoints = (sponsor: SponsorRecord, flags: Flags, profile: Profile) =
 
 const entryLevel = (flags: Flags) => flags.internship || flags.targetYear === 2027 || flags.newGradSignal
 
-// Why he can't take the role given his graduation date, or null. A graduation window that excludes it (Marvell's
-// "Fall 2027 – Summer 2028"), or an internship that starts after it (internships need current enrollment).
-const graduationMismatch = (flags: Flags, profile: Profile) => {
+const graduationMonth = (profile: Profile) => {
   const [year, month] = profile.graduation.split('-').map(Number)
-  const graduation = year * 12 + month
+  return year * 12 + month
+}
+
+// A stated graduation window that excludes his date (Marvell's "Fall 2027 – Summer 2028"), or null. He answers the
+// graduation question truthfully, so these can't get past the first screen.
+const graduationMismatch = (flags: Flags, profile: Profile) => {
   const window = flags.graduationWindow
+  const graduation = graduationMonth(profile)
   if (window && (graduation < window.from || graduation > window.to)) return `graduation window excludes ${profile.graduation}: ${quote(flags.graduation ?? '')}`
-  if (flags.internshipStart !== null && flags.internshipStart > graduation) return `internship starts after the ${profile.graduation} graduation`
   return null
 }
+
+// An internship that starts after he graduates usually needs current enrollment. He still wants to see these when the
+// posting doesn't state a window, so it's only a note to check the requirement, not a penalty.
+const startsAfterGraduation = (flags: Flags, profile: Profile) => (
+  flags.internshipStart !== null && flags.internshipStart > graduationMonth(profile)
+)
 
 const levelPoints = (flags: Flags, mismatch: string | null) => {
   if (mismatch) return 0
@@ -151,6 +160,7 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: 
     annual ? `pay≈$${Math.round(annual / 1000)}k` : null,
     flags.returnToSchool ? `⚠ requires returning to school: ${quote(flags.returnToSchool)}` : null,
     mismatch ? `⚠ ${mismatch}` : null,
+    !mismatch && startsAfterGraduation(flags, profile) ? `⚠ internship starts after the ${profile.graduation} graduation; check whether it requires current enrollment` : null,
   ].filter(Boolean)
 
   return {

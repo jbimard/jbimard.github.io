@@ -97,8 +97,7 @@ test('Simplify sponsorship labels feed the same flags', () => {
 })
 
 test('internships are kept in their own lane', () => {
-  // Spring 2027 ends before his May 2027 graduation; a Summer 2027 internship would start after it (see below).
-  const result = evaluateKept({ title: 'Security Engineering Intern - Spring 2027' })
+  const result = evaluateKept({ title: 'Security Engineering Intern - Summer 2027' })
   if (result.kind !== 'kept') return
   assert.equal(result.job.job_type, 'Internship')
   assert.equal(result.breakdown.level, 15)
@@ -214,11 +213,16 @@ test('graduation windows that exclude May 2027 stay under the cutoff, with a not
   assert.ok(late.job.match_score < profile.minScore)
 })
 
-test('internships that start after May 2027 stay under the cutoff; earlier ones are fine', () => {
+test('internships that start after May 2027 are kept at full score with a note; a stated window still filters', () => {
   const summer = evaluateKept({ title: 'Cloud Security Intern - Summer 2027', description: 'Build secure AWS infrastructure.' }, strongSponsor)
-  assert.ok(summer.job.match_score < profile.minScore)
-  assert.match(summer.job.notes ?? '', /internship starts after the 2027-05 graduation/)
+  assert.ok(summer.job.match_score >= profile.minScore)
+  assert.equal(summer.breakdown.level, 15)
+  assert.match(summer.job.notes ?? '', /internship starts after the 2027-05 graduation; check whether it requires current enrollment/)
   const spring = evaluateKept({ title: 'Cloud Security Intern - Spring 2027', description: 'Build secure AWS infrastructure.' }, strongSponsor)
   assert.ok(!(spring.job.notes ?? '').includes('internship starts after'))
+  // With a window that excludes May 2027 it's filtered, and only the window note shows.
+  const stated = evaluateKept({ title: 'Cloud Security Intern - Summer 2027', description: 'Graduating Spring 2028 or Fall 2027.' }, strongSponsor)
+  assert.ok(stated.job.match_score < profile.minScore)
+  assert.ok(!(stated.job.notes ?? '').includes('internship starts after'))
 })
 
