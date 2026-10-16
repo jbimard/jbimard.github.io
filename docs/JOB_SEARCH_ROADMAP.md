@@ -20,10 +20,11 @@ Work through the steps in order. Update the status column as each step lands, an
 | 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | Done — **B1** PR #19 (plus #20–#22); **B2** voice memory PR #26, deployed 2026-10-16: pull returns his last 40 edits, `ROUTINE.md` follows them |
 | 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | In progress — on `feat/packet-edit` with B1 |
 | 2b | More local companies (new board adapters) | Done — 8 companies on existing boards (#28); iCIMS + Jibe for SAS and First Citizens (#29); SuccessFactors for Duke and Novo Nordisk (this PR). Phenom / Avature / Eightfold left for later |
+| 2c | More Charlotte companies | Done — 12 companies on existing adapters (this PR); Honeywell (Oracle), Charter/Spectrum, Truist and Lowe's (Phenom) need new adapters |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
 
-Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 4 → 5.** Next: **2b**.
+Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 2c → 4 → 5.** Next: **4**.
 
 - 2a is small and gives step 3 real sponsorship data from day one.
 - 1b comes before the workflow is turned back on, so the dashboard never gets flooded with the whole backlog.
@@ -115,6 +116,15 @@ The work: `automation/` (the script), `.github/workflows/discover-jobs.yml` (the
 - **2b, part 3 (2026-10-16): SuccessFactors adapter.** `sources/successfactors.ts` reads Career Site Builder search tables and posting pages (the `jobdescription` span). Search is full text, so titles are filtered before posting pages are fetched. Added Duke University (careers.duke.edu, which also lists Duke Health jobs; cap-exempt for H-1B; USCIS lists ~109 filings in FY2024 under "Duke University-Univ-Med Ctr-Affil") and Novo Nordisk (careers.novonordisk.com). First dry run: Duke 1 posting in his title lanes (its IT roles are titled "Consultant, IT" and similar; no cyber titles open), Novo Nordisk 12. Biogen worked from the same run (3 postings).
   - **Left for later:** Phenom (Siemens Healthineers, ABB), Avature (MetLife), Eightfold (NetApp). Each is one or two companies; the Charlotte list (2c) comes first.
 - **Optional, later:** salary data from the free DOL LCA disclosure files, to see what each company pays at entry level (the H-1B lottery favors higher wages).
+
+### 2c. More Charlotte companies (done 2026-10-16)
+
+Added at his request after 2b. Already covered before: Wells Fargo, Truist, TIAA, Duke Energy, Lowe's, LendingTree.
+
+- **Added** (all on existing adapters): Bank of America (Workday `ghr/lateral-us`; strong H-1B record, ~70 a year), Ally, Atrium Health (Advocate Health's Workday; USCIS lists it as The Charlotte Mecklenburg Hospital Authority), Premier Inc, Albemarle, Allstate, Daimler Truck North America, RSM, Huntington Bank, AvidXchange and Red Ventures (Greenhouse), Novant Health (Jibe, like First Citizens). H-1B names set where USCIS spells them differently.
+- **First dry run:** every board answered; Bank of America added 3 jobs to the selection (cloud security, IAM, infrastructure platform).
+- **Not reachable yet:** Honeywell (Oracle Recruiting Cloud), Charter/Spectrum (its own site), Nucor, Brighthouse Financial, Sonic Automotive (Workday sites not found), Siemens Energy, Electrolux, Microsoft (own systems). Truist and Lowe's are already in through Workday even though their front pages run on Phenom.
+- **Skipped:** Movement Mortgage (no roles in his lanes), City of Charlotte.
 
 ## 3. Claude screening and preparation
 
@@ -381,4 +391,4 @@ Settled; don't reopen without a new reason.
   - **Graduation window:** discovery parses the posting's graduation sentence into a date window and compares it with `profile.graduation` ("2027-05"). A mismatch sets level points to 0 and caps the score at `minScore - 1`, so discovery doesn't add it, with a ⚠ note. Screening is told to recommend skip on the same grounds. **Internships that start after May 2027** (Summer 2027 or later) with no stated window are kept at their normal score, at his request: they only get a ⚠ note to check whether they require current enrollment. Before this, "Summer 2027" in an internship title was read as a 2027 graduation match. Jobs already queued keep their scores.
   - **ATS from posting text:** the routine sends `posting_text` when the job has no saved description (Workday imports). The estimate scores against it, and `job-prep` saves it as the job's `job_description`, so edits and regenerations score too. It isn't kept in the stored packet.
   - **No gap paragraphs:** a new yellow rule, `admits_gap`, catches cover letters and answers that volunteer what he lacks. Gaps stay in the match report and Fit & Gap.
-
+- **2c, Charlotte companies (2026-10-16):** a separate step from 2b at his request, done right after it. Only boards the existing adapters can read; new adapters (Oracle for Honeywell, Phenom) wait until a company there is worth it.
