@@ -7,6 +7,9 @@ project_id = "jbimard.github.io"
 [functions.job-intake]
 verify_jwt = false
 
+[functions.job-screening]
+verify_jwt = false
+
 [api]
 enabled = true
 # Port to use for the API URL.

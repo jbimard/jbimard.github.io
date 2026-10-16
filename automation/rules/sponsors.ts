@@ -267,3 +267,23 @@ export const buildSponsorData = (rows: HubRow[], options: { source: string; part
     employers: Object.fromEntries(sortedKeys.map((key) => [key, employers[key]])),
   }
 }
+
+export type SponsorCandidate = { name: string; byYear: Record<string, number>; sharedWords: number }
+
+const totalApprovals = (byYear: Record<string, number>) => Object.values(byYear).reduce((sum, count) => sum + count, 0)
+
+// For the screening routine's double-check: USCIS employers sharing the company's first word, ranked by
+// how many of its words they share, then by total approvals (all years, so new sponsors still show).
+// Claude picks the right one from the posting.
+export const searchSponsors = (index: SponsorIndex, company: string, limit = 8): SponsorCandidate[] => {
+  const words = normalizeEmployer(company).split(' ').filter(Boolean)
+  if (words.length === 0) return []
+  return (index.byFirstToken.get(words[0]) ?? [])
+    .map((key) => {
+      const keyWords = new Set(key.split(' '))
+      const { name, byYear } = index.data.employers[key]
+      return { name, byYear, sharedWords: words.filter((word) => keyWords.has(word)).length }
+    })
+    .sort((a, b) => (b.sharedWords - a.sharedWords) || (totalApprovals(b.byYear) - totalApprovals(a.byYear)))
+    .slice(0, limit)
+}

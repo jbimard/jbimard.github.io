@@ -13,7 +13,10 @@
     "discover": "node automation/discover.ts",
     "discover:test": "node --test \"automation/**/*.test.ts\"",
     "discover:typecheck": "tsc -p tsconfig.automation.json",
-    "sponsors:build": "node automation/scripts/build-sponsors.ts"
+    "sponsors:build": "node automation/scripts/build-sponsors.ts",
+    "screening:pull": "node automation/screening/client.ts pull",
+    "screening:push": "node automation/screening/client.ts push",
+    "screening:sponsor": "node automation/screening/client.ts sponsor"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.109.0",
