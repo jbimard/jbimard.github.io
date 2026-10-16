@@ -7,6 +7,8 @@ type JobRowProps = {
   onEdit: (job: Job) => void
   onArchive: (job: Job) => void
   onUpdate: (id: string, patch: JobUpdate) => Promise<void>
+  hasPacket: boolean
+  onOpenPacket: (job: Job) => void
 }
 
 const statusClass = (status: JobStatus) => {
@@ -26,7 +28,7 @@ const Badge = ({ children, className }: { children: string; className: string })
   <span className={`inline-flex rounded px-2 py-1 text-xs font-medium ring-1 ${className}`}>{children}</span>
 )
 
-const JobRow = ({ job, onEdit, onArchive, onUpdate }: JobRowProps) => {
+const JobRow = ({ job, onEdit, onArchive, onUpdate, hasPacket, onOpenPacket }: JobRowProps) => {
   const [copied, setCopied] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [editingPriority, setEditingPriority] = useState(false)
@@ -108,6 +110,9 @@ const JobRow = ({ job, onEdit, onArchive, onUpdate }: JobRowProps) => {
       <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">{job.follow_up_date || '-'}</td>
       <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">
         <div className="flex flex-nowrap items-center gap-1">
+          {hasPacket && (
+            <button type="button" onClick={() => onOpenPacket(job)} className="rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs text-emerald-800 hover:bg-emerald-100">Packet</button>
+          )}
           <button type="button" onClick={() => onEdit(job)} className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">Edit</button>
           {job.job_link && (
             <a href={job.job_link} target="_blank" rel="noreferrer" className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">Open</a>

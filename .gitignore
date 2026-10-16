@@ -31,3 +31,6 @@ automation/out/
 
 # Raw USCIS H-1B Employer Data Hub exports (large; only the trimmed JSON is committed)
 automation/data/raw/
+
+# Private application material (base resumes, work-authorization answers): uploaded to the private bucket, never committed
+automation/private/

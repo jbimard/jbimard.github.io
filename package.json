@@ -17,7 +17,10 @@
     "screening:pull": "node automation/screening/client.ts pull",
     "screening:push": "node automation/screening/client.ts push",
     "screening:sponsor": "node automation/screening/client.ts sponsor",
-    "links:check": "node automation/links/check.ts"
+    "links:check": "node automation/links/check.ts",
+    "prep:pull": "node automation/prep/client.ts pull",
+    "prep:push": "node automation/prep/client.ts push",
+    "prep:base": "node automation/prep/client.ts base"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.109.0",

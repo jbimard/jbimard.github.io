@@ -11,6 +11,8 @@ type JobsTableProps = {
   onEdit: (job: Job) => void
   onArchive: (job: Job) => void
   onUpdate: (id: string, patch: JobUpdate) => Promise<void>
+  packetJobIds: Set<string>
+  onOpenPacket: (job: Job) => void
 }
 
 const columns: { key: SortKey; label: string; align?: string }[] = [
@@ -24,7 +26,7 @@ const columns: { key: SortKey; label: string; align?: string }[] = [
   { key: 'follow_up_date', label: 'Follow-up' },
 ]
 
-const JobsTable = ({ jobs, sort, onSort, onEdit, onArchive, onUpdate }: JobsTableProps) => (
+const JobsTable = ({ jobs, sort, onSort, onEdit, onArchive, onUpdate, packetJobIds, onOpenPacket }: JobsTableProps) => (
   <section className="overflow-hidden rounded-md border border-slate-200 bg-white">
     <div className="overflow-x-auto">
       <table className="min-w-[1180px] w-full border-collapse text-left text-sm">
@@ -49,7 +51,17 @@ const JobsTable = ({ jobs, sort, onSort, onEdit, onArchive, onUpdate }: JobsTabl
           </tr>
         </thead>
         <tbody>
-          {jobs.map((job) => <JobRow key={job.id} job={job} onEdit={onEdit} onArchive={onArchive} onUpdate={onUpdate} />)}
+          {jobs.map((job) => (
+            <JobRow
+              key={job.id}
+              job={job}
+              onEdit={onEdit}
+              onArchive={onArchive}
+              onUpdate={onUpdate}
+              hasPacket={packetJobIds.has(job.id)}
+              onOpenPacket={onOpenPacket}
+            />
+          ))}
           {jobs.length === 0 && (
             <tr>
               <td colSpan={10} className="px-3 py-10 text-center text-sm text-slate-500">No jobs match the current view.</td>

@@ -5,6 +5,7 @@ import BulkImportDialog from './import/BulkImportDialog'
 import JobFormDrawer from './JobFormDrawer'
 import JobsTable, { type SortKey, type SortState } from './JobsTable'
 import ReviewQueue, { type ReviewDecision } from './ReviewQueue'
+import PacketPanel from './PacketPanel'
 import SummaryBar from './SummaryBar'
 import Toolbar, { type JobFilters } from './Toolbar'
 import { useJobs } from './useJobs'
@@ -48,7 +49,7 @@ const compareValues = (left: string | number | boolean | null, right: string | n
 }
 
 const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
-  const { jobs, queuedCount, loading, error, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob } = useJobs(session.user)
+  const { jobs, queuedCount, packets, packetFileUrl, loading, error, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob } = useJobs(session.user)
   const [filters, setFilters] = useState<JobFilters>(initialFilters)
   const [sort, setSort] = useState<SortState>({ key: 'date_found', direction: 'desc' })
   const [editingJob, setEditingJob] = useState<Job | null>(null)
@@ -58,6 +59,8 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
   const [actionError, setActionError] = useState<string | null>(null)
   const [promoting, setPromoting] = useState(false)
   const [view, setView] = useState<'pipeline' | 'review'>('pipeline')
+  const [packetJob, setPacketJob] = useState<Job | null>(null)
+  const packetJobIds = useMemo(() => new Set(packets.keys()), [packets])
 
   // Screened by the Claude routine and waiting for a decision.
   const reviewJobs = useMemo(
@@ -218,6 +221,8 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
             onEdit={openEdit}
             onArchive={setArchiveTarget}
             onUpdate={handleUpdate}
+            packetJobIds={packetJobIds}
+            onOpenPacket={setPacketJob}
           />
         )}
       </div>
@@ -239,6 +244,10 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
           onImport={createJobsBulk}
           onClose={() => setBulkImportOpen(false)}
         />
+      )}
+
+      {packetJob && packets.get(packetJob.id) && (
+        <PacketPanel job={packetJob} packet={packets.get(packetJob.id)!} fileUrl={packetFileUrl} onClose={() => setPacketJob(null)} />
       )}
 
       {archiveTarget && (

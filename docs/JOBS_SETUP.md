@@ -319,3 +319,58 @@ Until the secrets exist, the workflow step logs "Link check not configured" and 
 npm run links:check -- --rows=automation/out/report.json   # check a discovery dry run's links; sends nothing
 JOB_LINK_CHECK_URL=… JOB_LINK_CHECK_TOKEN=… npm run links:check -- --dry-run   # real jobs, sends nothing
 ```
+
+## 13. Application Packets (Preparation)
+
+When you **Approve** a job in Review, it moves to `Ready to Apply`. A second scheduled Claude routine ("Job preparation", daily at 14:00 UTC, or **Run now**) then writes a packet for each approved job without one:
+- a tailored resume (.docx)
+- a cover letter (.docx, plus the text)
+- answers to four standard questions (why this company, why this role, a relevant project, anything else)
+- your fixed work-authorization answers
+- a match report: estimated coverage, keywords covered, honest gaps
+
+Open it with the **Packet** button on the job's row in `/jobs`. The routine's instructions are in `automation/prep/ROUTINE.md`.
+
+**How truthfulness is enforced:** the routine sends structured text only. The `job-prep` function checks it against your base resumes before rendering anything:
+- every bullet must name the base bullet it rewords
+- no number or known tool may appear that its source doesn't have
+- skills must already be in your skill lists
+
+Contact details, titles, employers, dates and education are copied from the base, never written by Claude. The .docx files come from one fixed ATS-safe template: single column, standard headings, no tables, headers or footers.
+
+**Storage:** everything stays in the private `application-packets` bucket, never in this repo. Files are readable only by you, through one-minute signed download links.
+
+**One-time setup:**
+
+1. Deploy the database change and the function:
+   ```bash
+   supabase db push
+   supabase functions deploy job-prep
+   ```
+2. Set the function's token yourself, and never paste it into chat or commit it:
+   ```bash
+   supabase secrets set JOB_PREP_TOKEN=$(openssl rand -hex 32)
+   ```
+   It reuses `JOB_INTAKE_USER_ID` from section 9.
+3. **Review your base resumes:** `automation/private/base-resumes.json`. It's gitignored, and it was extracted from the three PDFs in `public/files/`.
+   - Check every entry, date and bullet. Tailoring can only reword what's here.
+   - Check the two `workAuthorization` answers. They're copied word for word into every packet. Add more question and answer pairs if you like.
+   - Then validate and upload it:
+   ```bash
+   npm run prep:base -- check
+   JOB_PREP_URL=https://PROJECT_REF.supabase.co/functions/v1/job-prep JOB_PREP_TOKEN=… npm run prep:base -- upload
+   ```
+   Re-upload whenever a base resume changes. The PDFs and this file are separate, so update both.
+4. **Create a cloud environment just for this routine** (for example "Job preparation"). It needs its own because a network secret applies to every request to the Supabase host, and the screening environment's secret holds a different token. In **Edit cloud environment**:
+   - **Environment variables:** `JOB_PREP_URL=https://PROJECT_REF.supabase.co/functions/v1/job-prep`
+   - **Network secrets → Add secret:** type **Bearer**, allowed website `PROJECT_REF.supabase.co`, header `Authorization`, prefix `Bearer`, value = the token from step 2
+   - **Network access: Custom**, the same job-board list as screening (§11)
+5. Tell Claude the environment exists. The routine is then created daily at 14:00 UTC with the prompt `Follow automation/prep/ROUTINE.md exactly.`
+
+**Locally:**
+
+```bash
+npm run prep:base -- check                                        # validate the base file, no network
+JOB_PREP_URL=… JOB_PREP_TOKEN=… npm run prep:pull                 # → /tmp/prep-jobs.json, /tmp/prep-base.json
+npm run prep:push -- /tmp/prep-packets.json --dry-run             # validate packets, nothing sent
+```

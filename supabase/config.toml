@@ -13,6 +13,9 @@ verify_jwt = false
 [functions.job-link-check]
 verify_jwt = false
 
+[functions.job-prep]
+verify_jwt = false
+
 [api]
 enabled = true
 # Port to use for the API URL.
