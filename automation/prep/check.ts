@@ -138,6 +138,7 @@ const atsScore = (required: string[], preferred: string[], text: string) => {
 
 const resumeText = (resume: ResolvedResume) => [
   resume.summary,
+  ...resume.coursework,
   ...[...resume.experience, ...resume.projects].flatMap((entry) => [entry.heading, entry.subheading ?? '', ...entry.bullets]),
   ...resume.skills.flatMap((group) => group.items),
 ].join('\n')
@@ -249,7 +250,7 @@ export const checkPacket = (packet: Packet, base: BaseResumes, resume: ResolvedR
 
   // Red: contact, titles, employers, dates or education differ from the base (they're copied, so this means drift).
   const expected = resolveResume(packet, base)
-  const locked = (r: ResolvedResume) => JSON.stringify([r.contact, r.education, [...r.experience, ...r.projects].map((e) => [e.heading, e.subheading, e.right])])
+  const locked = (r: ResolvedResume) => JSON.stringify([r.contact, r.education, r.coursework, [...r.experience, ...r.projects].map((e) => [e.heading, e.subheading, e.right])])
   if (locked(expected) !== locked(resume)) add('red', 'locked_fields', '*', 'Contact details, titles, employers, dates or education differ from the base resumes.')
 
   // Yellow: wording that reads like generated text.

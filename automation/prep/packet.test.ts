@@ -144,3 +144,23 @@ test('coursework may back the cover letter and answers, never bullets or the sum
   broken.inventory = { tools: [], certifications: [], coursework: [{ code: 'ITIS 5166' }] as never }
   assert.match(validateBase(broken).errors.join(' '), /inventory.coursework\[0\] must be/)
 })
+
+test('relevant coursework: inventory codes only, titles from the base, in-progress marked', () => {
+  const b = base()
+  b.inventory = {
+    tools: [],
+    certifications: [],
+    coursework: [
+      { code: 'ITCS 3160', title: 'Database Design and Implementation', term: 'Spring 2025', status: 'completed', topics: [], tools: ['MySQL'] },
+      { code: 'ITIS 6167', title: 'Network Security', term: 'Fall 2026', status: 'in_progress', topics: [], tools: [] },
+    ],
+  }
+  const run = (coursework: unknown) => validatePacket({ ...packet(), coursework }, b, buildVocabulary(b))
+  const ok = run(['ITIS 6167', 'ITCS 3160'])
+  assert.deepEqual(ok.errors, [])
+  assert.deepEqual(resolveResume(ok.packet!, b).coursework, ['Network Security (in progress)', 'Database Design and Implementation'])
+  assert.deepEqual(resolveResume(packet() as never, b).coursework, [])
+  assert.match(run(['ITSC 9999']).errors.join(' '), /not in inventory.coursework: ITSC 9999/)
+  assert.match(run(['ITCS 3160', 'ITCS 3160']).errors.join(' '), /twice/)
+  assert.match(run(Array(7).fill('ITCS 3160')).errors.join(' '), /at most 6/)
+})

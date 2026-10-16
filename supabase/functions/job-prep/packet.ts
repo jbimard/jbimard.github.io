@@ -22,6 +22,7 @@ export const LIMITS = {
   bulletsPerEntry: 6,
   experience: 4,
   projects: 3,
+  coursework: 6,
   coverLetter: 2500,
   coverLetterParagraphs: [3, 5],
   answer: 1200,
@@ -83,6 +84,8 @@ export type Packet = {
   experience: PacketEntry[]
   projects: PacketEntry[]
   skills: Array<{ id: string; items: string[] }>
+  // Course codes from inventory.coursework for the "Relevant Coursework" line. Optional so older packets stay valid.
+  coursework?: string[]
   cover_letter: { paragraphs: string[] }
   answers: Record<(typeof ANSWER_KEYS)[number], string>
   match_report: {
@@ -375,6 +378,19 @@ export const validatePacket = (
     })
   }
 
+  // Relevant coursework: codes from the inventory, each once. Titles come from the base, never from the packet.
+  if (input.coursework !== undefined) {
+    const known = new Set((base.inventory?.coursework ?? []).map((course) => course.code))
+    const codes = input.coursework
+    if (!Array.isArray(codes) || codes.length > LIMITS.coursework) {
+      errors.push(`coursework must be an array of at most ${LIMITS.coursework} course codes.`)
+    } else {
+      const extra = codes.filter((code) => typeof code !== 'string' || !known.has(code))
+      if (extra.length) errors.push(`coursework: not in inventory.coursework: ${extra.map(String).join(', ')}.`)
+      if (new Set(codes).size !== codes.length) errors.push('coursework lists a course twice.')
+    }
+  }
+
   // Cover letter and answers: anything they name must exist somewhere in the base or the coursework.
   if (!isObj(input.cover_letter) || !Array.isArray(input.cover_letter.paragraphs)) {
     errors.push('cover_letter must be { paragraphs: [...] }.')
@@ -437,6 +453,7 @@ export type ResolvedResume = {
   contact: BaseResumes['contact']
   summary: string
   education: BaseEducation[]
+  coursework: string[]
   experience: ResolvedEntry[]
   projects: ResolvedEntry[]
   skills: Array<{ label: string; items: string[] }>
@@ -446,12 +463,17 @@ export type ResolvedResume = {
 export const resolveResume = (packet: Packet, base: BaseResumes): ResolvedResume => {
   const version = base.versions[packet.resume_version]
   const labels = new Map(RESUME_VERSIONS.flatMap((v) => base.versions[v].skills.map((group) => [group.id, group.label] as const)))
+  const courses = new Map((base.inventory?.coursework ?? []).map((course) => [course.code, course] as const))
   // Skill items are written exactly as the base spells them.
   const spelling = new Map(RESUME_VERSIONS.flatMap((v) => base.versions[v].skills.flatMap((group) => group.items.map((item) => [item.toLowerCase(), item] as const))))
   return {
     contact: base.contact,
     summary: packet.summary.text.trim(),
     education: version.education,
+    coursework: (packet.coursework ?? []).flatMap((code) => {
+      const course = courses.get(code)
+      return course ? [`${course.title}${course.status === 'in_progress' ? ' (in progress)' : ''}`] : []
+    }),
     experience: packet.experience.map((entry) => {
       const source = findEntry(base, 'experience', entry.id, packet.resume_version)!
       return {

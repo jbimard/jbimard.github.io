@@ -12,7 +12,7 @@ You are preparing application materials for jobs Joseph has already approved in 
 Tailoring **rewords and reorders real experience only**. Never invent or inflate a skill, tool, title, date, employer, metric or responsibility. Never hide keywords. A posting keyword he doesn't have goes in `match_report.gaps`, not in the resume.
 
 - The base file's `inventory` lists every tool he can claim, each with a depth: `used`, `built` or `led`. Name only tools in it. Never call him "expert", "advanced" or "proficient" in a tool marked `used`.
-- `inventory.coursework` lists courses he took: `tools` he used hands-on, `topics` the course covered. Use them only in the **cover letter and answers**, and only when the posting asks for that skill and the base has nothing better. Always say it was coursework ("In my Backend App Development course I built a REST API with MongoDB"). For a course with `status: "in_progress"`, say he is taking it now. Never present coursework as work or project experience, never put it in bullets, the summary or skills, and never claim a `topics` item as hands-on use.
+- `inventory.coursework` lists courses he took: `tools` he used hands-on, `topics` the course covered. In text, use them only in the **cover letter and answers**, and only when the posting asks for that skill and the base has nothing better. Always say it was coursework ("In my Backend App Development course I built a REST API with MongoDB"). For a course with `status: "in_progress"`, say he is taking it now. Never present coursework as work or project experience, never put it in bullets, the summary or skills, and never claim a `topics` item as hands-on use. On the resume it appears only as the "Relevant Coursework" line, through the `coursework` field (step 4, under Skills).
 - Only certifications with `status: "earned"` may be claimed. An `in_progress` one must say "expected" or "in progress".
 - Keep each bullet's lead verb at or below its source's level. "Assisted" or "supported" never becomes "built", and nothing becomes "led", "managed" or "owned" unless the source says so.
 
@@ -40,6 +40,7 @@ The validator and the Resume check enforce this (see "What gets rejected").
       - Don't add a tool, platform or skill the source bullet doesn't mention.
    4. **Summary (≤ 700 characters):** a few plain sentences built from the base summaries and bullets, aimed at this role. Add no new numbers or tools.
    5. **Skills (1–5 groups):** use base skill group `id`s with items copied from the base skill lists, reordered so the posting's matches come first. Drop irrelevant items. Don't add any.
+      - **Relevant coursework (0–6 courses):** `coursework` lists course `code`s from `inventory.coursework`, most relevant to the posting first. The resume shows their titles under Education, with "(in progress)" added automatically. Pick only courses whose title, topics or tools match what the posting asks for. Leave it as `[]` when nothing fits, or when the experience already covers the posting well.
    6. **Cover letter (3–5 paragraphs, ≤ 2,500 characters):** no greeting and no sign-off, because the template adds both.
       - Say why this role, using specifics from the posting.
       - Give the one or two most relevant experiences from the base, with their real details.
@@ -64,6 +65,7 @@ The validator and the Resume check enforce this (see "What gets rejected").
   "experience": [{ "id": "<entry id>", "bullets": [{ "from": "<bullet id>", "text": "…" }] }],
   "projects": [{ "id": "<entry id>", "bullets": [{ "from": "<bullet id>", "text": "…" }] }],
   "skills": [{ "id": "<skill group id>", "items": ["…"] }],
+  "coursework": ["ITSC 3146", "ITCS 3160"],
   "cover_letter": { "paragraphs": ["…", "…", "…"] },
   "answers": { "why_company": "…", "why_role": "…", "relevant_project": "…", "anything_else": "" },
   "match_report": { "coverage": 72, "covered": ["…"], "gaps": [{ "keyword": "Kubernetes", "addable": false, "note": "…" }] }
@@ -82,6 +84,7 @@ The validator and the Resume check enforce this (see "What gets rejected").
 - A number in a bullet that its source bullet doesn't have, or a number in the summary, cover letter or answers that the base doesn't have anywhere.
 - A known tool, platform or certification named in a bullet that its source bullet doesn't name. The term list is the posting's required skills, the base skills and a common tech list. The same applies to the summary, cover letter and answers, checked against the whole base.
 - Skill items that aren't in the base skill lists.
+- A `coursework` code that isn't in `inventory.coursework`, a course listed twice, or more than 6.
 - Missing fields, or text over the limits.
 - Numbers written as words count as numbers: "six platforms" against a source that says four is rejected.
 - **Resume check, red** (never sent):
