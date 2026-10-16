@@ -20,7 +20,9 @@ You are screening new job postings for Joseph's search. Discovery has already fi
    - **Cloud Security:** `public/files/JosephPosas-SecurityCloudResume.pdf`
    - **Security:** `public/files/JosephPosasResume.pdf` (threat intel, SIEM, security research)
 4. For each job:
-   1. Read `job_description`. If it's null, shorter than about 500 characters, or obviously cut off (discovery stores at most 4000 characters), open `job_link` and read the full posting. If the link is dead or closed, still return a result: `recommendation: "skip"`, with the reason "Posting closed or unreachable".
+   1. Read `job_description`. If it's null, shorter than about 500 characters, or obviously cut off (discovery stores at most 4000 characters), open `job_link` and read the full posting.
+      - If the site says the posting is closed or gone (for example a 404, or "no longer accepting applications"), return `recommendation: "skip"` with the reason "Posting closed".
+      - If the site can't be reached because the network blocks it (the environment's network allowlist, a timeout, a 403 from the proxy), that is **not** a closed posting. Screen from the stored description, and say "Full posting not reachable; screened from the stored description" in the reason.
    2. **Check the USCIS sponsor data.** `sponsorship_notes` usually has a line starting `USCIS:` from discovery. Run:
       `node automation/screening/client.ts sponsor "<company>"`
       It prints `discoveryMatch` (what discovery used) and `candidates` (a wider search of the USCIS H-1B Employer Data Hub file).
@@ -81,6 +83,6 @@ You are screening new job postings for Joseph's search. Discovery has already fi
 ## Rules
 
 - **Don't change the repo.** No commits, branches, pushes or pull requests. Write files only under `/tmp`.
-- `JOB_SCREENING_URL` and `JOB_SCREENING_TOKEN` come from the routine's environment. Never print them, and never write them to a file.
+- `JOB_SCREENING_URL` comes from the environment. The token is a **network secret**: the proxy adds it to requests for the Supabase host, so the session never has it. If a request returns 401 Unauthorized, report that the network secret is missing or wrong, and stop. Never print, ask for, or write any token.
 - Keep the run summary to counts plus one line per job: company, role, score, recommendation.
 - Be truthful. The reason, strengths and gaps must match the posting and the resumes. If something is uncertain, say so in the note rather than guessing.
