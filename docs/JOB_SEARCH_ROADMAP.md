@@ -14,9 +14,9 @@ Work through the steps in order. Update the status column as each step lands, an
 | 2a | Real H-1B sponsor data (USCIS) | Done — PR #8; USCIS FY2024–FY2026 (Q3) data in `automation/data/h1b-sponsors.json` |
 | 1b | Daily batch of 10 + "Next batch" button | Done — PR #9, deployed 2026-10-16; `Queued` status, 11:00 UTC batch via `pg_cron`, "Next batch" button; migration + intake deployed and **workflow re-enabled** |
 | 3a | Claude screening + review queue | Done — `job-screening` function, routine instructions in `automation/screening/ROUTINE.md`, Review tab in `/jobs`. Live once the function is deployed and the routine is created (`docs/JOBS_SETUP.md` §11) |
-| 1c | Closed-posting check: archive jobs whose posting is gone | Done — PR #14; `automation/links/`, `job-link-check` function, runs in the discovery workflow. Live once deployed and the secrets are set (`docs/JOBS_SETUP.md` §12) |
-| 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Not started — **next** |
-| 3c | Resume check screen, resume preview + estimated ATS score in the dashboard | Not started — after 3b |
+| 1c | Closed-posting check: archive jobs whose posting is gone | Done — PR #14, deployed 2026-10-16 (migration + `job-link-check`). Runs once `JOB_LINK_CHECK_TOKEN` and the two repo secrets are set (`docs/JOBS_SETUP.md` §12) |
+| 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Done — PR #15; `job-prep` function, `application_packets` table, private bucket, routine instructions in `automation/prep/ROUTINE.md`, Packet panel in `/jobs`. Live once deployed, the base file is uploaded, and the routine is created (`docs/JOBS_SETUP.md` §13) |
+| 3c | Resume check screen, resume preview + estimated ATS score in the dashboard | Not started — **next** |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
@@ -113,7 +113,7 @@ A scheduled Claude routine runs at 11:30 UTC, after the morning batch. For each 
 
 The **Review** tab in `/jobs` shows the day's screened jobs. Approve moves a job to `Ready to Apply`, which is where 3b starts. Reject archives it.
 
-### 3b. Preparation (next)
+### 3b. Preparation (done)
 
 For each approved (`Ready to Apply`) job: draft a cover letter and answers to the standard application questions, and tailor the ATS-optimized resume below.
 
@@ -285,3 +285,16 @@ Settled; don't reopen without a new reason.
   - **Writes** go only through the `job-link-check` Edge Function with its own `JOB_LINK_CHECK_TOKEN`. Each update is guarded by the status it was read with, so a job moved in the dashboard meanwhile is left alone.
   - `private.promote_queued` skips rows with `link_status = 'missing'` (the promotion guard).
   - The check runs as a step in the discovery workflow after discovery, even if discovery failed, and is skipped quietly until its secrets are set.
+- **Preparation (2026-10-16, step 3b):**
+  - **Source of truth for now: the three base resumes.** They're stored as structured JSON with stable ids in the private bucket (`{user}/base/base-resumes.json`), never in the repo. The experience inventory and full claim tracing remain step 3c.
+  - **Claude writes structured content; the function renders.** The routine sends JSON only. `job-prep` validates it and renders the .docx files from one fixed ATS-safe template (single column, standard headings, contact details in the body, no tables, headers or footers). Contact details, titles, employers, dates and education come from the base by id, so Claude can't change them.
+  - **Mechanical truth checks** (`automation/prep/packet.ts`, an exact copy of the function's validator):
+    - Each bullet names the base bullet it rewords, from the same entry.
+    - Numbers and known tools in a bullet must appear in its source; in the summary, cover letter and answers they must appear somewhere in the base. Known tools are a shared tech list, a superset of `profile.json` skills, plus the posting's required skills and the base skills, matched case-sensitively.
+    - Skills must already be in the base.
+    - Heavy rewording and em dashes are warnings only. Wording inflation like "assisted" → "led" isn't caught mechanically; it's 3c's job.
+  - **Work-authorization answers** are fixed text he writes in the base file and are copied verbatim into every packet. They're never AI-written.
+  - **No outside research:** company facts in the cover letter and answers come from the posting only.
+  - **Files are DOCX only;** PDF and the in-dashboard preview come in 3c. Storage is a private bucket with owner-read-only policies and one-minute signed download links. The `application_packets` table is owner-select-only, and all writes go through the service role.
+  - **A separate cloud environment for the routine:** a network secret applies to every request to the Supabase host, so the screening environment would attach the screening token. `job-prep` has its own `JOB_PREP_TOKEN` in its own environment.
+  - **Schedule:** daily at 14:00 UTC, after the 11:30 screening and his morning review, plus Run now. One packet per job (`job_id` unique); 3c's Regenerate will replace it.

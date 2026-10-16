@@ -89,6 +89,22 @@ export interface Job {
   updated_at: string
 }
 
+// Written by the job-prep Edge Function (automation/prep/packet.ts); read-only in the dashboard.
+export interface ApplicationPacket {
+  id: string
+  job_id: string
+  resume_version: 'Cloud' | 'Security' | 'Cloud Security'
+  resume_path: string
+  cover_letter_path: string
+  cover_letter: string
+  answers: Array<{ key: string; question: string; answer: string }>
+  work_authorization: Array<{ question: string; answer: string }>
+  match_report: { coverage: number; covered: string[]; gaps: Array<{ keyword: string; addable: boolean; note: string }> }
+  warnings: Array<{ path: string; message: string }>
+  check_status: 'pending' | 'pass' | 'needs_edits' | 'blocked'
+  created_at: string
+}
+
 export type JobDraft = Omit<Job, 'id' | 'created_at' | 'updated_at' | 'screening' | 'screened_at' | 'link_status' | 'link_missing_count' | 'link_checked_at'>
 export type JobUpdate = Partial<Omit<Job, 'id' | 'created_at' | 'updated_at' | 'user_id'>>
 

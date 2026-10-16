@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabaseClient'
-import type { Job, JobDraft, JobUpdate } from './types'
+import type { ApplicationPacket, Job, JobDraft, JobUpdate } from './types'
+
+const PACKET_FIELDS = 'id, job_id, resume_version, resume_path, cover_letter_path, cover_letter, answers, work_authorization, match_report, warnings, check_status, created_at'
+const PACKET_BUCKET = 'application-packets'
 
 export function useJobs(user: User | undefined) {
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [queuedCount, setQueuedCount] = useState(0)
+  const [packets, setPackets] = useState<Map<string, ApplicationPacket>>(new Map())
 
   const loadJobs = useCallback(async () => {
     if (!supabase || !user) return
@@ -15,7 +19,7 @@ export function useJobs(user: User | undefined) {
     setError(null)
 
     // Queued rows stay in the database until a batch promotes them; only their count is shown.
-    const [{ data, error: loadError }, { count, error: countError }] = await Promise.all([
+    const [{ data, error: loadError }, { count, error: countError }, { data: packetRows, error: packetError }] = await Promise.all([
       supabase
         .from('jobs')
         .select('*')
@@ -26,13 +30,15 @@ export function useJobs(user: User | undefined) {
         .select('id', { count: 'exact', head: true })
         .eq('status', 'Queued')
         .eq('archived', false),
+      supabase.from('application_packets').select(PACKET_FIELDS),
     ])
 
-    if (loadError || countError) {
-      setError((loadError ?? countError)!.message)
+    if (loadError || countError || packetError) {
+      setError((loadError ?? countError ?? packetError)!.message)
     } else {
       setJobs((data ?? []) as Job[])
       setQueuedCount(count ?? 0)
+      setPackets(new Map(((packetRows ?? []) as ApplicationPacket[]).map((packet) => [packet.job_id, packet])))
     }
 
     setLoading(false)
@@ -110,5 +116,14 @@ export function useJobs(user: User | undefined) {
     return data as number
   }
 
-  return { jobs, queuedCount, loading, error, reload: loadJobs, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob }
+  // Packet files sit in a private bucket; links are signed for one minute, never public.
+  const packetFileUrl = async (path: string) => {
+    if (!supabase) throw new Error('Supabase is not configured.')
+
+    const { data, error: signError } = await supabase.storage.from(PACKET_BUCKET).createSignedUrl(path, 60, { download: true })
+    if (signError) throw signError
+    return data.signedUrl
+  }
+
+  return { jobs, queuedCount, packets, packetFileUrl, loading, error, reload: loadJobs, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob }
 }
