@@ -2,7 +2,7 @@
 // private base resumes before anything is rendered or stored. Tailoring may only reword and reorder real experience,
 // so the checks here are mechanical: every bullet points at the base bullet it rewords, numbers and tools can't appear
 // out of nowhere, and contact details, titles, employers, dates and education are copied from the base, never sent.
-// supabase/functions/job-prep/packet.ts must stay an exact copy of this file (packet.test.ts checks).
+// supabase/functions/_shared/packet.ts must stay an exact copy of this file (packet.test.ts checks).
 // No imports, so the same file runs under Node and Deno.
 
 export const RESUME_VERSIONS = ['Cloud', 'Security', 'Cloud Security'] as const
@@ -30,6 +30,8 @@ export const LIMITS = {
   listItem: 60,
   gaps: 20,
   gapNote: 200,
+  qualifications: 25,
+  qualification: 300,
 } as const
 
 export type ResumeVersion = (typeof RESUME_VERSIONS)[number]
@@ -56,7 +58,8 @@ export type BaseVersion = {
   skills: BaseSkillGroup[]
 }
 export type BaseResumes = {
-  contact: { name: string; location: string; email: string; phone: string; links: string[] }
+  // `relocation` (optional) sits next to the location on the contact line, e.g. "Open to relocation".
+  contact: { name: string; location: string; relocation?: string; email: string; phone: string; links: string[] }
   // Fixed, truthful answers he wrote himself; copied into every packet as-is, never written by AI.
   workAuthorization: Array<{ question: string; answer: string }>
   versions: Record<ResumeVersion, BaseVersion>
@@ -77,6 +80,12 @@ export type Inventory = {
 }
 
 export type PacketEntry = { id: string; bullets: Array<{ from: string; text: string }> }
+// Where a qualification is shown: a bullet id from this packet, or a whole resume section.
+export const EVIDENCE_SECTIONS = ['summary', 'education', 'coursework', 'skills', 'certifications'] as const
+export const QUALIFICATION_KINDS = ['basic', 'preferred'] as const
+// One qualification from the posting, judged against this resume the way per-qualification graders (Workday
+// HiredScore's Fit & Gap) do. `met` is Claude's reading, so it must cite where the resume shows it.
+export type Qualification = { text: string; kind: (typeof QUALIFICATION_KINDS)[number]; met: boolean; evidence: string[]; note: string }
 export type Packet = {
   job_id: string
   resume_version: ResumeVersion
@@ -88,6 +97,8 @@ export type Packet = {
   coursework?: string[]
   cover_letter: { paragraphs: string[] }
   answers: Record<(typeof ANSWER_KEYS)[number], string>
+  // The posting's qualifications, each met or not. Optional so older packets stay valid.
+  qualifications?: Qualification[]
   match_report: {
     coverage: number
     covered: string[]
@@ -110,6 +121,7 @@ export const validateBase = (input: unknown): { base: BaseResumes | null; errors
   if (!isObj(contact) || !['name', 'location', 'email', 'phone'].every((key) => isText(contact[key])) || !Array.isArray(contact.links)) {
     errors.push('contact needs name, location, email, phone and links[].')
   }
+  if (isObj(contact) && contact.relocation !== undefined && !isText(contact.relocation)) errors.push('contact.relocation must be a non-empty string when set.')
   if (!Array.isArray(input.workAuthorization) || input.workAuthorization.some((pair) => !isObj(pair) || !isText(pair.question) || !isText(pair.answer))) {
     errors.push('workAuthorization must be an array of { question, answer }.')
   }
@@ -431,6 +443,33 @@ export const validatePacket = (
     }
   }
 
+  // Qualifications: a "met" one must point at a bullet in this packet or at a section the resume has.
+  if (input.qualifications !== undefined) {
+    const list = input.qualifications
+    const bulletIds = new Set((['experience', 'projects'] as const).flatMap((kind) => (Array.isArray(input[kind]) ? input[kind] as unknown[] : [])
+      .flatMap((entry) => (isObj(entry) && Array.isArray(entry.bullets) ? entry.bullets : []))
+      .flatMap((bullet) => (isObj(bullet) && typeof bullet.from === 'string' ? [bullet.from] : []))))
+    const sections = new Set<string>(['summary', 'education', 'skills'])
+    if (Array.isArray(input.coursework) && input.coursework.length) sections.add('coursework')
+    if (earnedCertifications(base).length) sections.add('certifications')
+    if (!Array.isArray(list) || list.length > LIMITS.qualifications) {
+      errors.push(`qualifications must be an array of at most ${LIMITS.qualifications} items.`)
+    } else {
+      list.forEach((item, i) => {
+        const path = `qualifications[${i}]`
+        if (!isObj(item) || !QUALIFICATION_KINDS.includes(item.kind as never) || typeof item.met !== 'boolean' || !Array.isArray(item.evidence)) {
+          errors.push(`${path} must be { text, kind: ${QUALIFICATION_KINDS.join('|')}, met, evidence: [...], note }.`)
+          return
+        }
+        text(`${path}.text`, item.text, LIMITS.qualification)
+        text(`${path}.note`, item.note, LIMITS.gapNote, true)
+        const unknown = item.evidence.filter((ref) => typeof ref !== 'string' || (!bulletIds.has(ref) && !sections.has(ref)))
+        if (unknown.length) errors.push(`${path}.evidence: not a bullet in this packet or a section the resume has: ${unknown.map(String).join(', ')}.`)
+        if (item.met && item.evidence.length === 0) errors.push(`${path} is marked met but cites no evidence.`)
+      })
+    }
+  }
+
   const allText = JSON.stringify([input.summary, input.experience, input.projects, input.cover_letter, input.answers])
   const dashes = (allText.match(/—/g) ?? []).length
   if (dashes > 2) warnings.push({ path: '*', message: `${dashes} em dashes; real writing rarely has this many.` })
@@ -454,10 +493,20 @@ export type ResolvedResume = {
   summary: string
   education: BaseEducation[]
   coursework: string[]
+  // Earned certifications from the inventory, never from the packet.
+  certifications: string[]
   experience: ResolvedEntry[]
   projects: ResolvedEntry[]
   skills: Array<{ label: string; items: string[] }>
 }
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+// "Mastercard Cybersecurity Job Simulation (Forage), Jan 2025": inventory dates are "YYYY", "YYYY-MM" or "YYYY-MM-DD".
+export const earnedCertifications = (base: BaseResumes) => (base.inventory?.certifications ?? []).filter((cert) => cert.status === 'earned').map((cert) => {
+  const [year, month] = (cert.date ?? '').split('-')
+  const when = /^\d{4}$/.test(year ?? '') ? (month && MONTHS[Number(month) - 1] ? `${MONTHS[Number(month) - 1]} ${year}` : year) : ''
+  return when ? `${cert.name}, ${when}` : cert.name
+})
 
 // Locked fields (contact, titles, employers, dates, education, skill labels) come from the base, never from the packet.
 export const resolveResume = (packet: Packet, base: BaseResumes): ResolvedResume => {
@@ -474,6 +523,7 @@ export const resolveResume = (packet: Packet, base: BaseResumes): ResolvedResume
       const course = courses.get(code)
       return course ? [`${course.title}${course.status === 'in_progress' ? ' (in progress)' : ''}`] : []
     }),
+    certifications: earnedCertifications(base),
     experience: packet.experience.map((entry) => {
       const source = findEntry(base, 'experience', entry.id, packet.resume_version)!
       return {

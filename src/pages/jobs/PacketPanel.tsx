@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import ConfirmDialog from './ConfirmDialog'
+import PacketEditor from './PacketEditor'
 import { copyToClipboard } from './prompts'
-import { CHECK_LABELS, type ApplicationPacket, type Job } from './types'
+import { CHECK_LABELS, type ApplicationPacket, type Job, type PacketEdit } from './types'
 
 type PacketPanelProps = {
   job: Job
@@ -10,10 +11,11 @@ type PacketPanelProps = {
   fileBlob: (path: string) => Promise<Blob>
   onApprove: (packetId: string, acknowledged: string[]) => Promise<void>
   onRegenerate: (packetId: string) => Promise<void>
+  onEdit: (packetId: string, revision: number, edit: PacketEdit) => Promise<{ unchanged?: boolean; changed_lines?: number; voice_saved?: boolean }>
   onClose: () => void
 }
 
-type Tab = 'check' | 'resume' | 'changes' | 'letter'
+type Tab = 'check' | 'resume' | 'changes' | 'letter' | 'edit'
 
 const STATUS_CLASS: Record<ApplicationPacket['check_status'], string> = {
   pending: 'bg-slate-100 text-slate-600 ring-slate-200',
@@ -21,6 +23,9 @@ const STATUS_CLASS: Record<ApplicationPacket['check_status'], string> = {
   needs_edits: 'bg-amber-50 text-amber-700 ring-amber-200',
   blocked: 'bg-red-50 text-red-700 ring-red-200',
 }
+
+// Qualification evidence that points at a whole resume section rather than a bullet.
+const SECTION_LABELS: Record<string, string> = { summary: 'Summary', education: 'Education', skills: 'Skills', coursework: 'Relevant Coursework', certifications: 'Certifications' }
 
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
   <section className="border-t border-slate-200 pt-4">
@@ -62,13 +67,19 @@ const ResumePreview = ({ path, fileBlob }: { path: string; fileBlob: (path: stri
 }
 
 // Prepared application materials for one approved job (step 3b), with the Resume check (step 3c).
-const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, onClose }: PacketPanelProps) => {
+const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, onEdit, onClose }: PacketPanelProps) => {
   const [tab, setTab] = useState<Tab>('check')
   const [copied, setCopied] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [confirmRegenerate, setConfirmRegenerate] = useState(false)
   const [acknowledged, setAcknowledged] = useState<Set<string>>(new Set(packet.acknowledged_flags))
+  // A saved edit is a new revision with its own flags; start from what the server kept ticked.
+  const [seenRevision, setSeenRevision] = useState(packet.revision)
+  if (seenRevision !== packet.revision) {
+    setSeenRevision(packet.revision)
+    setAcknowledged(new Set(packet.acknowledged_flags))
+  }
 
   const redFlags = packet.check_flags.filter((flag) => flag.severity === 'red')
   const yellowFlags = packet.check_flags.filter((flag) => flag.severity === 'yellow')
@@ -110,6 +121,10 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
 
   const report = packet.match_report
   const ats = packet.ats
+  const qualifications = packet.packet?.qualifications ?? []
+  const bulletText = new Map([...(packet.packet?.experience ?? []), ...(packet.packet?.projects ?? [])].flatMap((entry) => entry.bullets.map((bullet) => [bullet.from, bullet.text] as const)))
+  const metCount = (kind: 'basic' | 'preferred') => `${qualifications.filter((q) => q.kind === kind && q.met).length} of ${qualifications.filter((q) => q.kind === kind).length}`
+  const basicMissing = qualifications.filter((q) => q.kind === 'basic' && !q.met).length
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/30" onClick={onClose}>
@@ -119,7 +134,7 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
             <h2 className="text-lg font-semibold text-slate-950">{job.company} — {job.role_title}</h2>
             <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
               <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ring-1 ${STATUS_CLASS[packet.check_status]}`}>{CHECK_LABELS[packet.check_status]}</span>
-              <span>{packet.resume_version} resume · prepared {packet.created_at.slice(0, 10)}</span>
+              <span>{packet.resume_version} resume · prepared {packet.created_at.slice(0, 10)}{packet.edited_at ? ` · edited ${packet.edited_at.slice(0, 10)}` : ''}</span>
               {packet.approved_at && <span className="text-emerald-700">· Approved {packet.approved_at.slice(0, 10)}</span>}
             </p>
           </div>
@@ -138,6 +153,12 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
           <button type="button" disabled={busy} onClick={() => setConfirmRegenerate(true)} className="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">Regenerate</button>
           <button type="button" onClick={() => void download(packet.resume_path)} className="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">Download resume</button>
           <button type="button" onClick={() => void download(packet.cover_letter_path)} className="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">Download cover letter</button>
+          {packet.resume_pdf_path && (
+            <button type="button" onClick={() => void download(packet.resume_pdf_path!)} className="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">Resume PDF</button>
+          )}
+          {packet.cover_letter_pdf_path && (
+            <button type="button" onClick={() => void download(packet.cover_letter_pdf_path!)} className="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">Cover letter PDF</button>
+          )}
         </div>
         {!packet.approved_at && packet.check_status === 'blocked' && (
           <p className="text-sm text-red-700">Blocked packets can't be approved. Regenerate it, and the next preparation run writes a new one.</p>
@@ -147,8 +168,8 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
         )}
         {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-        <nav className="grid grid-cols-4 rounded-md border border-slate-300 p-1 text-sm">
-          {([['check', 'Check'], ['resume', 'Resume'], ['changes', 'Changes'], ['letter', 'Letter & answers']] as const).map(([key, label]) => (
+        <nav className="grid grid-cols-5 rounded-md border border-slate-300 p-1 text-sm">
+          {([['check', 'Check'], ['resume', 'Resume'], ['changes', 'Changes'], ['letter', 'Letter & answers'], ['edit', 'Edit']] as const).map(([key, label]) => (
             <button key={key} type="button" onClick={() => setTab(key)} className={`rounded px-2 py-1.5 ${tab === key ? 'bg-slate-950 text-white' : 'text-slate-600'}`}>
               {label}
             </button>
@@ -195,6 +216,28 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
               </ul>
             </Section>
 
+            {qualifications.length > 0 && (
+              <Section title={`Fit & gap · basic ${metCount('basic')} met · preferred ${metCount('preferred')} met`}>
+                <p className="mb-2 text-xs text-slate-500">
+                  Each qualification from the posting, judged against this resume the way per-qualification graders (Workday HiredScore) do. Basic ones weigh most{basicMissing > 0 ? `; ${basicMissing} unmet basic qualification${basicMissing === 1 ? '' : 's'} would likely lower the grade` : ''}. This is Claude's reading, with the lines it relies on.
+                </p>
+                <ul className="space-y-2 text-sm">
+                  {qualifications.map((q, i) => (
+                    <li key={i} className={`rounded border px-3 py-2 ${q.met ? 'border-emerald-200 bg-emerald-50' : q.kind === 'basic' ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+                      <p className="text-slate-800">
+                        <span className={`mr-2 font-semibold ${q.met ? 'text-emerald-700' : 'text-red-700'}`}>{q.met ? 'Met' : 'Gap'}</span>
+                        {q.text} <span className="text-xs text-slate-500">({q.kind})</span>
+                      </p>
+                      {q.evidence.map((ref) => (
+                        <p key={ref} className="mt-1 text-xs text-slate-600">↳ {SECTION_LABELS[ref] ?? `“${bulletText.get(ref) ?? ref}”`}</p>
+                      ))}
+                      {q.note && <p className="mt-1 text-xs text-slate-600">{q.note}</p>}
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            )}
+
             <Section title={`Claude's match report · estimated coverage ${report.coverage}%`}>
               <p className="text-sm text-slate-600"><span className="font-medium text-slate-800">Covered:</span> {report.covered.join(', ') || '—'}</p>
               {report.gaps.length > 0 && (
@@ -207,6 +250,10 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
             </Section>
           </div>
         )}
+
+        {tab === 'edit' && (packet.packet
+          ? <PacketEditor key={packet.revision} packet={packet} onSave={onEdit} />
+          : <p className="text-sm text-slate-500">This packet was prepared before editing existed. Regenerate it, and the next preparation run writes one you can edit.</p>)}
 
         {tab === 'resume' && <ResumePreview path={packet.resume_path} fileBlob={fileBlob} />}
 

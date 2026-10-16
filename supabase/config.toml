@@ -16,6 +16,10 @@ verify_jwt = false
 [functions.job-prep]
 verify_jwt = false
 
+# Called from the dashboard; the function checks the user's session itself.
+[functions.packet-edit]
+verify_jwt = false
+
 [api]
 enabled = true
 # Port to use for the API URL.

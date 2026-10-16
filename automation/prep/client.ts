@@ -70,6 +70,8 @@ const push = async () => {
     const check = checkPacket(valid, base, resolveResume(valid, base), job)
     console.log(`packet ${index}: Resume check ${check.status.toUpperCase()}, ATS estimate ${check.ats.score ?? 'n/a'} (base ${check.ats.base_score ?? 'n/a'})`)
     for (const flag of check.flags) console.log(`  ${flag.severity} ${flag.rule} ${flag.path}: ${flag.message}`)
+    const met = (kind: string) => `${valid.qualifications?.filter((q) => q.kind === kind && q.met).length ?? 0}/${valid.qualifications?.filter((q) => q.kind === kind).length ?? 0}`
+    console.log(valid.qualifications ? `  qualifications met: basic ${met('basic')}, preferred ${met('preferred')}` : '  no qualifications listed (add them, see ROUTINE.md)')
     // Red flags are never sent: rewrite until they're gone. Yellow ones go through for his review.
     if (check.status === 'blocked') {
       problems++

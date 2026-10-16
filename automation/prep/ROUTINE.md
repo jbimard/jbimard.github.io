@@ -13,6 +13,7 @@ Tailoring **rewords and reorders real experience only**. Never invent or inflate
 
 - The base file's `inventory` lists every tool he can claim, each with a depth: `used`, `built` or `led`. Name only tools in it. Never call him "expert", "advanced" or "proficient" in a tool marked `used`.
 - `inventory.coursework` lists courses he took: `tools` he used hands-on, `topics` the course covered. In text, use them only in the **cover letter and answers**, and only when the posting asks for that skill and the base has nothing better. Always say it was coursework ("In my Backend App Development course I built a REST API with MongoDB"). For a course with `status: "in_progress"`, say he is taking it now. Never present coursework as work or project experience, never put it in bullets, the summary or skills, and never claim a `topics` item as hands-on use. On the resume it appears only as the "Relevant Coursework" line, through the `coursework` field (step 4, under Skills).
+- Earned certifications from `inventory.certifications` are added to the resume's **Certifications** section automatically. Don't list them anywhere else in the resume.
 - Only certifications with `status: "earned"` may be claimed. An `in_progress` one must say "expected" or "in progress".
 - Keep each bullet's lead verb at or below its source's level. "Assisted" or "supported" never becomes "built", and nothing becomes "led", "managed" or "owned" unless the source says so.
 
@@ -50,11 +51,17 @@ The validator and the Resume check enforce this (see "What gets rejected").
       - `why_company`: from what the posting says about the company and team
       - `why_role`
       - `relevant_project`: one real project or experience from the base, with its real details
-      - `anything_else`: short. For example, his May 2027 graduation and availability. It may be an empty string.
+      - `anything_else`: short. For example, his May 2027 graduation and availability. If the base contact has `relocation` and the job isn't in his area, say he's open to relocating. It may be an empty string.
    8. **Match report:**
       - `coverage`: 0–100, your estimate of the share of the posting's required and preferred skills the tailored resume covers
       - `covered`: up to 30 keywords the resume truthfully covers
       - `gaps`: up to 20 items `{ keyword, addable, note }`. `addable: true` only when the base shows the experience but the resume left it out; `false` for real gaps.
+   9. **Qualifications (Fit & Gap):** list the posting's qualifications the way Workday HiredScore grades them, one at a time. Up to 25 items `{ text, kind, met, evidence, note }`.
+      - `text`: the qualification as the posting words it (≤ 300 characters). Split combined lines ("Python and AWS experience") into one item each.
+      - `kind`: `basic` for required, minimum or basic qualifications; `preferred` for preferred, nice-to-have or bonus ones. Graders weigh basic ones most: missing one drops a candidate a grade.
+      - `met`: `true` only when this tailored resume shows it. `evidence` then lists where: bullet `from` ids used in this packet, or `summary`, `education`, `skills`, `coursework` (only when you picked coursework) or `certifications` (only when the inventory has an earned one). A `met` item with no evidence is rejected.
+      - Judge strictly: "2+ years of experience" isn't met by an internship of a few months, and "Bachelor's degree" is met by `education`. When unsure, mark it not met and say why in `note`.
+      - If a basic qualification is truthfully shown in the base but not in your picks, add that bullet to the resume rather than leaving it unmet.
 5. Write `/tmp/prep-packets.json` as `{ "packets": [ ... ] }`, one object per job:
 
 ```json
@@ -68,12 +75,16 @@ The validator and the Resume check enforce this (see "What gets rejected").
   "coursework": ["ITSC 3146", "ITCS 3160"],
   "cover_letter": { "paragraphs": ["…", "…", "…"] },
   "answers": { "why_company": "…", "why_role": "…", "relevant_project": "…", "anything_else": "" },
-  "match_report": { "coverage": 72, "covered": ["…"], "gaps": [{ "keyword": "Kubernetes", "addable": false, "note": "…" }] }
+  "match_report": { "coverage": 72, "covered": ["…"], "gaps": [{ "keyword": "Kubernetes", "addable": false, "note": "…" }] },
+  "qualifications": [
+    { "text": "Experience with Terraform", "kind": "basic", "met": true, "evidence": ["<bullet id>"], "note": "" },
+    { "text": "Kubernetes in production", "kind": "preferred", "met": false, "evidence": [], "note": "No Kubernetes experience." }
+  ]
 }
 ```
 
 6. Validate: `node automation/prep/client.ts push /tmp/prep-packets.json --dry-run`.
-   - It prints errors, then the **Resume check** for each packet: PASS, NEEDS_EDITS or BLOCKED, with red and yellow flags and the ATS estimate.
+   - It prints errors, then the **Resume check** for each packet (plus how many qualifications are met): PASS, NEEDS_EDITS or BLOCKED, with red and yellow flags and the ATS estimate.
    - Fix every error and every **red** flag. A packet with red flags is never sent.
    - Fix yellow flags where you can do it truthfully: buzzwords, vague words, em dashes, bullets that all open with the same verb, heavy rewording. He reviews whatever yellow flags remain before approving.
 7. Send: `node automation/prep/client.ts push /tmp/prep-packets.json`. Report the counts it prints: created, invalid, not found, and the check (pass / needs_edits / blocked).
@@ -100,6 +111,7 @@ The validator and the Resume check enforce this (see "What gets rejected").
   - 3 or more bullets opening with the same verb
   - a bullet keeping less than half its source's words
   - leadership wording in the cover letter or answers that no base bullet has
+  - read-aloud problems: a sentence over 35 words; a tool named twice in one bullet or the summary (three times in a paragraph or answer); two spelled-out acronyms in one line, or the same acronym spelled out in more than one place; a bullet opening with "Responsible for" or "Worked on"; a bullet in the passive voice ("was configured")
 
 ## Rules
 

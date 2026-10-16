@@ -403,6 +403,41 @@ JOB_PREP_URL=https://PROJECT_REF.supabase.co/functions/v1/job-prep JOB_PREP_TOKE
 
 Until the inventory is uploaded, every packet carries one yellow "no inventory" flag.
 
+### Fit & gap, certifications and PDFs
+
+- **Fit & gap** (Check tab): the routine lists each qualification from the posting, basic or preferred, as **Met** (with the resume lines that show it) or **Gap**. This mirrors how Workday HiredScore grades applicants since August 2026: it checks each qualification against the parsed resume, and unmet basic qualifications drop the grade. It's Claude's reading, so check it.
+- **Certifications:** every `earned` certification in your inventory is added to a **Certifications** section on each resume, after Skills. The inventory now has the Mastercard Cybersecurity Job Simulation (Forage, Jan 2025). **Re-upload the base file** for this to take effect:
+  ```bash
+  npm run prep:base -- check
+  JOB_PREP_URL=https://PROJECT_REF.supabase.co/functions/v1/job-prep JOB_PREP_TOKEN=… npm run prep:base -- upload
+  ```
+- **Open to relocation:** the base file's `contact.relocation` ("Open to relocation") is shown right after your location on every resume and cover letter. Remove it from the file to hide it. The same re-upload applies.
+- **PDF copies:** each packet also gets a text-based PDF of the resume and the cover letter (**Resume PDF**, **Cover letter PDF**). Same content and order as the .docx, in standard fonts, with no images. Use them on forms that take PDF only.
+- **Parser test (optional):** open [open-resume.com/resume-parser](https://www.open-resume.com/resume-parser), which runs in your browser and uploads nothing, and drop in a Resume PDF. Check that your name, contact details, each job's title, company and dates, education and skills come out in the right fields. When you apply in step 5, Workday's and Greenhouse's own autofill is the real version of the same test.
+
+### Editing a packet (step 3c-B)
+
+The **Edit** tab of the Packet panel lets you change the wording of any bullet, the summary, each cover-letter paragraph and each answer. You can also move bullets up or down, or remove them (**Restore** brings one back). Titles, employers, dates, skills, coursework and your work-authorization answers stay locked. To add bullets or entries, use **Regenerate**.
+
+**Save and re-check** sends the edit to the `packet-edit` function. It runs the same validator and Resume check as the routine:
+- **Errors or red flags:** nothing is saved. The lines with problems are outlined in red with the reason. For a true tool that's missing from your inventory, add it to the inventory and re-upload the base file.
+- **Otherwise:** the .docx and PDF files are rendered again, so **Resume** previews the new file and the download buttons fetch it. The check result is replaced, and the packet must be **approved again**. Yellow flags you ticked stay ticked if they're about the same text.
+- **Every changed line** is kept in `packet_edits` (owner-read-only) as an example of your writing. A later update will feed these to the preparation routine.
+
+**Read aloud** reads the packet one line at a time, using your browser's built-in speech. After each line, pick **Sounds like me** to move on, or **Edit this line** to jump to it. **Listen** next to any line reads just that one. The Resume check also flags lines that are hard to read aloud: run-on sentences, a tool named twice in one line, stacked or repeated acronym spell-outs, "Responsible for…" openings and passive voice.
+
+Packets prepared before this change can't be edited. Regenerate them and the next run writes an editable one.
+
+**One-time setup** (after merging):
+
+```bash
+supabase db push
+supabase functions deploy packet-edit
+supabase functions deploy job-prep   # its shared files moved to supabase/functions/_shared/
+```
+
+`packet-edit` needs no secret of its own. It checks your sign-in and only touches your own packets.
+
 **Locally:**
 
 ```bash

@@ -3,12 +3,14 @@
 // PUT ?base uploads a reviewed base-resumes.json. Same shape as job-screening: its own bearer token, one configured
 // user, service-role client. Writes only touch that user's Ready to Apply jobs that don't have a packet yet.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { ANSWER_QUESTIONS, buildVocabulary, resolveResume, splitSkills, validateBase, validatePacket, type BaseResumes } from './packet.ts'
-import { checkPacket } from './check.ts'
-import { fileStem, renderCoverLetter, renderResume } from './render.ts'
+import { ANSWER_QUESTIONS, buildVocabulary, resolveResume, splitSkills, validateBase, validatePacket, type BaseResumes } from '../_shared/packet.ts'
+import { checkPacket } from '../_shared/check.ts'
+import { fileStem, renderCoverLetter, renderResume } from '../_shared/render.ts'
+import { renderCoverLetterPdf, renderResumePdf } from '../_shared/render_pdf.ts'
 
 const BUCKET = 'application-packets'
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+const PDF = 'application/pdf'
 const MAX_LIMIT = 10
 const MAX_PACKETS = 5
 const PULL_FIELDS = 'id, company, role_title, location, job_link, job_type, work_mode, match_score, required_skills, sponsorship_notes, graduation_requirement, job_description, resume_version, screening'
@@ -122,12 +124,15 @@ Deno.serve(async (req) => {
       const folder = `${userId}/${job.id}`
       const resumePath = `${folder}/${stem}-Resume-${fileStem(job.company)}.docx`
       const letterPath = `${folder}/${stem}-Cover-Letter-${fileStem(job.company)}.docx`
-      const files: Array<[string, Uint8Array<ArrayBuffer>]> = [
-        [resumePath, await renderResume(resume)],
-        [letterPath, await renderCoverLetter(base.contact, job, packet.cover_letter.paragraphs, now)],
+      const pdfPath = (path: string) => path.replace(/\.docx$/, '.pdf')
+      const files: Array<[string, Uint8Array<ArrayBuffer>, string]> = [
+        [resumePath, await renderResume(resume), DOCX],
+        [letterPath, await renderCoverLetter(base.contact, job, packet.cover_letter.paragraphs, now), DOCX],
+        [pdfPath(resumePath), await renderResumePdf(resume), PDF],
+        [pdfPath(letterPath), await renderCoverLetterPdf(base.contact, job, packet.cover_letter.paragraphs, now), PDF],
       ]
-      for (const [path, bytes] of files) {
-        const { error } = await storage.upload(path, new Blob([bytes], { type: DOCX }), { upsert: true, contentType: DOCX })
+      for (const [path, bytes, type] of files) {
+        const { error } = await storage.upload(path, new Blob([bytes], { type }), { upsert: true, contentType: type })
         if (error) throw error
       }
 
@@ -137,7 +142,11 @@ Deno.serve(async (req) => {
         resume_version: packet.resume_version,
         resume_path: resumePath,
         cover_letter_path: letterPath,
+        resume_pdf_path: pdfPath(resumePath),
+        cover_letter_pdf_path: pdfPath(letterPath),
         resume_content: resume,
+        // Kept so the dashboard can edit it later (packet-edit re-runs the same checks on it).
+        packet,
         cover_letter: packet.cover_letter.paragraphs.join('\n\n'),
         answers: Object.entries(ANSWER_QUESTIONS).map(([key, question]) => ({ key, question, answer: packet.answers[key as keyof typeof ANSWER_QUESTIONS] })),
         work_authorization: base.workAuthorization,

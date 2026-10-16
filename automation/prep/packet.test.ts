@@ -108,7 +108,7 @@ test('TECH_TERMS covers every discovery profile skill', () => {
 
 test('the Edge Function copy is identical', () => {
   const read = (file: string) => readFileSync(path.join(import.meta.dirname, file), 'utf8')
-  assert.equal(read('../../supabase/functions/job-prep/packet.ts'), read('packet.ts'))
+  assert.equal(read('../../supabase/functions/_shared/packet.ts'), read('packet.ts'))
 })
 
 test('numbers written as words are checked too', () => {
@@ -164,3 +164,45 @@ test('relevant coursework: inventory codes only, titles from the base, in-progre
   assert.match(run(['ITCS 3160', 'ITCS 3160']).errors.join(' '), /twice/)
   assert.match(run(Array(7).fill('ITCS 3160')).errors.join(' '), /at most 6/)
 })
+
+test('qualifications: a met one cites a bullet in this packet or a section the resume has', () => {
+  const withQualifications = (qualifications: unknown) => ({ ...packet(), qualifications })
+  const good = [
+    { text: 'Experience with Terraform', kind: 'basic', met: true, evidence: ['cloudsec:acme-intern:2'], note: '' },
+    { text: "Bachelor's in Computer Science", kind: 'basic', met: true, evidence: ['education'], note: '' },
+    { text: 'Kubernetes', kind: 'preferred', met: false, evidence: [], note: 'No Kubernetes experience.' },
+  ]
+  assert.deepEqual(check(withQualifications(good)).errors, [])
+  const errors = (qualifications: unknown) => check(withQualifications(qualifications)).errors.join(' ')
+  assert.match(errors([{ ...good[0], evidence: [] }]), /marked met but cites no evidence/)
+  // A base bullet the packet didn't use isn't evidence, and neither is a section the resume doesn't have.
+  assert.match(errors([{ ...good[0], evidence: ['cloud:acme-intern:2'] }]), /not a bullet in this packet/)
+  assert.match(errors([{ ...good[0], evidence: ['certifications'] }]), /not a bullet in this packet/)
+  assert.match(errors([{ ...good[0], kind: 'nice' }]), /must be \{ text, kind/)
+  // Older packets without qualifications stay valid.
+  assert.deepEqual(check(packet()).errors, [])
+})
+
+test('certifications come from the inventory: earned only, with a readable date', () => {
+  const b = base()
+  b.inventory = {
+    tools: [],
+    certifications: [
+      { name: 'Example Job Simulation (Forage)', status: 'earned', date: '2025-01-06' },
+      { name: 'Example Course Certificate', status: 'earned', date: '2022' },
+      { name: 'CompTIA Security+', status: 'in_progress', date: null },
+    ],
+  }
+  const resume = resolveResume(packet() as never, b)
+  assert.deepEqual(resume.certifications, ['Example Job Simulation (Forage), Jan 2025', 'Example Course Certificate, 2022'])
+  assert.deepEqual(resolveResume(packet() as never, base()).certifications, [])
+})
+
+test('contact.relocation is optional, and must be text when set', () => {
+  const b = base()
+  b.contact.relocation = 'Open to relocation'
+  assert.deepEqual(validateBase(b).errors, [])
+  b.contact.relocation = ''
+  assert.match(validateBase(b).errors.join(' '), /contact.relocation/)
+})
+

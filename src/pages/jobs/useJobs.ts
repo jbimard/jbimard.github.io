@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabaseClient'
-import type { ApplicationPacket, Job, JobDraft, JobUpdate } from './types'
+import { PacketEditError, type ApplicationPacket, type Job, type JobDraft, type JobUpdate, type PacketEdit } from './types'
 
-const PACKET_FIELDS = 'id, job_id, resume_version, resume_path, cover_letter_path, cover_letter, answers, work_authorization, match_report, warnings, check_status, check_flags, comparisons, ats, checked_at, acknowledged_flags, approved_at, created_at'
+const PACKET_FIELDS = 'id, job_id, resume_version, resume_path, cover_letter_path, resume_pdf_path, cover_letter_pdf_path, cover_letter, answers, work_authorization, match_report, warnings, check_status, check_flags, comparisons, ats, checked_at, acknowledged_flags, approved_at, created_at, packet, resume_content, revision, edited_at'
 const PACKET_BUCKET = 'application-packets'
 
 export function useJobs(user: User | undefined) {
@@ -142,6 +142,20 @@ export function useJobs(user: User | undefined) {
     await loadJobs()
   }
 
+  // Saves an edit through packet-edit, which re-checks and re-renders it. Refusals come back as a PacketEditError.
+  const editPacket = async (packetId: string, revision: number, edit: PacketEdit) => {
+    if (!supabase) throw new Error('Supabase is not configured.')
+
+    const { data, error: editError } = await supabase.functions.invoke('packet-edit', { body: { packet_id: packetId, revision, edit } })
+    if (editError) {
+      const response = (editError as { context?: unknown }).context
+      const body = response instanceof Response ? await response.json().catch(() => null) as { error?: string; errors?: string[]; flags?: ApplicationPacket['check_flags'] } | null : null
+      throw new PacketEditError(body?.error ?? editError.message, body?.errors, body?.flags)
+    }
+    await loadJobs()
+    return data as { unchanged?: boolean; revision: number; check_status?: ApplicationPacket['check_status']; changed_lines?: number; voice_saved?: boolean }
+  }
+
   // The stored .docx itself, for the in-browser preview.
   const packetFile = async (path: string) => {
     if (!supabase) throw new Error('Supabase is not configured.')
@@ -151,5 +165,5 @@ export function useJobs(user: User | undefined) {
     return data
   }
 
-  return { jobs, queuedCount, packets, packetFileUrl, packetFile, approvePacket, regeneratePacket, loading, error, reload: loadJobs, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob }
+  return { jobs, queuedCount, packets, packetFileUrl, packetFile, approvePacket, regeneratePacket, editPacket, loading, error, reload: loadJobs, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob }
 }
