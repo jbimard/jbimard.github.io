@@ -197,6 +197,7 @@ The workflow `.github/workflows/discover-jobs.yml` runs daily at 10:00 UTC. To r
 
 ```bash
 npm run discover -- --dry-run      # fetch + score, write automation/out/report.json, send nothing
+npm run discover -- --limit=1      # send only the top job (connection test)
 npm run discover:test              # rule unit tests
 npm run discover:typecheck
 JOB_INTAKE_URL=… JOB_INTAKE_TOKEN=… npm run discover   # real run

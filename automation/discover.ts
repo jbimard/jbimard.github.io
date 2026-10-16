@@ -1,5 +1,5 @@
 // Daily job discovery: fetch postings → filter/score → send to the job-intake Edge Function.
-// Usage: node automation/discover.ts [--dry-run]
+// Usage: node automation/discover.ts [--dry-run] [--limit=N]
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { mapWithConcurrency, postJson } from './http.ts'
@@ -99,6 +99,10 @@ const sendToIntake = async (jobs: IntakeJob[]) => {
 
 const main = async () => {
   const dryRun = process.argv.includes('--dry-run')
+  // --limit=N sends only the top N jobs, e.g. a one-row test of the intake connection.
+  const limitArg = process.argv.find((arg) => arg.startsWith('--limit='))?.split('=')[1]
+  const limit = limitArg ? Number(limitArg) : null
+  if (limit !== null && (!Number.isInteger(limit) || limit < 1)) throw new Error(`--limit must be a positive integer, got "${limitArg}".`)
   const profile = await readJson<Profile>('config/profile.json')
   const companies = await readJson<Company[]>('config/companies.json')
   const sourceStats: SourceStat[] = []
@@ -136,7 +140,7 @@ const main = async () => {
     ...ranked.filter((entry) => entry.job.job_type !== 'Internship').slice(0, profile.maxPerRun),
     ...ranked.filter((entry) => entry.job.job_type === 'Internship').slice(0, profile.maxInternshipsPerRun),
   ].sort((a, b) => b.job.match_score - a.job.match_score)
-  const jobs = selected.map((entry) => entry.job)
+  const jobs = selected.slice(0, limit ?? selected.length).map((entry) => entry.job)
 
   const counts = {
     fetched: postings.length,
