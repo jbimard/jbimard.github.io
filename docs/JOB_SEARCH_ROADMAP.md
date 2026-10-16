@@ -17,7 +17,7 @@ Work through the steps in order. Update the status column as each step lands, an
 | 1c | Closed-posting check: archive jobs whose posting is gone | Live — PR #14; deployed and secrets set 2026-10-16; workflow dry run checked 71 postings (67 open, 4 couldn't verify) |
 | 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Live — PR #15; deployed, base file uploaded, routine "Job preparation" daily at 14:00 UTC in its own environment (first run 2026-10-16: OK, 0 jobs) |
 | 3c-A | Resume check, preview, ATS score, Approve / Regenerate | Done — PR #16; deployed and the inventory uploaded 2026-10-16. Confirm on the next preparation run that new packets carry no "no inventory" flag |
-| 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | In progress — **B1** (editing, re-render, read-aloud) on `feat/packet-edit`; **B2** (voice memory in the routine) next |
+| 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | Done — **B1** PR #19 (plus #20–#22); **B2** voice memory on `feat/voice-memory`: pull returns his last 40 edits, `ROUTINE.md` follows them |
 | 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | In progress — on `feat/packet-edit` with B1 |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
@@ -218,6 +218,8 @@ Two PRs. **B1** makes packets editable; **B2** feeds the edits back into tailori
 
 **B2: voice memory**
 - The routine's pull returns his most recent edits as before/after pairs. `ROUTINE.md` tells it to follow those choices (words he cuts, phrasings he prefers) within the same truth rules.
+- **Built:** `job-prep` GET returns the newest 40 `packet_edits` rows as `voice`; `client.ts pull` writes them to `/tmp/prep-voice.json`. The routine learns patterns, reuses his wording for the same base bullet, treats removals as a soft signal, follows the newer edit when two disagree, and never carries a company-specific line to another company.
+- **Cleanup:** a new packet removes the `r<n>/` files a regenerated packet's edits left behind.
 
 ## 4. Visa timeline card
 

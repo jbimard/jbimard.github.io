@@ -2,6 +2,7 @@
 // packet per job (POST); the function validates it, renders the .docx files and stores them in the private bucket.
 // PUT ?base uploads a reviewed base-resumes.json. Same shape as job-screening: its own bearer token, one configured
 // user, service-role client. Writes only touch that user's Ready to Apply jobs that don't have a packet yet.
+// GET also returns his most recent dashboard edits (packet_edits) as `voice`, so the routine can write the way he edits.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { ANSWER_QUESTIONS, buildVocabulary, resolveResume, splitSkills, validateBase, validatePacket, type BaseResumes } from '../_shared/packet.ts'
 import { checkPacket } from '../_shared/check.ts'
@@ -13,6 +14,7 @@ const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.doc
 const PDF = 'application/pdf'
 const MAX_LIMIT = 10
 const MAX_PACKETS = 5
+const VOICE_LIMIT = 40
 const PULL_FIELDS = 'id, company, role_title, location, job_link, job_type, work_mode, match_score, required_skills, sponsorship_notes, graduation_requirement, job_description, resume_version, screening'
 
 const corsHeaders = {
@@ -59,6 +61,18 @@ Deno.serve(async (req) => {
     return jobs.filter((job) => !done.has(job.id)).slice(0, limit)
   }
 
+  const removeEditedFiles = async (folder: string) => {
+    const { data: entries, error } = await storage.list(folder)
+    if (error) throw error
+    for (const entry of entries ?? []) {
+      // Folders come back with no id.
+      if (entry.id || !/^r\d+$/.test(entry.name)) continue
+      const { data: files, error: listError } = await storage.list(`${folder}/${entry.name}`)
+      if (listError) throw listError
+      if (files?.length) await storage.remove(files.map((file) => `${folder}/${entry.name}/${file.name}`))
+    }
+  }
+
   try {
     if (req.method === 'PUT') {
       if (!new URL(req.url).searchParams.has('base')) return jsonResponse({ error: 'Use PUT ?base to upload base-resumes.json.' }, 400)
@@ -81,7 +95,11 @@ Deno.serve(async (req) => {
     if (req.method === 'GET') {
       const requested = Number(new URL(req.url).searchParams.get('limit') ?? 5)
       const limit = Number.isInteger(requested) ? Math.min(Math.max(requested, 1), MAX_LIMIT) : 5
-      return jsonResponse({ jobs: await waitingJobs(null, limit), base })
+      // Newest first. Removals (after: null) are kept too: they show which kinds of lines he cuts.
+      const { data: voice, error: voiceError } = await supabase.from('packet_edits').select('kind, source, before, after, created_at')
+        .eq('user_id', userId).order('created_at', { ascending: false }).limit(VOICE_LIMIT)
+      if (voiceError) throw voiceError
+      return jsonResponse({ jobs: await waitingJobs(null, limit), base, voice: voice ?? [] })
     }
 
     let parsed: unknown
@@ -178,6 +196,8 @@ Deno.serve(async (req) => {
         continue
       }
       if (insertError) throw insertError
+      // Files a previous packet's edits left under r<n>/ (Regenerate deletes the row, not the files).
+      await removeEditedFiles(folder)
       created.push(job.id)
       warningCount += warnings.length
       statusCounts[check.status]++

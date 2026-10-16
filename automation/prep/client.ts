@@ -1,7 +1,8 @@
 // Used by the Claude preparation routine (see ROUTINE.md). No AI calls here: it only moves and checks data.
 // Usage:
 //   node automation/prep/client.ts pull [--limit=5]                approved jobs without a packet → /tmp/prep-jobs.json,
-//                                                                   base resumes → /tmp/prep-base.json
+//                                                                   base resumes → /tmp/prep-base.json,
+//                                                                   his recent dashboard edits → /tmp/prep-voice.json
 //   node automation/prep/client.ts push packets.json [--dry-run]   validate against the pulled base, then send
 //   node automation/prep/client.ts base check [file]               validate a base-resumes.json (no network)
 //   node automation/prep/client.ts base upload [file]              validate, then store it in the private bucket
@@ -16,8 +17,11 @@ import { buildVocabulary, resolveResume, splitSkills, validateBase, validatePack
 const ROOT = path.join(import.meta.dirname, '..')
 const JOBS_FILE = '/tmp/prep-jobs.json'
 const BASE_FILE = '/tmp/prep-base.json'
+const VOICE_FILE = '/tmp/prep-voice.json'
 const DEFAULT_BASE = path.join(ROOT, 'private/base-resumes.json')
 
+// One line he changed in the dashboard: `before` is what the routine wrote, `after` his wording (null: he removed it).
+type VoiceEdit = { kind: string; source: string | null; before: string; after: string | null; created_at: string }
 type PulledJob = { id: string; company: string; role_title: string; required_skills: string | null; job_description: string | null }
 
 const option = (name: string) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
@@ -35,10 +39,12 @@ const endpoint = () => {
 const pull = async () => {
   const { url, headers } = endpoint()
   const limit = option('limit') ?? '5'
-  const data = await fetchJson<{ jobs: PulledJob[]; base: BaseResumes }>(`${url}?limit=${encodeURIComponent(limit)}`, { headers })
+  const data = await fetchJson<{ jobs: PulledJob[]; base: BaseResumes; voice?: VoiceEdit[] }>(`${url}?limit=${encodeURIComponent(limit)}`, { headers })
+  const voice = data.voice ?? []
   await writeFile(JOBS_FILE, `${JSON.stringify(data.jobs, null, 2)}\n`)
   await writeFile(BASE_FILE, `${JSON.stringify(data.base, null, 2)}\n`)
-  console.log(`Wrote ${data.jobs.length} job(s) to ${JOBS_FILE} and the base resumes to ${BASE_FILE}`)
+  await writeFile(VOICE_FILE, `${JSON.stringify(voice, null, 2)}\n`)
+  console.log(`Wrote ${data.jobs.length} job(s) to ${JOBS_FILE}, the base resumes to ${BASE_FILE} and ${voice.length} recent edit(s) to ${VOICE_FILE}`)
 }
 
 const push = async () => {

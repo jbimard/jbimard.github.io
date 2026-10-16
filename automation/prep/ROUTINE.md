@@ -26,13 +26,14 @@ The validator and the Resume check enforce this (see "What gets rejected").
    - Run `export NODE_USE_ENV_PROXY=1`. The session reaches the internet only through its proxy; without this, Node's `fetch` fails with "fetch failed". The proxy also adds the API token.
    - Run `node --version`. On Node older than 23.6 (the cloud image has Node 22), add `--experimental-strip-types` after `node` in every command below.
 2. Pull: `node automation/prep/client.ts pull --limit=5`
-   - It writes the jobs to `/tmp/prep-jobs.json` and the base resumes to `/tmp/prep-base.json`.
+   - It writes the jobs to `/tmp/prep-jobs.json`, the base resumes to `/tmp/prep-base.json` and his recent dashboard edits to `/tmp/prep-voice.json` (see **His edits** below).
    - If it reports 0 jobs, stop.
    - If it returns 409 "No valid base-resumes.json", stop and report that the base file needs to be uploaded.
 3. Read `/tmp/prep-base.json`:
    - `versions` holds the three base resumes: `Cloud`, `Security` and `Cloud Security`.
    - Every experience and project entry has an `id`, and every bullet has an `id` like `cloudsec:true-homes-cybersecurity-rotational-intern:3`.
    - The same job can appear in several versions with different wording. You may reword any version's bullet for that same entry id.
+   - Read `/tmp/prep-voice.json` before writing anything. It's empty until he edits a packet.
 4. For each job:
    1. Read `job_description`. If it's short or cut off, open `job_link` for the full posting. Use **only the posting** for facts about the company and role: no outside research, and never state a company fact the posting doesn't.
       - When `job_description` is empty or cut off, put the posting text you read in the packet's **`posting_text`** (plain text, up to 20,000 characters). The ATS estimate scores against it, and `job-prep` saves it on the job. Without it, the estimate says n/a.
@@ -95,6 +96,16 @@ The validator and the Resume check enforce this (see "What gets rejected").
    - Fix every error and every **red** flag. A packet with red flags is never sent.
    - Fix yellow flags where you can do it truthfully: buzzwords, vague words, em dashes, bullets that all open with the same verb, heavy rewording. He reviews whatever yellow flags remain before approving.
 7. Send: `node automation/prep/client.ts push /tmp/prep-packets.json`. Report the counts it prints: created, invalid, not found, and the check (pass / needs_edits / blocked).
+
+## His edits (voice memory)
+
+`/tmp/prep-voice.json` lists the lines he changed in the dashboard, newest first: `kind` (`bullet`, `bullet_removed`, `summary`, `cover_letter`, `answer`), `source` (the base bullet a resume line rewords), `before` (what this routine wrote) and `after` (his wording; `null` when he removed the line).
+
+- **Learn the pattern, not the line.** Compare each `before` with its `after`: words and phrases he cuts, ones he adds, how long he keeps sentences, how he opens bullets, how formal the cover letter is. Write new packets that way from the start.
+- **Reuse his wording** when you reword the same `source` bullet for a similar posting. His `after` already passed the same checks.
+- **Removals are a soft signal.** A `bullet_removed` line means that wording or that bullet didn't help for that job. Don't drop the bullet everywhere; give it less weight when the posting is similar, and avoid the same wording.
+- **Newer wins.** When two edits disagree, follow the newer one.
+- **The truth rules come first.** His edits never let you claim something the base doesn't back. Never copy a company-specific line (his edit to one cover letter) into a different company's packet.
 
 ## What gets rejected
 
