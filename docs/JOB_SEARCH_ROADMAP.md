@@ -13,7 +13,7 @@ Work through the steps in order. Update the status column as each step lands, an
 | 1 | Ship daily discovery | Done — PR #6 merged, secrets set, 1-job test inserted OK. **Workflow paused** until 1b: re-enable with `gh workflow enable discover-jobs.yml` |
 | 2a | Real H-1B sponsor data (USCIS) | Not started — **next** |
 | 1b | Daily batch of 10 + "Next batch" button | Not started — after 2a; **finish by re-enabling the workflow** |
-| 3 | Claude screening + preparation (incl. ATS-optimized resumes + Resume check screen), review queue | Not started — after 1b |
+| 3 | Claude screening + preparation (incl. ATS-optimized resumes, Resume check, resume preview + ATS score in dashboard), review queue | Not started — after 1b |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
@@ -131,12 +131,30 @@ The aim is not to beat "AI detectors"; those tools are unreliable. The aim is a 
 
 **Result:** each tailored resume gets **Pass / Needs edits / Blocked**. Only **Pass**, plus his approval, makes it available to step 5.
 
-**Open decision for step 3 planning:** the current rule says resume text is never stored in Supabase, but a review screen in `/jobs` needs to display the text. The options are:
+### Resume preview + ATS score in the dashboard
 
-- (a) generate the review as a **local page** on his machine and keep the rule
-- (b) store tailored resume text in Supabase, protected by row-level security like the rest of his data, and relax the rule
+Each job in `/jobs` that has a tailored resume shows a **Resume** panel:
 
-Constraint: the resume text is never stored in Supabase. The routine reads it from local profile files; the database only records the resume label used.
+- **Preview** of the exact file that will be submitted. It's the same file step 5 uploads, so what you see is what gets sent.
+- **Estimated ATS score (0–100), labeled as an estimate.**
+  - Employers' ATS rankings are internal and configured per company; applicants can't see them.
+  - Our score combines keyword coverage against the posting (required skills weighted above preferred) with formatting safety (single column, standard headings, parseable file).
+  - Shown next to the base resume's score, so the improvement from tailoring is visible.
+- **Match report:**
+  - keywords covered
+  - honest gaps
+  - which gaps could truthfully be added from the experience inventory
+- **Resume check result:** Pass / Needs edits / Blocked, with the red and yellow flags listed and the side-by-side change view.
+- **Actions:** Approve (makes it available to step 5), Edit, or Regenerate.
+
+**Storage (decided 2026-10-16):** tailored resume files live in a **private Supabase Storage bucket**.
+
+- Storage policies restrict each file to its owner (same model as `jobs`: `auth.uid()` must match).
+- Files are read through short-lived signed URLs, never public links.
+- A table such as `application_packets` links each job to its file path, ATS score, match report, check status and approval.
+- The base resumes and the experience inventory may also live in the private bucket. They never go in this public repo.
+
+Storage: resumes live in a private Supabase Storage bucket (see "Resume preview + ATS score" below). Never in this public repo.
 
 ## 4. Visa timeline card
 
@@ -189,6 +207,7 @@ Settled; don't reopen without a new reason.
 - **Privacy:** the repo is public, so CI logs print only counts, never company or job names. No visa details or resume text in committed files.
 - **Daily volume (2026-10-16):** the dashboard shows the best 10 per day; more come only on request with "Next batch" (step 1b). The workflow stays paused until 1b exists.
 - **Resume tailoring (2026-10-16):** each application gets an ATS-optimized version of the chosen base resume (step 3). Tailoring is strictly truthful: rewording and reordering real experience only.
+- **Resume storage (2026-10-16):** this replaces the original V1 rule "no resume text in Supabase". The dashboard must preview the exact resume being submitted, so tailored resumes are stored in a private Supabase Storage bucket with owner-only policies. The ATS score shown is our own estimate (keyword coverage + format), labeled as such.
 - **Resume check (2026-10-16):** every tailored resume passes a check screen before use. Every claim must trace to his experience inventory, and AI-sounding wording is flagged. The goal is accuracy and his own voice, not evading AI detectors.
 - **Order (2026-10-15):** step 2 is split. 2a (USCIS sponsor data) goes before step 3 so screening uses real data; 2b (new board adapters) goes after step 3.
 - **H-1B data:** use the USCIS Employer Data Hub, not the Apify "H-1B Visa Salary Search" actor. That actor returns per-filing LCA salary records (not sponsorship counts), costs $0.05 per record, and doesn't clearly state its source.
