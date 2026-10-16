@@ -3,7 +3,8 @@
 //   node automation/screening/client.ts pull [--limit=10] [--out=jobs.json]   unscreened Found jobs
 //   node automation/screening/client.ts push results.json [--dry-run]         validate, then send
 //   node automation/screening/client.ts sponsor "Company name"                USCIS lookup (local file)
-// pull/push need JOB_SCREENING_URL and JOB_SCREENING_TOKEN in the environment.
+// pull/push need JOB_SCREENING_URL. The token comes from JOB_SCREENING_TOKEN when set (local runs); in the
+// cloud routine it's a network secret that Anthropic's proxy adds to requests, so the session never sees it.
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fetchJson, postJson } from '../http.ts'
@@ -17,9 +18,10 @@ const option = (name: string) => process.argv.find((arg) => arg.startsWith(`--${
 
 const endpoint = () => {
   const url = process.env.JOB_SCREENING_URL
+  if (!url) throw new Error('JOB_SCREENING_URL must be set.')
   const token = process.env.JOB_SCREENING_TOKEN
-  if (!url || !token) throw new Error('JOB_SCREENING_URL and JOB_SCREENING_TOKEN must be set.')
-  return { url, headers: { Authorization: `Bearer ${token}` } }
+  // No token here means the network secret supplies the Authorization header on the way out.
+  return { url, headers: token ? { Authorization: `Bearer ${token}` } : {} as Record<string, string> }
 }
 
 const pull = async () => {

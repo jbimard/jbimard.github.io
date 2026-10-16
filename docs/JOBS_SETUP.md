@@ -258,8 +258,11 @@ Each morning a scheduled Claude routine reads the day's `Found` jobs against the
 3. Create the routine as a scheduled Claude Code cloud agent (`/schedule`) on this repo:
    - **Schedule:** daily at 11:30 UTC, after discovery (10:00) and the morning batch (11:00).
    - **Prompt:** `Follow automation/screening/ROUTINE.md exactly.`
-   - **Environment variables:** `JOB_SCREENING_URL` = `https://PROJECT_REF.supabase.co/functions/v1/job-screening`, and `JOB_SCREENING_TOKEN` = the value from step 2.
-   - **Network access:** it needs your Supabase URL and the job boards, to read full postings.
+   - **Environment:** a dedicated cloud environment (for example "Job screening"), so the secret and network rules don't apply to your other cloud sessions. In its **Edit cloud environment** dialog:
+     - **Environment variables:** `JOB_SCREENING_URL=https://PROJECT_REF.supabase.co/functions/v1/job-screening`. This one isn't a secret.
+     - **Network secrets → Add secret:** Secret type **Bearer**. Allowed websites `PROJECT_REF.supabase.co`. Header `Authorization`, prefix `Bearer`, and the value from step 2. Anthropic's proxy adds it to requests for that host, so the session never sees the token, and the host is reachable even with the Trusted network level.
+     - **Network access: Custom**, including the defaults, plus the job boards for full postings: `boards-api.greenhouse.io`, `job-boards.greenhouse.io`, `boards.greenhouse.io`, `api.lever.co`, `jobs.lever.co`, `api.ashbyhq.com`, `jobs.ashbyhq.com`, `*.myworkdayjobs.com`. Other career sites stay blocked, and the routine screens those from the stored description.
+   - **Don't put the token in Environment variables**: every session in the environment can read them.
 
 **Running it on demand:** after you click **Next batch**, run the routine now from its page to screen the new jobs right away.
 
