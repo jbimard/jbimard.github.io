@@ -367,4 +367,8 @@ Settled; don't reopen without a new reason.
   - **New yellow rules:** `first_person`, `weak_lead`, `tool_overuse` (3 or more resume lines) and `duplicate_project`. The summary limit drops from 700 to 360 characters.
   - **Stale preview fixed:** a regenerated packet reuses the same path, so the browser showed the cached old file (the old TA title). Uploads now use `cacheControl: '0'`, and the preview fetches through a fresh signed link with `no-store`.
   - **The .docx font is now Arial** instead of Calibri, which the browser preview didn't have.
+- **Graduation fit, posting text, no gap paragraphs (2026-10-16, from the Marvell test):**
+  - **Graduation window:** discovery parses the posting's graduation sentence into a date window and compares it with `profile.graduation` ("2027-05"). An internship whose title term starts after that date (Summer 2027 or later) needs current enrollment, so it counts as a mismatch too. Either one sets level points to 0 and caps the score at `minScore - 1`, so discovery doesn't add it, with a ⚠ note. Screening is told to recommend skip on the same grounds. Before this, "Summer 2027" in an internship title was read as a 2027 graduation match. Jobs already queued keep their scores.
+  - **ATS from posting text:** the routine sends `posting_text` when the job has no saved description (Workday imports). The estimate scores against it, and `job-prep` saves it as the job's `job_description`, so edits and regenerations score too. It isn't kept in the stored packet.
+  - **No gap paragraphs:** a new yellow rule, `admits_gap`, catches cover letters and answers that volunteer what he lacks. Gaps stay in the match report and Fit & Gap.
 

@@ -206,3 +206,19 @@ test('resume style: no first person, a strong first bullet, a tool named in at m
   assert.ok(rules(run(() => {}, base)).includes('yellow:duplicate_project'))
 })
 
+
+test('a cover letter or answer that volunteers a gap is yellow', () => {
+  for (const text of [
+    'I have not yet worked with container orchestration.',
+    "I haven't used Kubernetes in production.",
+    'I have no professional experience with AWS.',
+    'My exposure to Jenkins is limited experience so far.',
+  ]) assert.ok(rules(run((p) => { p.cover_letter.paragraphs[2] = text })).includes('yellow:admits_gap'), text)
+  assert.ok(!rules(run((p) => { p.cover_letter.paragraphs[2] = 'At Acme I built identity tooling in PowerShell.' })).includes('yellow:admits_gap'))
+})
+
+test('the ATS estimate scores against whatever posting text it is given', () => {
+  const posting = 'Requirements:\n• Azure and Terraform\nPreferred:\n• Splunk'
+  assert.equal(run(() => {}, withInventory(), { required_skills: null, job_description: null }).ats.score, null)
+  assert.ok(run(() => {}, withInventory(), { required_skills: null, job_description: posting }).ats.score! > 0)
+})

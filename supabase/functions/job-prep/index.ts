@@ -118,6 +118,14 @@ Deno.serve(async (req) => {
       }
 
       const resume = resolveResume(packet, base)
+      // No saved description (common for Workday imports): score against the posting text the routine read, and keep it
+      // on the job so later checks (edits, regenerations) have it too. The packet itself doesn't store it.
+      const { posting_text: postingText, ...storedPacket } = packet
+      if (!job.job_description?.trim() && postingText?.trim()) {
+        job.job_description = postingText.trim()
+        const { error: describeError } = await supabase.from('jobs').update({ job_description: job.job_description }).eq('id', job.id).eq('user_id', userId)
+        if (describeError) throw describeError
+      }
       // Resume check (step 3c): verdict, flags, side-by-side comparisons and the ATS estimate, stored with the packet.
       const check = checkPacket(packet, base, resume, job)
       // One page, measured on the real PDF (the check's estimate is what the routine sees first).
@@ -152,7 +160,7 @@ Deno.serve(async (req) => {
         cover_letter_pdf_path: pdfPath(letterPath),
         resume_content: resume,
         // Kept so the dashboard can edit it later (packet-edit re-runs the same checks on it).
-        packet,
+        packet: storedPacket,
         cover_letter: packet.cover_letter.paragraphs.join('\n\n'),
         answers: Object.entries(ANSWER_QUESTIONS).map(([key, question]) => ({ key, question, answer: packet.answers[key as keyof typeof ANSWER_QUESTIONS] })),
         work_authorization: base.workAuthorization,

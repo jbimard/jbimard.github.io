@@ -67,7 +67,9 @@ const push = async () => {
       return
     }
     // The same Resume check the function stores: red flags block approval, yellow ones need a look.
-    const check = checkPacket(valid, base, resolveResume(valid, base), job)
+    // Same fallback as job-prep: score against the posting text the routine read when the job has no description.
+    const posting = job.job_description?.trim() ? job : { ...job, job_description: valid.posting_text ?? null }
+    const check = checkPacket(valid, base, resolveResume(valid, base), posting)
     console.log(`packet ${index}: Resume check ${check.status.toUpperCase()}, ATS estimate ${check.ats.score ?? 'n/a'} (base ${check.ats.base_score ?? 'n/a'})`)
     for (const flag of check.flags) console.log(`  ${flag.severity} ${flag.rule} ${flag.path}: ${flag.message}`)
     const met = (kind: string) => `${valid.qualifications?.filter((q) => q.kind === kind && q.met).length ?? 0}/${valid.qualifications?.filter((q) => q.kind === kind).length ?? 0}`

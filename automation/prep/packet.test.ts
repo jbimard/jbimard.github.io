@@ -206,3 +206,9 @@ test('contact.relocation is optional, and must be text when set', () => {
   assert.match(validateBase(b).errors.join(' '), /contact.relocation/)
 })
 
+test('posting_text is optional text with a size limit', () => {
+  assert.deepEqual(check({ ...packet(), posting_text: 'Requirements: Azure.' }).errors, [])
+  assert.match(check({ ...packet(), posting_text: 'x'.repeat(20001) }).errors.join(' '), /posting_text must be at most/)
+  assert.match(check({ ...packet(), posting_text: 42 }).errors.join(' '), /posting_text must be a non-empty string/)
+})
+

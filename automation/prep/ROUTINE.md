@@ -34,6 +34,7 @@ The validator and the Resume check enforce this (see "What gets rejected").
    - The same job can appear in several versions with different wording. You may reword any version's bullet for that same entry id.
 4. For each job:
    1. Read `job_description`. If it's short or cut off, open `job_link` for the full posting. Use **only the posting** for facts about the company and role: no outside research, and never state a company fact the posting doesn't.
+      - When `job_description` is empty or cut off, put the posting text you read in the packet's **`posting_text`** (plain text, up to 20,000 characters). The ATS estimate scores against it, and `job-prep` saves it on the job. Without it, the estimate says n/a.
    2. Start from `resume_version` (screening's pick) unless the posting clearly fits another version better.
    3. **Experience (1–4 entries) and projects (0–3):** pick the most relevant entries by `id`, most relevant first. For each one, choose up to 6 bullets, most relevant first. Each bullet is `{ "from": "<base bullet id>", "text": "<your wording>" }`.
       - **The resume must fit on one page.** The Resume check estimates the length and blocks anything longer, and `job-prep` measures the real PDF too. In practice that means 2–3 experience entries and 1–2 projects, with 2–4 bullets each, and bullets of one or two lines. Cut the least relevant bullet first, not the most specific one.
@@ -50,6 +51,7 @@ The validator and the Resume check enforce this (see "What gets rejected").
       - Say why this role, using specifics from the posting.
       - Give the one or two most relevant experiences from the base, with their real details.
       - Close briefly.
+      - **Don't point out gaps** in the cover letter or answers ("I haven't worked with Kubernetes", "my experience with AWS is limited"). Gaps go in `match_report.gaps` and `qualifications`, which only he sees. Say what he has done instead.
       - Write like a person: specific and plain. Avoid "leveraged", "spearheaded", "passionate", "results-driven", "dynamic", "cutting-edge", "seamlessly", "robust" and "synergy", and use few em dashes.
    7. **Answers** (each ≤ 1,200 characters, plain first person, specific to the posting):
       - `why_company`: from what the posting says about the company and team
@@ -116,6 +118,7 @@ The validator and the Resume check enforce this (see "What gets rejected").
   - 3 or more bullets opening with the same verb
   - a bullet keeping less than half its source's words
   - leadership wording in the cover letter or answers that no base bullet has
+  - a cover letter or answer that points out something he lacks ("haven't worked with", "no experience with", "limited experience")
   - resume style: "I", "my" or "me" in the summary or a bullet; a weak first bullet ("Used…", "Assisted…"); a tool named in three or more resume lines; a project from the same employer as an experience entry
   - read-aloud problems: a sentence over 35 words; a tool named twice in one bullet or the summary (three times in a paragraph or answer); two spelled-out acronyms in one line, or the same acronym spelled out in more than one place; a bullet opening with "Responsible for" or "Worked on"; a bullet in the passive voice ("was configured")
 

@@ -50,7 +50,19 @@ const sponsorPoints = (sponsor: SponsorRecord, flags: Flags, profile: Profile) =
 
 const entryLevel = (flags: Flags) => flags.internship || flags.targetYear === 2027 || flags.newGradSignal
 
-const levelPoints = (flags: Flags) => {
+// Why he can't take the role given his graduation date, or null. A graduation window that excludes it (Marvell's
+// "Fall 2027 – Summer 2028"), or an internship that starts after it (internships need current enrollment).
+const graduationMismatch = (flags: Flags, profile: Profile) => {
+  const [year, month] = profile.graduation.split('-').map(Number)
+  const graduation = year * 12 + month
+  const window = flags.graduationWindow
+  if (window && (graduation < window.from || graduation > window.to)) return `graduation window excludes ${profile.graduation}: ${quote(flags.graduation ?? '')}`
+  if (flags.internshipStart !== null && flags.internshipStart > graduation) return `internship starts after the ${profile.graduation} graduation`
+  return null
+}
+
+const levelPoints = (flags: Flags, mismatch: string | null) => {
+  if (mismatch) return 0
   if (flags.returnToSchool) return 5
   if (flags.targetYear !== null && flags.targetYear !== 2027) return 5
   if (entryLevel(flags)) return 15
@@ -105,6 +117,7 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: 
   if (location.points === null) return { kind: 'irrelevant', reason: 'location' }
 
   const flags = detectFlags(posting)
+  const mismatch = graduationMismatch(flags, profile)
   // The one hard block: clearance roles need citizenship and can never work out.
   if (flags.clearance) return { kind: 'blocked', reason: flags.clearance, posting }
   if (flags.requiredYears !== null && flags.requiredYears > profile.maxRequiredYears) {
@@ -122,12 +135,14 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: 
   const breakdown: Breakdown = {
     role: Math.round((offTarget ? OFF_TARGET_ROLE_POINTS : ROLE_POINTS[group]) * levelFactor),
     sponsor: weighted(sponsorPoints(sponsor, flags, profile)),
-    level: weighted(levelPoints(flags)),
+    level: weighted(levelPoints(flags, mismatch)),
     location: weighted(location.points),
     pay: weighted(payPoints(annual, flags)),
     fit,
   }
-  const score = breakdown.role + breakdown.sponsor + breakdown.level + breakdown.location + breakdown.pay
+  const total = breakdown.role + breakdown.sponsor + breakdown.level + breakdown.location + breakdown.pay
+  // A graduation mismatch can't be applied to truthfully, so it stays just under the cutoff however good the rest is.
+  const score = mismatch ? Math.min(total, profile.minScore - 1) : total
 
   const description = posting.description ?? ''
   const skills = findSkills(`${posting.title}\n${description}`, profile.skills)
@@ -135,6 +150,7 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: 
     location.metro ? `metro=${location.metro}` : null,
     annual ? `pay≈$${Math.round(annual / 1000)}k` : null,
     flags.returnToSchool ? `⚠ requires returning to school: ${quote(flags.returnToSchool)}` : null,
+    mismatch ? `⚠ ${mismatch}` : null,
   ].filter(Boolean)
 
   return {
