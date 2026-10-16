@@ -10,7 +10,7 @@ import { fetchAshby } from './sources/ashby.ts'
 import { enrichPostings } from './sources/enrich.ts'
 import { fetchGreenhouse } from './sources/greenhouse.ts'
 import { fetchLever } from './sources/lever.ts'
-import { fetchSimplify, stripTracking } from './sources/simplify.ts'
+import { fetchSimplify, linkKey } from './sources/simplify.ts'
 import { fetchWorkday } from './sources/workday.ts'
 import type { Company, IntakeJob, Profile, RawPosting, SponsorTier } from './types.ts'
 
@@ -57,7 +57,6 @@ const collect = async (label: string, stats: SourceStat[], load: () => Promise<R
   }
 }
 
-const linkKey = (url: string) => stripTracking(url).toLowerCase().replace(/\/+$/, '')
 const roleKey = (job: IntakeJob) => `${job.company.toLowerCase()}\u0000${job.role_title.toLowerCase()}`
 
 // The same posting can arrive from a company board and from Simplify; keep the best-scoring copy.

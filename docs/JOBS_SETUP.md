@@ -275,3 +275,47 @@ npm run screening:push -- /tmp/results.json --dry-run          # validate only
 ```
 
 The `job-screening` function updates only that user's `Found` rows that haven't been screened yet, so it can't change jobs you're already working on.
+
+## 12. Closed-Posting Check
+
+Each morning, right after discovery in the same workflow, `automation/links/check.ts` asks each job board whether every open job's posting is still there. It checks `Queued`, `Found`, `Fit Check` and `Ready to Apply`, plus `Applied` and `Follow-Up`. A job is closed only after **two "missing" checks on different days**:
+
+- Before applying: status `Closed`, archived, and a note "Posting closed (checked 2026-10-20 via greenhouse)". It shows under the Archived filter, and Unarchive brings it back.
+- After applying: the note only.
+
+One strike keeps a queued job out of the next batch while it waits for its second check. Anything the checker can't confirm (a redirect, a block, a board that doesn't answer) is "couldn't verify" and never closes a job.
+
+How each board is asked (all public APIs, no AI):
+
+| Board | Signal |
+|---|---|
+| Greenhouse, Lever | Not in the board's job list, and the posting itself returns 404 |
+| Ashby | Not in the board's job list (Ashby has no per-posting API) |
+| Workday | The posting returns 404 while the site's search still answers, or it says `canApply: false` / `posted: false` |
+| Simplify (other sites) | Simplify marks the listing `active: false` |
+| Other career sites | HTTP 404 or 410 |
+
+**One-time setup:**
+
+1. Deploy the database change and the function:
+   ```bash
+   supabase db push
+   supabase functions deploy job-link-check
+   ```
+2. Set the function's token yourself, and never paste it into chat or commit it:
+   ```bash
+   supabase secrets set JOB_LINK_CHECK_TOKEN=$(openssl rand -hex 32)
+   ```
+   It reuses `JOB_INTAKE_USER_ID` from section 9.
+3. Add two repository secrets (Settings → Secrets and variables → Actions):
+   - `JOB_LINK_CHECK_URL` = `https://PROJECT_REF.supabase.co/functions/v1/job-link-check`
+   - `JOB_LINK_CHECK_TOKEN` = the value from step 2
+
+Until the secrets exist, the workflow step logs "Link check not configured" and passes. The Actions log and summary show counts only.
+
+**Locally:**
+
+```bash
+npm run links:check -- --rows=automation/out/report.json   # check a discovery dry run's links; sends nothing
+JOB_LINK_CHECK_URL=… JOB_LINK_CHECK_TOKEN=… npm run links:check -- --dry-run   # real jobs, sends nothing
+```

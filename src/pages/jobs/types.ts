@@ -81,11 +81,15 @@ export interface Job {
   archived: boolean
   screening: Screening | null
   screened_at: string | null
+  // Closed-posting check (automation/links/strikes.ts); two "missing" checks on different days close the job.
+  link_status: 'open' | 'missing' | 'unverified' | null
+  link_missing_count: number
+  link_checked_at: string | null
   created_at: string
   updated_at: string
 }
 
-export type JobDraft = Omit<Job, 'id' | 'created_at' | 'updated_at' | 'screening' | 'screened_at'>
+export type JobDraft = Omit<Job, 'id' | 'created_at' | 'updated_at' | 'screening' | 'screened_at' | 'link_status' | 'link_missing_count' | 'link_checked_at'>
 export type JobUpdate = Partial<Omit<Job, 'id' | 'created_at' | 'updated_at' | 'user_id'>>
 
 export const EMPTY_JOB_VALUES = {

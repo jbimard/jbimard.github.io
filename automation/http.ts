@@ -47,6 +47,27 @@ const request = async <T>(url: string, init: RequestInit): Promise<T> => {
 
 export const fetchJson = <T>(url: string, init: RequestInit = {}) => throttled(url, () => request<T>(url, init))
 
+// Like fetchJson, but a 4xx comes back as a status instead of an error: the link check needs to see 404s.
+export const probeJson = <T>(url: string, init: RequestInit = {}) => throttled(url, async (): Promise<{ status: number; data: T | null }> => {
+  try {
+    return { status: 200, data: await request<T>(url, init) }
+  } catch (error) {
+    if (error instanceof HttpError && error.status < 500) return { status: error.status, data: null }
+    throw error
+  }
+})
+
+// Status code of a career page, without following redirects (a redirect to a generic page proves nothing).
+export const probeStatus = (url: string) => throttled(url, async () => {
+  const response = await fetch(url, {
+    redirect: 'manual',
+    headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml', 'Accept-Language': 'en-US' },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  })
+  await response.body?.cancel()
+  return response.status
+})
+
 // Runs `task` over `items` with at most `limit` in flight, keeping results in input order.
 export const mapWithConcurrency = async <Item, Result>(
   items: Item[],

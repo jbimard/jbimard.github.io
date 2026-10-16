@@ -35,3 +35,10 @@ jobs:
         env:
           JOB_INTAKE_URL: ${{ secrets.JOB_INTAKE_URL }}
           JOB_INTAKE_TOKEN: ${{ secrets.JOB_INTAKE_TOKEN }}
+      # Closed-posting check (step 1c): before the 11:00 batch, so closed jobs are never promoted or screened.
+      # Runs even if discovery failed; it only reads the jobs already in /jobs.
+      - run: npm run links:check -- ${{ inputs.dry_run && '--dry-run' || '' }}
+        if: ${{ !cancelled() }}
+        env:
+          JOB_LINK_CHECK_URL: ${{ secrets.JOB_LINK_CHECK_URL }}
+          JOB_LINK_CHECK_TOKEN: ${{ secrets.JOB_LINK_CHECK_TOKEN }}
