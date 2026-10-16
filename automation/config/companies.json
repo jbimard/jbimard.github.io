@@ -66,5 +66,7 @@
   { "name": "HackerOne", "ats": "ashby", "board": "hackerone" },
   { "name": "Semgrep", "ats": "ashby", "board": "semgrep" },
   { "name": "Socket", "ats": "ashby", "board": "socket" },
-  { "name": "Cohere", "ats": "ashby", "board": "cohere" }
+  { "name": "Cohere", "ats": "ashby", "board": "cohere" },
+  { "name": "SAS", "ats": "icims", "board": "globalcareers-sas", "h1bNames": ["SAS Institute Inc"] },
+  { "name": "First Citizens Bank", "ats": "jibe", "board": "firstcitizens", "h1bNames": ["First Citizens Bank and Trust Co"] }
 ]

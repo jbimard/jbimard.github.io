@@ -9,6 +9,8 @@ import { scoreLocation, shortLocation } from './rules/text.ts'
 import { fetchAshby } from './sources/ashby.ts'
 import { enrichPostings } from './sources/enrich.ts'
 import { fetchGreenhouse } from './sources/greenhouse.ts'
+import { fetchIcims } from './sources/icims.ts'
+import { fetchJibe } from './sources/jibe.ts'
 import { fetchLever } from './sources/lever.ts'
 import { fetchSimplify, linkKey } from './sources/simplify.ts'
 import { fetchWorkday } from './sources/workday.ts'
@@ -41,6 +43,8 @@ const fetchCompany = (company: Company, profile: Profile) => {
     case 'lever': return fetchLever(company)
     case 'ashby': return fetchAshby(company)
     case 'workday': return fetchWorkday(company, profile)
+    case 'icims': return fetchIcims(company, profile)
+    case 'jibe': return fetchJibe(company, profile)
   }
 }
 

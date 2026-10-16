@@ -25,7 +25,7 @@ const throttled = <T>(url: string, task: () => Promise<T>): Promise<T> => {
   return run
 }
 
-const request = async <T>(url: string, init: RequestInit): Promise<T> => {
+const request = async <T>(url: string, init: RequestInit, read: (response: Response) => Promise<T> = (response) => response.json() as Promise<T>): Promise<T> => {
   for (let attempt = 1; ; attempt++) {
     try {
       const response = await fetch(url, {
@@ -35,7 +35,7 @@ const request = async <T>(url: string, init: RequestInit): Promise<T> => {
         signal: AbortSignal.timeout(TIMEOUT_MS),
       })
       if (!response.ok) throw new HttpError(response.status, url)
-      return await response.json() as T
+      return await read(response)
     } catch (error) {
       // Client errors (bad board id, missing posting) won't fix themselves on retry.
       const clientError = error instanceof HttpError && error.status >= 400 && error.status < 500
@@ -46,6 +46,9 @@ const request = async <T>(url: string, init: RequestInit): Promise<T> => {
 }
 
 export const fetchJson = <T>(url: string, init: RequestInit = {}) => throttled(url, () => request<T>(url, init))
+
+// HTML career pages (iCIMS has no public JSON API).
+export const fetchText = (url: string) => throttled(url, () => request(url, { headers: { Accept: 'text/html,application/xhtml+xml' } }, (response) => response.text()))
 
 // Like fetchJson, but a 4xx comes back as a status instead of an error: the link check needs to see 404s.
 export const probeJson = <T>(url: string, init: RequestInit = {}) => throttled(url, async (): Promise<{ status: number; data: T | null }> => {
