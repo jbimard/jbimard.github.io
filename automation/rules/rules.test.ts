@@ -85,9 +85,9 @@ test('no-sponsorship postings are kept with a label', () => {
   }, strongSponsor)
   if (result.kind !== 'kept') return
   assert.match(result.job.sponsorship_notes ?? '', /No sponsorship/)
-  assert.equal(result.breakdown.sponsor, 5) // strong 20 − 15
+  assert.equal(result.breakdown.sponsor, -5) // strong 25 − 30
   const unknown = evaluateKept({ description: 'We are unable to sponsor visas for this role.' })
-  if (unknown.kind === 'kept') assert.equal(unknown.breakdown.sponsor, -5) // none on record 10 − 15
+  if (unknown.kind === 'kept') assert.equal(unknown.breakdown.sponsor, -25) // none on record 5 − 30
 })
 
 test('Simplify sponsorship labels feed the same flags', () => {
@@ -173,9 +173,9 @@ test('score adds up to the breakdown and maps to priority', () => {
   const result = evaluateKept({ salaryText: '$130,000 - $150,000' }, strongSponsor)
   if (result.kind !== 'kept') return
   const { role, sponsor, level, location, pay } = result.breakdown
-  assert.deepEqual({ role, sponsor, level, location, pay }, { role: 30, sponsor: 20, level: 15, location: 15, pay: 15 })
+  assert.deepEqual({ role, sponsor, level, location, pay }, { role: 30, sponsor: 25, level: 15, location: 15, pay: 15 })
   assert.equal(result.breakdown.fit, 1)
-  assert.equal(result.job.match_score, 95)
+  assert.equal(result.job.match_score, 100)
   assert.equal(result.job.priority, 'High')
   // Discovery only fills the queue; the daily batch (or "Next batch") moves rows to Found.
   assert.equal(result.job.status, 'Queued')
