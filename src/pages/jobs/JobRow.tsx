@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { buildChatGptPrompt, buildClaudePrompt, copyToClipboard } from './prompts'
-import { PRIORITY_OPTIONS, STATUS_OPTIONS, type Job, type JobPriority, type JobStatus, type JobUpdate } from './types'
+import { PRIORITY_OPTIONS, PIPELINE_STATUS_OPTIONS, type Job, type JobPriority, type JobStatus, type JobUpdate } from './types'
 
 type JobRowProps = {
   job: Job
@@ -94,7 +94,7 @@ const JobRow = ({ job, onEdit, onArchive, onUpdate }: JobRowProps) => {
             onBlur={() => setEditingStatus(false)}
             className="w-full min-w-36 rounded border border-slate-300 bg-white px-2 py-1 text-xs"
           >
-            {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
+            {PIPELINE_STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
           </select>
         ) : (
           <button type="button" onClick={() => setEditingStatus(true)}>

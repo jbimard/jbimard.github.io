@@ -4,7 +4,7 @@ import {
   EMPTY_JOB_VALUES,
   JOB_TYPE_OPTIONS,
   PRIORITY_OPTIONS,
-  STATUS_OPTIONS,
+  PIPELINE_STATUS_OPTIONS,
   WORK_MODE_OPTIONS,
   type Job,
   type JobDraft,
@@ -199,7 +199,7 @@ const JobFormDrawer = ({ job, userId, onClose, onCreate, onUpdate, onDelete }: J
             <label className="block text-sm font-medium text-slate-700">
               Status
               <select value={values.status} onChange={(event) => setValue('status', event.target.value as JobFormValues['status'])} className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-                {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
+                {PIPELINE_STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
               </select>
             </label>
             <label className="block text-sm font-medium text-slate-700">

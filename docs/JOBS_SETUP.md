@@ -33,7 +33,7 @@ supabase db push                            # applies supabase/migrations/*.sql 
 
 `supabase login` and `supabase link` should be run by you in your own terminal — they're interactive/credentialed steps. Alternatively, you can skip the CLI and paste the migration file's contents into the Supabase dashboard's SQL Editor and run it once; the effect is identical.
 
-The jobs schema uses `role_title` for the role name and `job_link` for the posting URL. It also tracks optional `start_date`, `graduation_requirement`, `e_verify_notes`, `cover_letter_status`, and `recruiter_contact` fields. Valid statuses are Found, Fit Check, Tailoring, Ready to Apply, Applied, Follow-Up, Interview, Offer, Rejected, and Closed. Valid job types are New Grad, Early Career, Rotational Program, Internship, Part-Time, and Other.
+The jobs schema uses `role_title` for the role name and `job_link` for the posting URL. It also tracks optional `start_date`, `graduation_requirement`, `e_verify_notes`, `cover_letter_status`, and `recruiter_contact` fields. Valid statuses are Queued, Found, Fit Check, Tailoring, Ready to Apply, Applied, Follow-Up, Interview, Offer, Rejected, and Closed. `Queued` rows are hidden in the dashboard until a batch promotes them (section 10). Valid job types are New Grad, Early Career, Rotational Program, Internship, Part-Time, and Other.
 
 ## 3. Create Accounts Safely
 
@@ -149,7 +149,7 @@ curl -X POST "https://PROJECT_REF.supabase.co/functions/v1/job-intake" \
 
 For ChatGPT, Codex, or another agent, POST only valid JSON to the endpoint. The endpoint accepts either a raw JSON array or an object shaped like `{ "jobs": [...] }`. Each job object should use only these fields: `company`, `role_title`, `job_link`, `job_type`, `location`, `work_mode`, `start_date`, `graduation_requirement`, `sponsorship_notes`, `e_verify_notes`, `required_skills`, `match_score`, `status`, `priority`, `resume_version`, `cover_letter_status`, `recruiter_contact`, `date_found`, `date_applied`, `follow_up_date`, `job_description`, `notes`.
 
-Required fields are `company` and `role_title`. Use `null` for unknown optional fields. Dates must be `YYYY-MM-DD`. `match_score` must be `null` or a number from 0 to 100. `job_link` must be an `http` or `https` URL when provided. Valid statuses are Found, Fit Check, Tailoring, Ready to Apply, Applied, Follow-Up, Interview, Offer, Rejected, and Closed. Valid priorities are High, Medium, and Low. Valid job types are New Grad, Early Career, Rotational Program, Internship, Part-Time, and Other. Valid work modes are Remote, Hybrid, Onsite, and Unknown.
+Required fields are `company` and `role_title`. Use `null` for unknown optional fields. Dates must be `YYYY-MM-DD`. `match_score` must be `null` or a number from 0 to 100. `job_link` must be an `http` or `https` URL when provided. Valid statuses are Queued, Found, Fit Check, Tailoring, Ready to Apply, Applied, Follow-Up, Interview, Offer, Rejected, and Closed. `Queued` rows are hidden in the dashboard until a batch promotes them (section 10). Valid priorities are High, Medium, and Low. Valid job types are New Grad, Early Career, Rotational Program, Internship, Part-Time, and Other. Valid work modes are Remote, Hybrid, Onsite, and Unknown.
 
 Defaults when omitted or blank: `status` is `Fit Check`, `priority` is `Medium`, `work_mode` is `Unknown`, `date_found` is today's date, and `archived` is `false`. The automatic `status` default intentionally differs from Bulk Import's `Found` default so automated finds land in triage.
 
@@ -159,7 +159,20 @@ Automatic intake only adds new jobs. Everything else, including status changes, 
 
 ## 10. Daily Discovery (GitHub Actions)
 
-`automation/discover.ts` finds new postings every morning and sends them to the `job-intake` function above, so section 9 must be deployed first. It uses no AI: it applies fixed filter and scoring rules, and the jobs land in `/jobs` with status `Found`, ready for review.
+`automation/discover.ts` finds new postings every morning and sends them to the `job-intake` function above, so section 9 must be deployed first. It uses no AI: it applies fixed filter and scoring rules. Every job it keeps arrives as `Queued`, which `/jobs` doesn't show.
+
+**Daily batch:**
+
+- At **11:00 UTC** (about 7am Eastern, an hour after discovery), `pg_cron` runs `private.promote_daily_batches()`. For each user, it moves the best queued jobs to `Found`: the top 10 by `match_score` from the **whole queue**, so a strong job found yesterday can still beat today's. `date_found` is set to the day the job surfaced.
+- To see more, use **Next batch (N waiting)** in the dashboard toolbar. It calls `promote_next_batch()`, which promotes the next batch for the signed-in user only.
+- Queued jobs older than 21 days are never promoted, since postings close, and the daily run archives them.
+- Settings live in the `job_settings` table (Supabase table editor): `daily_batch_size` (default 10) and `queue_max_age_days` (default 21). No row means the defaults apply.
+
+**Deploying changes to the batch.** Do it in this order, so intake never rejects `Queued` rows:
+
+1. `supabase db push`
+2. `supabase functions deploy job-intake`
+3. `gh workflow enable discover-jobs.yml`, if the workflow is disabled
 
 **Where postings come from:**
 

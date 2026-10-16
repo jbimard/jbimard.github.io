@@ -47,7 +47,7 @@ const compareValues = (left: string | number | boolean | null, right: string | n
 }
 
 const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
-  const { jobs, loading, error, createJob, createJobsBulk, updateJob, archiveJob, deleteJob } = useJobs(session.user)
+  const { jobs, queuedCount, loading, error, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob } = useJobs(session.user)
   const [filters, setFilters] = useState<JobFilters>(initialFilters)
   const [sort, setSort] = useState<SortState>({ key: 'date_found', direction: 'desc' })
   const [editingJob, setEditingJob] = useState<Job | null>(null)
@@ -55,6 +55,7 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
   const [bulkImportOpen, setBulkImportOpen] = useState(false)
   const [archiveTarget, setArchiveTarget] = useState<Job | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [promoting, setPromoting] = useState(false)
 
   const visibleJobs = useMemo(() => {
     const search = filters.search.trim().toLowerCase()
@@ -109,6 +110,18 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
     }
   }
 
+  const handleNextBatch = async () => {
+    setActionError(null)
+    setPromoting(true)
+    try {
+      await promoteNextBatch()
+    } catch (promoteError) {
+      setActionError(promoteError instanceof Error ? promoteError.message : 'Unable to load the next batch.')
+    } finally {
+      setPromoting(false)
+    }
+  }
+
   const handleUpdate = async (id: string, patch: JobUpdate) => {
     setActionError(null)
     try {
@@ -139,6 +152,9 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
           onFiltersChange={setFilters}
           onAddJob={openCreate}
           onBulkImport={() => setBulkImportOpen(true)}
+          queuedCount={queuedCount}
+          promoting={promoting}
+          onNextBatch={() => void handleNextBatch()}
         />
 
         {(error || actionError) && (

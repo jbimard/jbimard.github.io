@@ -65,7 +65,8 @@ export type IntakeJob = {
   role_title: string
   location: string | null
   job_link: string
-  status: 'Found'
+  // Hidden in /jobs until the daily batch or "Next batch" promotes it to Found.
+  status: 'Queued'
   priority: 'High' | 'Medium' | 'Low'
   job_type: 'New Grad' | 'Rotational Program' | 'Internship' | 'Other'
   work_mode: 'Remote' | 'Hybrid' | 'Onsite' | 'Unknown'

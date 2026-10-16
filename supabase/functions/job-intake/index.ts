@@ -32,6 +32,8 @@ const emptyResult = () => ({
   possible_duplicates: [],
 })
 
+const EXISTING_PAGE_SIZE = 1000
+
 const normalizeUrl = (value: string | null) => value?.trim() ?? ''
 
 const companyRoleKey = (company: string | null, roleTitle: string | null) => (
@@ -97,18 +99,25 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    const { data: existingJobs, error: existingError } = await supabase
-      .from('jobs')
-      .select('job_link, company, role_title')
-      .eq('user_id', userId)
-
-    if (existingError) throw existingError
+    // Paged: PostgREST returns at most max_rows (1000) per request, and the queue keeps every job ever found.
+    const existingJobs: Array<{ job_link: string | null; company: string | null; role_title: string | null }> = []
+    for (let from = 0; ; from += EXISTING_PAGE_SIZE) {
+      const { data, error: existingError } = await supabase
+        .from('jobs')
+        .select('job_link, company, role_title')
+        .eq('user_id', userId)
+        .order('id')
+        .range(from, from + EXISTING_PAGE_SIZE - 1)
+      if (existingError) throw existingError
+      existingJobs.push(...(data ?? []))
+      if ((data ?? []).length < EXISTING_PAGE_SIZE) break
+    }
 
     const existingLinks = new Set(
-      (existingJobs ?? []).map((job) => normalizeUrl(job.job_link)).filter((link) => link !== ''),
+      existingJobs.map((job) => normalizeUrl(job.job_link)).filter((link) => link !== ''),
     )
     const existingCompanyRoles = new Set(
-      (existingJobs ?? []).map((job) => companyRoleKey(job.company, job.role_title)),
+      existingJobs.map((job) => companyRoleKey(job.company, job.role_title)),
     )
     const batchLinks = new Set<string>()
 

@@ -10,10 +10,10 @@ Work through the steps in order. Update the status column as each step lands, an
 
 | # | Step | Status |
 |---|------|--------|
-| 1 | Ship daily discovery | Done — PR #6 merged, secrets set, 1-job test inserted OK. **Workflow paused** until 1b: re-enable with `gh workflow enable discover-jobs.yml` |
-| 2a | Real H-1B sponsor data (USCIS) | Done — USCIS FY2024–FY2026 (Q3) data in `automation/data/h1b-sponsors.json`; workflow still paused |
-| 1b | Daily batch of 10 + "Next batch" button | Not started — **next**; **finish by re-enabling the workflow** |
-| 3 | Claude screening + preparation (incl. ATS-optimized resumes, Resume check, resume preview + ATS score in dashboard), review queue | Not started — after 1b |
+| 1 | Ship daily discovery | Done — PR #6 merged, secrets set, 1-job test inserted OK. Workflow re-enabled at the end of 1b |
+| 2a | Real H-1B sponsor data (USCIS) | Done — PR #8; USCIS FY2024–FY2026 (Q3) data in `automation/data/h1b-sponsors.json` |
+| 1b | Daily batch of 10 + "Next batch" button | Done — `Queued` status, 11:00 UTC batch via `pg_cron`, "Next batch" button; migration + intake deployed and **workflow re-enabled** |
+| 3 | Claude screening + preparation (incl. ATS-optimized resumes, Resume check, resume preview + ATS score in dashboard), review queue | Not started — **next** |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
@@ -36,7 +36,7 @@ The work: `automation/` (the script), `.github/workflows/discover-jobs.yml` (the
 3. Go to Actions → Daily job discovery → Run workflow (not dry run). About 50 jobs should land in `/jobs` as `Found`. A second run should insert 0.
 4. Review them for a few days: archive the wrong ones and note any patterns. Use that to tune `automation/config/profile.json`.
 
-## 1b. Daily batch of 10 + "Next batch" button
+## 1b. Daily batch of 10 + "Next batch" button (done)
 
 **Goal:** each morning `/jobs` shows only the **best 10 new jobs**, not every match. When those are reviewed and more are wanted, a **"Next batch"** button shows the next 10 best.
 
@@ -221,3 +221,10 @@ Settled; don't reopen without a new reason.
     - Names that differ completely go in `h1bNames` in `companies.json`.
   - USCIS blocks scripted downloads (Akamai 403), so the export is downloaded by hand once a year. Only the trimmed JSON (about 2 MB, public data) is committed.
   - Step 2a did not re-enable the workflow; that still happens at the end of 1b.
+- **Daily batch (2026-10-16, step 1b):**
+  - Discovery sends every kept job as `Queued`. `/jobs` doesn't load queued rows; it only shows their count on the "Next batch (N waiting)" button.
+  - `pg_cron` promotes the best `daily_batch_size` (default 10) at 11:00 UTC, an hour after discovery, ranked by `match_score` from the **whole queue** and oldest first on ties. Internships compete in the same ranking; their own slots still apply when discovery fills the queue.
+  - On promotion `date_found` becomes the day the job surfaced (Eastern time); `created_at` keeps the day it was found.
+  - Queued rows older than `queue_max_age_days` (default 21) are never promoted and are archived by the daily run.
+  - Both paths share one function, `private.promote_queued`. The button calls `public.promote_next_batch()`, a `security definer` function scoped by `auth.uid()` and executable only by signed-in users. It does the same job as the RLS-only approach first planned, and still needs no new token or Edge Function.
+  - `job-intake` now reads existing rows in pages of 1000 (the PostgREST `max_rows` limit), so duplicate checks still work once the queue grows past 1000 rows.

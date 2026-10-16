@@ -205,7 +205,7 @@ const main = async () => {
       `USCIS sponsor tier: strong ${sponsorTiers.strong} · some ${sponsorTiers.some} · rare ${sponsorTiers.rare} · none on record ${sponsorTiers.none}`,
       intake ? `Intake: inserted **${intake.inserted}**, skipped duplicates ${intake.skipped}, invalid ${intake.invalid}` : '',
       failed.length > 0 ? `\n**Failed sources:** ${failed.map((stat) => stat.source).join(', ')}` : '',
-      'Review the new rows in /jobs (status: Found).',
+      'New rows are queued; the best batch moves to /jobs (status: Found) at 11:00 UTC, and "Next batch" brings more.',
     ]
     await appendFile(process.env.GITHUB_STEP_SUMMARY, `${lines.filter(Boolean).join('\n')}\n`)
   }

@@ -1,4 +1,7 @@
+// 'Queued' rows come from discovery and stay hidden until a batch promotes them to 'Found'
+// (see supabase/migrations/20261016000000_daily_job_batch.sql).
 export const STATUS_OPTIONS = [
+  'Queued',
   'Found',
   'Fit Check',
   'Tailoring',
@@ -10,6 +13,9 @@ export const STATUS_OPTIONS = [
   'Rejected',
   'Closed',
 ] as const
+
+// Statuses the dashboard shows and lets you pick; Queued is managed by the batch functions.
+export const PIPELINE_STATUS_OPTIONS = STATUS_OPTIONS.filter((status) => status !== 'Queued')
 
 export const PRIORITY_OPTIONS = ['High', 'Medium', 'Low'] as const
 export const JOB_TYPE_OPTIONS = ['New Grad', 'Early Career', 'Rotational Program', 'Internship', 'Part-Time', 'Other'] as const
