@@ -17,8 +17,8 @@ Work through the steps in order. Update the status column as each step lands, an
 | 1c | Closed-posting check: archive jobs whose posting is gone | Live — PR #14; deployed and secrets set 2026-10-16; workflow dry run checked 71 postings (67 open, 4 couldn't verify) |
 | 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Live — PR #15; deployed, base file uploaded, routine "Job preparation" daily at 14:00 UTC in its own environment (first run 2026-10-16: OK, 0 jobs) |
 | 3c-A | Resume check, preview, ATS score, Approve / Regenerate | Done — PR #16; deployed and the inventory uploaded 2026-10-16. Confirm on the next preparation run that new packets carry no "no inventory" flag |
-| 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | In progress — **B1** (editing, re-render, read-aloud) on `feat/packet-edit`; **B2** (voice memory in the routine) next |
-| 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | In progress — on `feat/packet-edit` with B1 |
+| 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | In progress — **B1** done (PR #19, deployed; one-page resume, stale-preview fix and Run now link in #20–#22). **B2** (voice memory in the routine) next |
+| 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | Done — with B1 (PR #19); graduation-window fit and ATS from posting text in #22–#23; `inventory.not_yet` gap list in #24. First full test (Marvell): ATS 59 → 77 after the base gained AWS, MySQL, Java and GitHub Actions; packet approved 2026-10-16 |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
