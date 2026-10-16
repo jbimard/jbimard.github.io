@@ -19,6 +19,12 @@
   { "name": "NVIDIA", "ats": "workday", "board": "nvidia/wd5/NVIDIAExternalCareerSite" },
   { "name": "Workday", "ats": "workday", "board": "workday/wd5/Workday" },
   { "name": "Hewlett Packard Enterprise", "ats": "workday", "board": "hpe/wd5/Jobsathpe" },
+  { "name": "GSK", "ats": "workday", "board": "gsk/wd5/GSKCareers", "h1bNames": ["GSK Solutions Inc", "GlaxoSmithKline LLC"] },
+  { "name": "Biogen", "ats": "workday", "board": "biibhr/wd3/external" },
+  { "name": "Merck", "ats": "workday", "board": "msd/wd5/SearchJobs", "h1bNames": ["Merck Sharp and Dohme LLC", "Merck Sharp Dohme LLC"] },
+  { "name": "Wolfspeed", "ats": "workday", "board": "cree/wd108/EXT" },
+  { "name": "Syneos Health", "ats": "workday", "board": "syneoshealth/wd12/Syneos_Health_External_Site" },
+  { "name": "Cloud Software Group", "ats": "workday", "board": "tibco/wd5/Cloud_Software_Group", "h1bNames": ["Cloud Software Group Inc", "Cloud Software Group Holdings Inc", "Citrix Systems Inc"] },
 
   { "name": "Pendo", "ats": "greenhouse", "board": "pendo" },
   { "name": "Epic Games", "ats": "greenhouse", "board": "epicgames" },
@@ -42,10 +48,12 @@
   { "name": "Abnormal Security", "ats": "greenhouse", "board": "abnormalsecurity" },
   { "name": "Chainguard", "ats": "greenhouse", "board": "chainguard" },
   { "name": "Squarespace", "ats": "greenhouse", "board": "squarespace" },
+  { "name": "Rithum", "ats": "greenhouse", "board": "rithum" },
 
   { "name": "Palantir", "ats": "lever", "board": "palantir" },
   { "name": "Spotify", "ats": "lever", "board": "spotify" },
   { "name": "Wealthfront", "ats": "lever", "board": "wealthfront" },
+  { "name": "Spreedly", "ats": "lever", "board": "spreedly" },
 
   { "name": "Ramp", "ats": "ashby", "board": "ramp" },
   { "name": "Plaid", "ats": "ashby", "board": "plaid" },

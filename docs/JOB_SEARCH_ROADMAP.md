@@ -19,7 +19,7 @@ Work through the steps in order. Update the status column as each step lands, an
 | 3c-A | Resume check, preview, ATS score, Approve / Regenerate | Done — PR #16; deployed and the inventory uploaded 2026-10-16. Confirm on the next preparation run that new packets carry no "no inventory" flag |
 | 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | Done — **B1** PR #19 (plus #20–#22); **B2** voice memory PR #26, deployed 2026-10-16: pull returns his last 40 edits, `ROUTINE.md` follows them |
 | 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | In progress — on `feat/packet-edit` with B1 |
-| 2b | More local companies (new board adapters) | Not started — after 3 |
+| 2b | More local companies (new board adapters) | In progress — part 1: 8 Triangle companies on existing adapters (GSK, Biogen, Merck, Wolfspeed, Syneos, Cloud Software Group, Rithum, Spreedly); next an iCIMS adapter for SAS and First Citizens |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
 
@@ -106,6 +106,12 @@ The work: `automation/` (the script), `.github/workflows/discover-jobs.yml` (the
   - **Public and universities:** NC State, Duke University, UNC-Chapel Hill. Note that universities are cap-exempt for H-1B, which matters for his visa.
 
   The list is a starting point, not checked yet. Each company's ATS decides whether it needs a new adapter (Workday, SmartRecruiters, iCIMS, Oracle). Verify each one's careers board before adding it.
+- **Checked 2026-10-16 (2b, part 1):**
+  - **Added** (boards answer the existing adapters): GSK, Biogen, Merck, Wolfspeed, Syneos Health, Cloud Software Group (Citrix) on Workday; Rithum (formerly CommerceHub) on Greenhouse; Spreedly on Lever. H-1B names set where USCIS spells them differently (GSK Solutions / GlaxoSmithKline, Merck Sharp and Dohme, Citrix Systems). The first dry run returned postings from GSK 11, Merck 16, Wolfspeed 14, Rithum 8, Spreedly 6; Syneos and Cloud Software Group had none in his lanes that day. Biogen's `wd3` host didn't resolve from the local machine; confirm on the next GitHub Actions run.
+  - **Need a new adapter:** iCIMS — SAS, First Citizens Bank; Avature — MetLife; Eightfold — NetApp; SuccessFactors — Duke University and Duke Health, Novo Nordisk; Phenom — Siemens Healthineers, ABB.
+  - **Their own systems (skip or Simplify only):** IBM, Google, Apple, UBS.
+  - **Not found yet:** Lenovo (Workday tenant exists, site name unknown), Eli Lilly (Workday search refuses requests), Eaton, John Deere, UNC Health, Jaggaer, Relias, Brightly, NC State and UNC-Chapel Hill (PeopleAdmin).
+  - **Next:** an iCIMS adapter. SAS (Cary) and First Citizens (Raleigh) are two of the largest local tech employers.
 - **Optional, later:** salary data from the free DOL LCA disclosure files, to see what each company pays at entry level (the H-1B lottery favors higher wages).
 
 ## 3. Claude screening and preparation
