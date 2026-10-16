@@ -362,3 +362,9 @@ Settled; don't reopen without a new reason.
   - **Gap 2, Certifications section:** Workday's parsed profile has a certifications field. Earned inventory certifications now render as their own section, locked like education. From the portfolio, only the Mastercard Cybersecurity Job Simulation (Forage, 2025-01-06) is listed. He left out Python Data Structures (Coursera, 2022) as too old.
   - **Gap 3, PDF copies:** text-based PDFs rendered with `pdf-lib` in standard fonts, in the same order as the .docx. The .docx stays the primary file; the PDF is for PDF-only forms and the OpenResume parser test.
 - **Relocation (2026-10-16):** resumes say he's open to relocation. It's an optional `contact.relocation` in the private base file ("Open to relocation"), shown right after the location on the resume and cover-letter contact line, and locked like the rest of the contact details. The routine may also mention it in `anything_else` when the job isn't in his area.
+- **One-page resume and style (2026-10-16, after the first real packet):** the Marvell test packet ran two pages, with a first-person summary, a weak lead bullet, Claude Code in four lines and a project that repeated the internship.
+  - **One page is red:** `check.ts` estimates the height with Helvetica widths and the renderer's exact word wrap (a Deno test keeps it within one line of the real PDF). `job-prep` and `packet-edit` also measure the real PDF.
+  - **New yellow rules:** `first_person`, `weak_lead`, `tool_overuse` (3 or more resume lines) and `duplicate_project`. The summary limit drops from 700 to 360 characters.
+  - **Stale preview fixed:** a regenerated packet reuses the same path, so the browser showed the cached old file (the old TA title). Uploads now use `cacheControl: '0'`, and the preview fetches through a fresh signed link with `no-store`.
+  - **The .docx font is now Arial** instead of Calibri, which the browser preview didn't have.
+

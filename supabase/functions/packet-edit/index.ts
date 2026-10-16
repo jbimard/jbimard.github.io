@@ -8,7 +8,7 @@ import { applyEdit } from '../_shared/edit.ts'
 import { ANSWER_QUESTIONS, buildVocabulary, resolveResume, splitSkills, validateBase, validatePacket, type BaseResumes, type Packet } from '../_shared/packet.ts'
 import { checkPacket, type Flag } from '../_shared/check.ts'
 import { fileStem, renderCoverLetter, renderResume } from '../_shared/render.ts'
-import { renderCoverLetterPdf, renderResumePdf } from '../_shared/render_pdf.ts'
+import { PAGE_HEIGHT, measureResumePdf, renderCoverLetterPdf, renderResumePdf } from '../_shared/render_pdf.ts'
 
 const BUCKET = 'application-packets'
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -79,6 +79,10 @@ Deno.serve(async (req) => {
     if (check.status === 'blocked') {
       return jsonResponse({ error: 'The edit was not saved: it has red flags.', flags: check.flags.filter((flag) => flag.severity === 'red') }, 422)
     }
+    const { pages, used } = await measureResumePdf(resume)
+    if (pages > 1) {
+      return jsonResponse({ error: `The edit was not saved: the resume would run ${pages} pages, about ${Math.ceil((used - PAGE_HEIGHT) / 12.6)} lines too long. Shorten or remove a bullet.` }, 422)
+    }
 
     // New files (.docx and .pdf) under r<revision>/ with the same names, so the file sent to employers is never called "-r2".
     const revision = row.revision + 1
@@ -96,7 +100,7 @@ Deno.serve(async (req) => {
       [pdfPath(letterPath), await renderCoverLetterPdf(base.contact, job, packet.cover_letter.paragraphs, now), PDF],
     ]
     for (const [path, bytes, type] of files) {
-      const { error } = await storage.upload(path, new Blob([bytes], { type }), { upsert: true, contentType: type })
+      const { error } = await storage.upload(path, new Blob([bytes], { type }), { upsert: true, contentType: type, cacheControl: '0' })
       if (error) throw error
     }
 

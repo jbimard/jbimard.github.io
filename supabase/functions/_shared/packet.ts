@@ -17,7 +17,8 @@ export const ANSWER_QUESTIONS: Record<(typeof ANSWER_KEYS)[number], string> = {
 }
 
 export const LIMITS = {
-  summary: 700,
+  // About three lines on the one-page resume.
+  summary: 360,
   bullet: 300,
   bulletsPerEntry: 6,
   experience: 4,

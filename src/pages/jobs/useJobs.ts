@@ -156,13 +156,16 @@ export function useJobs(user: User | undefined) {
     return data as { unchanged?: boolean; revision: number; check_status?: ApplicationPacket['check_status']; changed_lines?: number; voice_saved?: boolean }
   }
 
-  // The stored .docx itself, for the in-browser preview.
+  // The stored .docx itself, for the in-browser preview. A regenerated packet reuses the same path, so fetch through a
+  // fresh signed link and skip the browser cache; otherwise the preview can show the previous packet's file.
   const packetFile = async (path: string) => {
     if (!supabase) throw new Error('Supabase is not configured.')
 
-    const { data, error: downloadError } = await supabase.storage.from(PACKET_BUCKET).download(path)
-    if (downloadError) throw downloadError
-    return data
+    const { data, error: signError } = await supabase.storage.from(PACKET_BUCKET).createSignedUrl(path, 60)
+    if (signError) throw signError
+    const response = await fetch(data.signedUrl, { cache: 'no-store' })
+    if (!response.ok) throw new Error(`Unable to load the file (HTTP ${response.status}).`)
+    return response.blob()
   }
 
   return { jobs, queuedCount, packets, packetFileUrl, packetFile, approvePacket, regeneratePacket, editPacket, loading, error, reload: loadJobs, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob }

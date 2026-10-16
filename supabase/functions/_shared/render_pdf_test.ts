@@ -38,3 +38,15 @@ Deno.test('resume and cover letter PDFs render, wrap onto a second page, and sur
     await Deno.writeFile(`${out}/letter.pdf`, letter)
   }
 })
+
+Deno.test("check.ts's one-page estimate matches the rendered PDF within a line", async () => {
+  const { estimateResumeHeight } = await import('./check.ts')
+  const { measureResumePdf } = await import('./render_pdf.ts')
+  for (const count of [2, 5, 8]) {
+    const sized = { ...resume, experience: [{ ...resume.experience[0], bullets: resume.experience[0].bullets.slice(0, count) }] }
+    const { pages, used } = await measureResumePdf(sized)
+    assert(pages === 1, `${count} bullets fit on one page`)
+    const diff = Math.abs(estimateResumeHeight(sized) - used)
+    assert(diff < 12.6, `estimate is off by ${diff.toFixed(1)} points with ${count} bullets`)
+  }
+})

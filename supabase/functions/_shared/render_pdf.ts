@@ -3,11 +3,15 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'npm:pdf-lib@1.17.1'
 import { contactLine, letterDate } from './render.ts'
 import type { BaseResumes, ResolvedEntry, ResolvedResume } from './packet.ts'
+import { LAYOUT } from './check.ts'
 
 const PAGE: [number, number] = [612, 792] // US Letter, points
 const MARGIN = { top: 36, bottom: 36, side: 40 }
-const BODY = 10.5
-const LEADING = 1.25
+// Sizes and spacing shared with check.ts's one-page estimate.
+const BODY = LAYOUT.body
+const LEADING = LAYOUT.leading
+// Usable height of one page, in points.
+export const PAGE_HEIGHT = PAGE[1] - MARGIN.top - MARGIN.bottom
 
 // Standard fonts only cover WinAnsi; anything else (arrows, emoji) would make pdf-lib throw.
 const clean = (text: string) => text
@@ -124,7 +128,7 @@ const entry = (w: Writer, item: ResolvedEntry) => {
   for (const text of item.bullets) w.bullet(text)
 }
 
-export const renderResumePdf = async (resume: ResolvedResume): Promise<Uint8Array<ArrayBuffer>> => {
+const drawResume = async (resume: ResolvedResume) => {
   const w = await open(`${resume.contact.name} Resume`, resume.contact.name)
   w.paragraph([{ text: resume.contact.name, font: 'bold' }], { size: 16, align: 'center' })
   w.paragraph([{ text: contactLine(resume.contact), font: 'regular' }], { align: 'center' })
@@ -148,7 +152,17 @@ export const renderResumePdf = async (resume: ResolvedResume): Promise<Uint8Arra
     w.heading('Certifications')
     for (const cert of resume.certifications) w.bullet(cert)
   }
-  return new Uint8Array(await w.pdf.save())
+  return w
+}
+
+export const renderResumePdf = async (resume: ResolvedResume): Promise<Uint8Array<ArrayBuffer>> => new Uint8Array(await (await drawResume(resume)).pdf.save())
+
+// How much the resume fills: page count, and total height used in points (a full first page is PAGE_HEIGHT).
+// job-prep and packet-edit refuse anything over one page.
+export const measureResumePdf = async (resume: ResolvedResume) => {
+  const w = await drawResume(resume)
+  const pages = w.pdf.getPageCount()
+  return { pages, used: (pages - 1) * PAGE_HEIGHT + (PAGE[1] - MARGIN.top - w.y) }
 }
 
 export const renderCoverLetterPdf = async (

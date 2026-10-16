@@ -415,6 +415,14 @@ Until the inventory is uploaded, every packet carries one yellow "no inventory" 
 - **PDF copies:** each packet also gets a text-based PDF of the resume and the cover letter (**Resume PDF**, **Cover letter PDF**). Same content and order as the .docx, in standard fonts, with no images. Use them on forms that take PDF only.
 - **Parser test (optional):** open [open-resume.com/resume-parser](https://www.open-resume.com/resume-parser), which runs in your browser and uploads nothing, and drop in a Resume PDF. Check that your name, contact details, each job's title, company and dates, education and skills come out in the right fields. When you apply in step 5, Workday's and Greenhouse's own autofill is the real version of the same test.
 
+### One page and resume style
+
+- **One page is enforced.** The Resume check estimates the length from the same layout as the PDF and blocks anything longer (red). `job-prep` and `packet-edit` also measure the rendered PDF and refuse a second page. An edit that would push the resume onto page 2 is refused with how many lines to cut.
+- **Style flags (yellow):** "I", "my" or "me" in the summary or a bullet; a weak first bullet ("Used…", "Assisted…"); a tool named in three or more resume lines; a project from the same employer as an experience entry.
+- **Summary:** at most 360 characters, about 3 lines.
+- **Previews are never stale:** packet files are stored with caching off, and the Resume tab fetches a fresh copy. Before this, a regenerated packet could show the previous file.
+- **Font:** the .docx uses Arial, which renders the same in Word, in the browser preview and in the PDF's Helvetica metrics.
+
 ### Editing a packet (step 3c-B)
 
 The **Edit** tab of the Packet panel lets you change the wording of any bullet, the summary, each cover-letter paragraph and each answer. You can also move bullets up or down, or remove them (**Restore** brings one back). Titles, employers, dates, skills, coursework and your work-authorization answers stay locked. To add bullets or entries, use **Regenerate**.

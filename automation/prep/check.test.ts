@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { test } from 'node:test'
-import { checkPacket, postingKeywords, wordDiff, type PostingFields } from './check.ts'
+import { LAYOUT, checkPacket, estimateResumeHeight, postingKeywords, wordDiff, type PostingFields } from './check.ts'
 import { numbersIn, resolveResume, type BaseResumes, type Inventory, type Packet } from './packet.ts'
 import { base as fixtureBase, packet as fixturePacket } from './test-fixtures.ts'
 
@@ -170,3 +170,39 @@ test('read-aloud pass: spell an acronym out once, and not two per line', () => {
   // "Splunk (SIEM)" names a product, it doesn't spell anything out.
   assert.ok(!rules(run((p) => { p.answers.why_role = 'I used Splunk (SIEM) and Azure (cloud).' })).some((rule) => rule.includes('expansion')))
 })
+
+test('one page: a resume the estimate puts past one page is red', () => {
+  const base = withInventory()
+  assert.ok(estimateResumeHeight(resolveResume(fixturePacket() as Packet, base)) < LAYOUT.pageHeight)
+  // Six entries of three two-line bullets don't fit.
+  const p2 = fixturePacket() as Packet & { experience: Array<{ id: string; bullets: Array<{ from: string; text: string }> }> }
+  const b2 = withInventory()
+  const job = b2.versions['Cloud Security'].experience[0]
+  const text = 'Provisioned identity infrastructure as Terraform across dev, staging and production environments, keeping privileged resources separate.'
+  for (let i = 2; i <= 6; i++) {
+    b2.versions['Cloud Security'].experience.push({ ...job, id: `acme-${i}`, bullets: [{ id: `cloudsec:acme-${i}:1`, text }, { id: `cloudsec:acme-${i}:2`, text }, { id: `cloudsec:acme-${i}:3`, text }] })
+    p2.experience.push({ id: `acme-${i}`, bullets: [1, 2, 3].map((n) => ({ from: `cloudsec:acme-${i}:${n}`, text })) })
+  }
+  const over = checkPacket(p2, b2, resolveResume(p2, b2), noJob)
+  assert.ok(over.flags.some((flag) => flag.rule === 'over_one_page' && flag.severity === 'red'))
+  assert.equal(over.status, 'blocked')
+})
+
+test('resume style: no first person, a strong first bullet, a tool named in at most two lines, no repeated project', () => {
+  assert.ok(rules(run((p) => { p.summary.text = 'I build identity tooling with Azure and Terraform.' })).includes('yellow:first_person'))
+  assert.ok(rules(run((p) => { p.summary.text = 'Engineer whose work is my focus.' })).includes('yellow:first_person'))
+  // Cover letters and answers are first person by nature.
+  assert.ok(!rules(run((p) => { p.answers.why_role = 'I like identity work.' })).includes('yellow:first_person'))
+  assert.ok(rules(run((p) => { p.experience[0].bullets[0].text = 'Used Terraform to provision identity infrastructure across dev, staging and production environments.' })).includes('yellow:weak_lead'))
+  const overuse = run((p) => { p.summary.text = 'Security-minded cloud engineer who builds identity tooling with Terraform.' })
+  assert.ok(overuse.flags.some((flag) => flag.rule === 'tool_overuse' && flag.message.startsWith('"Terraform"')) === false, 'two lines is fine')
+  const three = run((p) => {
+    p.summary.text = 'Cloud engineer who writes Terraform.'
+    p.projects[0].bullets[0].text = 'Analyzed 475+ security events across 44 attack sessions using Splunk, deployed with Terraform.'
+  })
+  assert.ok(three.flags.some((flag) => flag.rule === 'tool_overuse' && flag.message.startsWith('"Terraform"')))
+  const base = withInventory()
+  base.versions['Cloud Security'].projects[0].context = 'Acme'
+  assert.ok(rules(run(() => {}, base)).includes('yellow:duplicate_project'))
+})
+

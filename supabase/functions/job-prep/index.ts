@@ -6,7 +6,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { ANSWER_QUESTIONS, buildVocabulary, resolveResume, splitSkills, validateBase, validatePacket, type BaseResumes } from '../_shared/packet.ts'
 import { checkPacket } from '../_shared/check.ts'
 import { fileStem, renderCoverLetter, renderResume } from '../_shared/render.ts'
-import { renderCoverLetterPdf, renderResumePdf } from '../_shared/render_pdf.ts'
+import { PAGE_HEIGHT, measureResumePdf, renderCoverLetterPdf, renderResumePdf } from '../_shared/render_pdf.ts'
 
 const BUCKET = 'application-packets'
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -120,6 +120,12 @@ Deno.serve(async (req) => {
       const resume = resolveResume(packet, base)
       // Resume check (step 3c): verdict, flags, side-by-side comparisons and the ATS estimate, stored with the packet.
       const check = checkPacket(packet, base, resume, job)
+      // One page, measured on the real PDF (the check's estimate is what the routine sees first).
+      const { pages, used } = await measureResumePdf(resume)
+      if (pages > 1) {
+        invalid.push({ index, errors: [`The resume renders to ${pages} pages, about ${Math.ceil((used - PAGE_HEIGHT) / 12.6)} lines too long; drop or shorten bullets.`] })
+        continue
+      }
       const stem = fileStem(base.contact.name)
       const folder = `${userId}/${job.id}`
       const resumePath = `${folder}/${stem}-Resume-${fileStem(job.company)}.docx`
@@ -132,7 +138,7 @@ Deno.serve(async (req) => {
         [pdfPath(letterPath), await renderCoverLetterPdf(base.contact, job, packet.cover_letter.paragraphs, now), PDF],
       ]
       for (const [path, bytes, type] of files) {
-        const { error } = await storage.upload(path, new Blob([bytes], { type }), { upsert: true, contentType: type })
+        const { error } = await storage.upload(path, new Blob([bytes], { type }), { upsert: true, contentType: type, cacheControl: '0' })
         if (error) throw error
       }
 
