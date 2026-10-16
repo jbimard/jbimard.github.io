@@ -67,6 +67,14 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
     [jobs],
   )
 
+  // Archived this morning by the closed-posting check (see automation/links/check.ts).
+  const closedToday = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    return jobs.filter((job) => (
+      job.status === 'Closed' && job.archived && job.link_missing_count >= 2 && job.link_checked_at?.slice(0, 10) === today
+    )).length
+  }, [jobs])
+
   const visibleJobs = useMemo(() => {
     const search = filters.search.trim().toLowerCase()
 
@@ -167,6 +175,11 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
         </header>
 
         <SummaryBar jobs={jobs} />
+        {closedToday > 0 && (
+          <p className="text-sm text-slate-500">
+            {closedToday} closed posting{closedToday === 1 ? '' : 's'} archived today (see the Archived filter).
+          </p>
+        )}
         <nav className="grid w-full grid-cols-2 rounded-md border border-slate-300 bg-white p-1 text-sm sm:w-80">
           {(['pipeline', 'review'] as const).map((option) => (
             <button

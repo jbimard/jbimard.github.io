@@ -14,8 +14,8 @@ Work through the steps in order. Update the status column as each step lands, an
 | 2a | Real H-1B sponsor data (USCIS) | Done — PR #8; USCIS FY2024–FY2026 (Q3) data in `automation/data/h1b-sponsors.json` |
 | 1b | Daily batch of 10 + "Next batch" button | Done — PR #9, deployed 2026-10-16; `Queued` status, 11:00 UTC batch via `pg_cron`, "Next batch" button; migration + intake deployed and **workflow re-enabled** |
 | 3a | Claude screening + review queue | Done — `job-screening` function, routine instructions in `automation/screening/ROUTINE.md`, Review tab in `/jobs`. Live once the function is deployed and the routine is created (`docs/JOBS_SETUP.md` §11) |
-| 1c | Closed-posting check: archive jobs whose posting is gone | Not started — **next** (small; before 3b) |
-| 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Not started — after 1c |
+| 1c | Closed-posting check: archive jobs whose posting is gone | Done — PR #14; `automation/links/`, `job-link-check` function, runs in the discovery workflow. Live once deployed and the secrets are set (`docs/JOBS_SETUP.md` §12) |
+| 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Not started — **next** |
 | 3c | Resume check screen, resume preview + estimated ATS score in the dashboard | Not started — after 3b |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
@@ -58,7 +58,7 @@ The work: `automation/` (the script), `.github/workflows/discover-jobs.yml` (the
 - **Clear out stale rows** automatically, e.g. archive `Queued` rows older than about 21 days, since postings close.
 - **After step 3**, Claude re-ranks the queue before each promotion, so the 10 are chosen by real fit, not just the rule score.
 
-## 1c. Closed-posting check (next)
+## 1c. Closed-posting check (done)
 
 **Problem:** jobs wait in the queue, in Review, and in `Ready to Apply` for days or weeks, and postings close in the meantime. The 21-day stale rule (1b) is only a guess. A closed job shown again wastes review time, and 3b would waste effort tailoring for it.
 
@@ -272,3 +272,16 @@ Settled; don't reopen without a new reason.
   - The sponsorship check uses the USCIS data from 2a. Claude can correct a missed or wrong employer match (`source: "corrected"`) but never guesses one.
   - A clearance requirement is always a Skip (enforced by the validator).
   - The routine never changes the repo.
+- **Closed-posting check (2026-10-16, step 1c):**
+  - The checker fetches each board's list itself, one request per board, instead of reusing discovery's in-memory lists. Discovery's lists are filtered (Lever non-US, Workday search terms only, Simplify lookback window), so absence from them doesn't prove a posting closed. Cost is about one request per board plus a few confirmations.
+  - Signals (verified live in planning):
+    - **Greenhouse, Lever:** not in the board list *and* the posting returns 404. A wrong board name also returns 404, so if the list itself doesn't load, the result is "couldn't verify".
+    - **Ashby:** no per-posting API, and its posting pages return 200 even for made-up ids, so absence from a board list that loaded is the only signal. Unlisted (`isListed: false`) postings count as open.
+    - **Workday:** has no complete list. The posting's 404 counts only if the site's search still answers (a wrong site also returns 404), and `canApply: false` or `posted: false` counts as missing.
+    - **Simplify:** `active: false` counts as missing, used only for links that aren't on a supported board.
+    - **Other sites:** only 404/410 counts. Redirects aren't followed, and 403, 3xx, 5xx and timeouts count as "couldn't verify".
+  - **Two strikes, different UTC days:** a "missing" adds a strike only if the last check was on an earlier day, so re-running the workflow can't close anything. "Couldn't verify" keeps the count, and "open" resets it.
+  - **Statuses:** `Queued`, `Found`, `Fit Check` and `Ready to Apply` close (status `Closed`, archived, note). `Applied` and `Follow-Up` get the note once and nothing else. Later stages aren't checked.
+  - **Writes** go only through the `job-link-check` Edge Function with its own `JOB_LINK_CHECK_TOKEN`. Each update is guarded by the status it was read with, so a job moved in the dashboard meanwhile is left alone.
+  - `private.promote_queued` skips rows with `link_status = 'missing'` (the promotion guard).
+  - The check runs as a step in the discovery workflow after discovery, even if discovery failed, and is skipped quietly until its secrets are set.

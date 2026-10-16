@@ -16,7 +16,8 @@
     "sponsors:build": "node automation/scripts/build-sponsors.ts",
     "screening:pull": "node automation/screening/client.ts pull",
     "screening:push": "node automation/screening/client.ts push",
-    "screening:sponsor": "node automation/screening/client.ts sponsor"
+    "screening:sponsor": "node automation/screening/client.ts sponsor",
+    "links:check": "node automation/links/check.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.109.0",

@@ -31,6 +31,9 @@ export const stripTracking = (url: string) => {
   }
 }
 
+// How the same posting is recognised across sources and runs.
+export const linkKey = (url: string) => stripTracking(url).toLowerCase().replace(/\/+$/, '')
+
 // Simplify listings carry no description; enrich.ts fills it in afterwards where possible.
 export const fetchSimplify = async (profile: Profile): Promise<RawPosting[]> => {
   const cutoff = Date.now() / 1000 - profile.simplifyLookbackDays * 86_400
