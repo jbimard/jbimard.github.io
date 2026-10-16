@@ -13,6 +13,7 @@ import { fetchIcims } from './sources/icims.ts'
 import { fetchJibe } from './sources/jibe.ts'
 import { fetchLever } from './sources/lever.ts'
 import { fetchSimplify, linkKey } from './sources/simplify.ts'
+import { fetchSuccessFactors } from './sources/successfactors.ts'
 import { fetchWorkday } from './sources/workday.ts'
 import type { Company, IntakeJob, Profile, RawPosting, SponsorTier } from './types.ts'
 
@@ -45,6 +46,7 @@ const fetchCompany = (company: Company, profile: Profile) => {
     case 'workday': return fetchWorkday(company, profile)
     case 'icims': return fetchIcims(company, profile)
     case 'jibe': return fetchJibe(company, profile)
+    case 'successfactors': return fetchSuccessFactors(company, profile)
   }
 }
 
