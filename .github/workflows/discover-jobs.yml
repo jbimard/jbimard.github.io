@@ -9,6 +9,10 @@ on:
         description: "Fetch and score only; don't send anything to /jobs"
         type: boolean
         default: false
+      limit:
+        description: "Send only the top N jobs (blank = all)"
+        type: string
+        default: ""
 permissions:
   contents: read
 concurrency:
@@ -27,7 +31,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run discover:test
-      - run: npm run discover -- ${{ inputs.dry_run && '--dry-run' || '' }}
+      - run: npm run discover -- ${{ inputs.dry_run && '--dry-run' || '' }} ${{ inputs.limit && format('--limit={0}', inputs.limit) || '' }}
         env:
           JOB_INTAKE_URL: ${{ secrets.JOB_INTAKE_URL }}
           JOB_INTAKE_TOKEN: ${{ secrets.JOB_INTAKE_TOKEN }}
