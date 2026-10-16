@@ -89,13 +89,37 @@ export interface Job {
   updated_at: string
 }
 
-// Written by the job-prep Edge Function (automation/prep/packet.ts); read-only in the dashboard.
+// The packet as validated (automation/prep/packet.ts `Packet`, the fields an edit can reach).
+export type PacketEntry = { id: string; bullets: Array<{ from: string; text: string }> }
+export interface PacketContent {
+  summary: { text: string }
+  experience: PacketEntry[]
+  projects: PacketEntry[]
+  cover_letter: { paragraphs: string[] }
+  answers: Record<string, string>
+  // The posting's qualifications, judged one by one (Fit & Gap). Missing on older packets.
+  qualifications?: Array<{ text: string; kind: 'basic' | 'preferred'; met: boolean; evidence: string[]; note: string }>
+}
+// What the dashboard sends to packet-edit (automation/prep/edit.ts `PacketEdit`).
+export interface PacketEdit {
+  summary: string
+  experience: PacketEntry[]
+  projects: PacketEntry[]
+  cover_letter: string[]
+  answers: Record<string, string>
+}
+type ResolvedEntry = { heading: string; subheading: string | null; right: string | null; sources: Array<{ id: string; text: string }> }
+
+// Written by the job-prep and packet-edit Edge Functions; the dashboard edits it only through packet-edit.
 export interface ApplicationPacket {
   id: string
   job_id: string
   resume_version: 'Cloud' | 'Security' | 'Cloud Security'
   resume_path: string
   cover_letter_path: string
+  // PDF copies of the same files; null on packets prepared before PDFs existed.
+  resume_pdf_path: string | null
+  cover_letter_pdf_path: string | null
   cover_letter: string
   answers: Array<{ key: string; question: string; answer: string }>
   work_authorization: Array<{ question: string; answer: string }>
@@ -115,6 +139,22 @@ export interface ApplicationPacket {
   acknowledged_flags: string[]
   approved_at: string | null
   created_at: string
+  // Null for packets prepared before editing existed (step 3c-B); those need Regenerate to be editable.
+  packet: PacketContent | null
+  resume_content: { experience: ResolvedEntry[]; projects: ResolvedEntry[] }
+  revision: number
+  edited_at: string | null
+}
+
+// packet-edit refused the save: validator errors and/or red flags, shown next to the lines.
+export class PacketEditError extends Error {
+  errors: string[]
+  flags: ApplicationPacket['check_flags']
+  constructor(message: string, errors: string[] = [], flags: ApplicationPacket['check_flags'] = []) {
+    super(message)
+    this.errors = errors
+    this.flags = flags
+  }
 }
 
 export const CHECK_LABELS: Record<ApplicationPacket['check_status'], string> = {

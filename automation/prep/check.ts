@@ -1,6 +1,6 @@
 // Resume check (step 3c): reads a validated packet against the base resumes and the experience inventory and
 // flags what a careful human reviewer would. Deterministic, no AI. Red flags block approval; yellow ones need a look.
-// supabase/functions/job-prep/check.ts must stay an exact copy of this file (check.test.ts checks).
+// supabase/functions/_shared/check.ts must stay an exact copy of this file (check.test.ts checks).
 import {
   RESUME_VERSIONS,
   allBaseText,
@@ -50,13 +50,31 @@ const CERTIFICATIONS = [
 const PROGRESS_WORDS = /\b(in progress|expected|pursuing|studying for|preparing for|scheduled)\b/i
 const COURSE_WORDS = /\b(course|courses|coursework|class|classes)\b/i
 const CURRENT_WORDS = /\b(currently|this semester|this fall|this spring|in progress|taking|enrolled)\b/i
-const PREFERRED_HEADING = /(preferred|nice[ -]to[ -]have|bonus|pluses|is a plus|would be a plus|desired|desirable)/i
+// Read-aloud pass: lines that trip you up when spoken, the way a recruiter skims them.
+const LONG_SENTENCE_WORDS = 35
+const DUTY_OPENERS = /^(responsible for|duties included|tasked with|in charge of|worked on)\b/i
+const PASSIVE = /\b(?:was|were|is|are|been|being)\s+(?:[a-z]+ed|built|made|done|run|written|given|taken|set up)\b/i
+const PREFERRED_HEADING =/(preferred|nice[ -]to[ -]have|bonus|pluses|is a plus|would be a plus|desired|desirable)/i
 const REQUIRED_HEADING = /(required|requirements|minimum|basic qualifications|what it takes|must have|you have|qualifications)/i
 
 // ---------- helpers ----------
 
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const termPattern = (term: string, flags = '') => new RegExp(`(?<![A-Za-z0-9])${escapeRegex(term)}(?![A-Za-z0-9+])`, flags)
+
+// Spelled-out acronyms in a line, by acronym: "SIEM (Security Information and Event Management)" or the reverse.
+// Only counts when the capitalized words' initials spell the acronym, so "Splunk (SIEM)" isn't one.
+const initials = (words: string) => (words.match(/\b[A-Z]/g) ?? []).join('')
+const expansionsIn = (text: string) => {
+  const found = new Set<string>()
+  for (const [, acronym, words] of text.matchAll(/\b([A-Z]{2,})\s*\(([^)]+)\)/g)) if (initials(words) === acronym) found.add(acronym)
+  for (const match of text.matchAll(/\(([A-Z]{2,})\)/g)) {
+    const before = text.slice(0, match.index).trim().split(/\s+/)
+    const capitalized = before.filter((word) => /^[A-Z]/.test(word))
+    if (initials(capitalized.slice(-match[1].length).join(' ')) === match[1] && /^[A-Z]/.test(before.at(-1) ?? '')) found.add(match[1])
+  }
+  return [...found]
+}
 
 const verbLevel = (sentence: string): number | null => {
   const word = sentence.trim().toLowerCase().match(/^[a-z-]+/)?.[0]
@@ -139,6 +157,7 @@ const atsScore = (required: string[], preferred: string[], text: string) => {
 const resumeText = (resume: ResolvedResume) => [
   resume.summary,
   ...resume.coursework,
+  ...resume.certifications,
   ...[...resume.experience, ...resume.projects].flatMap((entry) => [entry.heading, entry.subheading ?? '', ...entry.bullets]),
   ...resume.skills.flatMap((group) => group.items),
 ].join('\n')
@@ -250,8 +269,8 @@ export const checkPacket = (packet: Packet, base: BaseResumes, resume: ResolvedR
 
   // Red: contact, titles, employers, dates or education differ from the base (they're copied, so this means drift).
   const expected = resolveResume(packet, base)
-  const locked = (r: ResolvedResume) => JSON.stringify([r.contact, r.education, r.coursework, [...r.experience, ...r.projects].map((e) => [e.heading, e.subheading, e.right])])
-  if (locked(expected) !== locked(resume)) add('red', 'locked_fields', '*', 'Contact details, titles, employers, dates or education differ from the base resumes.')
+  const locked = (r: ResolvedResume) => JSON.stringify([r.contact, r.education, r.coursework, r.certifications, [...r.experience, ...r.projects].map((e) => [e.heading, e.subheading, e.right])])
+  if (locked(expected) !== locked(resume)) add('red', 'locked_fields', '*', 'Contact details, titles, employers, dates, education or certifications differ from the base resumes.')
 
   // Yellow: wording that reads like generated text.
   for (const { path, text } of everything) {
@@ -272,6 +291,27 @@ export const checkPacket = (packet: Packet, base: BaseResumes, resume: ResolvedR
       if (!baseLeadership.has(word)) add('yellow', 'leadership_claim', path, `Says "${word}", which no base bullet does.`, text)
     }
   }
+
+  // Yellow, read-aloud pass: run-on sentences, stuffed keywords and stiff resume-speak.
+  for (const { path, text } of everything) {
+    const words = text.split(/(?<=[.!?])\s+/).map((sentence) => sentence.split(/\s+/).filter(Boolean).length)
+    if (Math.max(0, ...words) > LONG_SENTENCE_WORDS) add('yellow', 'long_sentence', path, `One sentence runs ${Math.max(...words)} words; split it so it reads aloud in one breath.`, text)
+    // A tool named twice in a bullet or the summary (three times in a paragraph) reads as keyword stuffing.
+    const most = path.startsWith('cover_letter') || path.startsWith('answers') ? 3 : 2
+    for (const { term } of vocabulary) {
+      const count = (text.match(termPattern(term, 'g')) ?? []).length
+      if (count >= most) add('yellow', 'keyword_repeat', path, `"${term}" appears ${count} times in one line; once reads more naturally.`, text)
+    }
+    if (expansionsIn(text).length >= 2) add('yellow', 'stacked_expansions', path, 'Two or more spelled-out acronyms in one line are hard to read; keep the one that matters most.', text)
+  }
+  for (const bullet of bullets) {
+    if (DUTY_OPENERS.test(bullet.text.trim())) add('yellow', 'duty_phrase', bullet.path, 'Opens with a duty ("Responsible for…"); start with what you did.', bullet.text)
+    if (PASSIVE.test(bullet.text)) add('yellow', 'passive', bullet.path, 'Passive voice ("was configured"); say who did it, starting with the verb.', bullet.text)
+  }
+  // The same spelled-out acronym in more than one line: once is enough for an ATS.
+  const expansions = new Map<string, number>()
+  for (const { text } of everything) for (const acronym of expansionsIn(text)) expansions.set(acronym, (expansions.get(acronym) ?? 0) + 1)
+  for (const [acronym, count] of expansions) if (count > 1) add('yellow', 'repeated_expansion', '*', `${acronym} is spelled out in ${count} places; spell it out once and use the short form after.`)
 
   // ATS estimate: posting keywords covered by the tailored resume, next to the full base version.
   const terms = vocabulary.map((entry) => entry.term)

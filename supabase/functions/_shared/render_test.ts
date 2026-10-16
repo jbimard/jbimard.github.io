@@ -1,4 +1,4 @@
-// deno test supabase/functions/job-prep/render_test.ts — not imported by index.ts, so it is never deployed.
+// deno test supabase/functions/_shared/render_test.ts — not imported by any function, so it is never deployed.
 import JSZip from 'npm:jszip@3.10.1'
 import { fileStem, renderCoverLetter, renderResume } from './render.ts'
 import type { ResolvedResume } from './packet.ts'
@@ -12,6 +12,7 @@ const resume: ResolvedResume = {
   summary: 'Cloud-focused engineer.',
   education: [{ school: 'Example University', location: 'Charlotte, NC', degrees: [{ degree: 'MS in Cybersecurity', date: 'May 2027' }] }],
   coursework: ['Network Security (in progress)', 'Database Design'],
+  certifications: [],
   experience: [{ heading: 'Acme, Charlotte, NC', subheading: 'Security Intern', right: 'May 2026 – Aug 2026', bullets: ['Built a tool & shipped it <safely>.'], sources: [] }],
   projects: [{ heading: 'SSH Honeypot', subheading: null, right: 'GitHub', bullets: ['Analyzed 475+ events.'], sources: [] }],
   skills: [{ label: 'Tools', items: ['Azure', 'Terraform'] }],
@@ -41,7 +42,19 @@ Deno.test('cover letter: greeting, paragraphs and sign-off', async () => {
   for (const text of ['Dear Acme Hiring Team,', 'Re: Cloud Engineer', 'October 20, 2026', 'Two.', 'Sincerely,']) assert(document.includes(text), `missing ${text}`)
 })
 
+Deno.test('relocation sits next to the location on the contact line', async () => {
+  const { document } = await unzip(await renderResume({ ...resume, contact: { ...resume.contact, relocation: 'Open to relocation' } }))
+  assert(document.includes('Charlotte, NC | Open to relocation | test@example.com'), 'relocation after location')
+})
+
 Deno.test('file names', () => {
   assert(fileStem('Wells Fargo & Co.') === 'Wells-Fargo-Co', fileStem('Wells Fargo & Co.'))
   assert(fileStem('***') === 'Company', 'empty falls back')
+})
+
+Deno.test('resume: certifications get their own section, and none means no heading', async () => {
+  const { document } = await unzip(await renderResume({ ...resume, certifications: ['Example Job Simulation (Forage), Jan 2025'] }))
+  assert(document.includes('>Certifications<') && document.includes('Example Job Simulation (Forage), Jan 2025'), 'certifications section')
+  const { document: without } = await unzip(await renderResume(resume))
+  assert(!without.includes('>Certifications<'), 'no section without certifications')
 })

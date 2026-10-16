@@ -16,13 +16,14 @@ Work through the steps in order. Update the status column as each step lands, an
 | 3a | Claude screening + review queue | Done — `job-screening` function, routine instructions in `automation/screening/ROUTINE.md`, Review tab in `/jobs`. Live once the function is deployed and the routine is created (`docs/JOBS_SETUP.md` §11) |
 | 1c | Closed-posting check: archive jobs whose posting is gone | Live — PR #14; deployed and secrets set 2026-10-16; workflow dry run checked 71 postings (67 open, 4 couldn't verify) |
 | 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Live — PR #15; deployed, base file uploaded, routine "Job preparation" daily at 14:00 UTC in its own environment (first run 2026-10-16: OK, 0 jobs) |
-| 3c-A | Resume check, preview, ATS score, Approve / Regenerate | Done — PR #16; `automation/prep/check.ts`, experience inventory in the private base file, Packet panel tabs. Live once deployed and the inventory is re-uploaded (`docs/JOBS_SETUP.md` §13) |
-| 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | Not started — **next** |
+| 3c-A | Resume check, preview, ATS score, Approve / Regenerate | Done — PR #16; deployed and the inventory uploaded 2026-10-16. Confirm on the next preparation run that new packets carry no "no inventory" flag |
+| 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | In progress — **B1** (editing, re-render, read-aloud) on `feat/packet-edit`; **B2** (voice memory in the routine) next |
+| 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | In progress — on `feat/packet-edit` with B1 |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
 
-Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B → 2b → 4 → 5.**
+Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 4 → 5.**
 
 - 2a is small and gives step 3 real sponsorship data from day one.
 - 1b comes before the workflow is turned back on, so the dashboard never gets flooded with the whole backlog.
@@ -97,6 +98,14 @@ The work: `automation/` (the script), `.github/workflows/discover-jobs.yml` (the
 ### 2b. More local companies (after step 3)
 
 - **More local companies:** Bank of America, Lowe's corporate tech, Honeywell, Duke Energy IT, SAS, Lenovo and MetLife aren't reachable through the current boards. Some need a new adapter, such as SmartRecruiters.
+- **Many more Triangle companies (Raleigh, Durham, RTP, Cary, Morrisville), at his request (2026-10-16).** Already covered: Red Hat, Cisco, Fidelity, IQVIA, Labcorp, Epic Games, Pendo and Bandwidth. Candidates to check first, for open cloud and security roles, their ATS and their H-1B record:
+  - **Tech:** SAS, IBM (RTP), Lenovo, NetApp, Cloud Software Group (Citrix), Google (Durham), Apple (Raleigh), Wolfspeed, Jaggaer, Brightly, Spreedly, Relias, CommerceHub
+  - **Finance and insurance:** First Citizens Bank, MetLife (Cary), UBS (RTP), Truist (Raleigh)
+  - **Health, pharma and biotech IT:** GSK, Biogen, Novo Nordisk, Syneos Health, Merck, Duke Health, UNC Health
+  - **Industrial with large tech centers:** John Deere (Cary), Siemens Healthineers, Eaton, ABB
+  - **Public and universities:** NC State, Duke University, UNC-Chapel Hill. Note that universities are cap-exempt for H-1B, which matters for his visa.
+
+  The list is a starting point, not checked yet. Each company's ATS decides whether it needs a new adapter (Workday, SmartRecruiters, iCIMS, Oracle). Verify each one's careers board before adding it.
 - **Optional, later:** salary data from the free DOL LCA disclosure files, to see what each company pays at entry level (the H-1B lottery favors higher wages).
 
 ## 3. Claude screening and preparation
@@ -192,6 +201,23 @@ Each job in `/jobs` that has a tailored resume shows a **Resume** panel:
 - The base resumes and the experience inventory may also live in the private bucket. They never go in this public repo.
 
 Storage: resumes live in a private Supabase Storage bucket (see "Resume preview + ATS score" below). Never in this public repo.
+
+### 3c-B. Editing, re-render, read-aloud, voice memory (in progress)
+
+Two PRs. **B1** makes packets editable; **B2** feeds the edits back into tailoring.
+
+**B1: edit, re-render, read-aloud**
+- **Edit tab** in the Packet panel. Change the wording of any bullet, the summary, each cover-letter paragraph and each answer, and remove or reorder bullets within an entry. Everything else stays locked: titles, employers, dates, which base bullet a line rewords, skills, coursework, the match report and the work-authorization answers. Adding bullets or entries is still Regenerate's job.
+- **Same truth check:** the `packet-edit` Edge Function (signed in as the owner, no shared token) merges the edit (`automation/prep/edit.ts`), then runs `validatePacket` and `checkPacket`. Any error or red flag refuses the save, and nothing changes.
+- **Re-render:** both .docx files are rendered again into `{user}/{job}/r{revision}/`, under the same file names. The row update is guarded by the revision the dashboard opened, and the old files are removed only after it succeeds. So the preview is always the exact stored file.
+- **Approval resets** on every saved edit. Ticked yellow flags carry over only if they're about the same text.
+- **Read-aloud pass:**
+  - **Rules:** new yellow rules in `check.ts`, which the routine sees too: a sentence over 35 words; keyword repeats (2 in a bullet or the summary, 3 in prose); two spelled-out acronyms in one line, or one acronym spelled out in several places; "Responsible for…" openings; passive voice in bullets.
+  - **Read through:** a mode in the Edit tab that uses the browser's built-in speech: Sounds like me / Edit this line / Repeat / Stop. No AI API calls.
+- **Edits are recorded** from B1 on in `packet_edits` (one row per changed line, with the base source for bullets), so B2 starts with real examples.
+
+**B2: voice memory**
+- The routine's pull returns his most recent edits as before/after pairs. `ROUTINE.md` tells it to follow those choices (words he cuts, phrasings he prefers) within the same truth rules.
 
 ## 4. Visa timeline card
 
@@ -322,3 +348,17 @@ Settled; don't reopen without a new reason.
   - **"No sponsorship" in the posting:** −30 (was −15). The sponsor component is clamped to −30…25, so the total stays within 0–100.
   - **Effect on the 2026-10-16 dry run (71 jobs):** strong sponsors in the top 10 go from 2 to 5, and no-sponsorship postings from 5 to 0. 51 jobs still clear `minScore` 50.
   - Rows already queued keep their old scores, because intake skips postings it already has. They age out after 21 days (`queue_max_age_days`). New postings use the new weights from the next discovery run.
+- **Packet editing (2026-10-16, step 3c-B part 1):**
+  - **Red on edit refuses the save** (his choice), the same as the routine, which never sends red packets. A true tool missing from the inventory is fixed by adding it there and re-uploading.
+  - **Edit scope:** text, plus removing or reordering bullets (his choice). No new bullets or entries; that stays with Regenerate.
+  - **The raw packet is now stored** (`application_packets.packet`), because the edit has to be re-validated against entry and bullet ids. Packets made before this have none and need Regenerate to be editable.
+  - **Shared code:** `packet.ts`, `check.ts`, `edit.ts` and `render.ts` live in `supabase/functions/_shared/`, used by `job-prep` and `packet-edit`. The exact-copy tests point there.
+  - **Revision folders** (`r2/`, `r3/`…) keep the file names unchanged, so an employer never sees "-r2".
+  - **Edits survive Regenerate:** `packet_edits` rows keep their wording when the packet is deleted (`on delete set null`).
+- **ATS gaps (2026-10-16, step 3c-ATS, at his request):** a check of open-source ATS tools and of what employers use today.
+  - **No open-source tool to adopt.** Employers use proprietary systems (Workday, Greenhouse, Lever, iCIMS, Taleo, SuccessFactors, Ashby), often with licensed parsers. Open-source ATS products (OpenCATS, OrangeHRM, Odoo, Frappe HR) aren't what our targets run. Resume-Matcher imitates an ATS with a language model, which overlaps with our estimate and wouldn't predict real rankings. OpenResume's parser is useful as a manual readability test (PDF only).
+  - **Confirmed:** the major ATSs list applicants by date and recruiters search parsed fields by keyword, so keyword findability and clean parsing matter most (our template and estimate). Workday's parser still breaks multi-column and table layouts.
+  - **Gap 1, per-qualification grading:** since August 2026, Workday HiredScore grades each basic and preferred qualification with a language model. Basic qualifications decide A/B versus C/D, and recruiters see a Fit & Gap view. Our keyword estimate can't see "2+ years building X", so the routine now writes `qualifications` (met or not, with evidence that must be a bullet in the packet or a section the resume has). The dashboard shows them as Fit & Gap. Optional in the schema for older packets. An edit that removes the only evidence marks the item unmet.
+  - **Gap 2, Certifications section:** Workday's parsed profile has a certifications field. Earned inventory certifications now render as their own section, locked like education. From the portfolio, only the Mastercard Cybersecurity Job Simulation (Forage, 2025-01-06) is listed. He left out Python Data Structures (Coursera, 2022) as too old.
+  - **Gap 3, PDF copies:** text-based PDFs rendered with `pdf-lib` in standard fonts, in the same order as the .docx. The .docx stays the primary file; the PDF is for PDF-only forms and the OpenResume parser test.
+- **Relocation (2026-10-16):** resumes say he's open to relocation. It's an optional `contact.relocation` in the private base file ("Open to relocation"), shown right after the location on the resume and cover-letter contact line, and locked like the rest of the contact details. The routine may also mention it in `anything_else` when the job isn't in his area.

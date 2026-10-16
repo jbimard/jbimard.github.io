@@ -1,6 +1,7 @@
 // Renders the tailored resume and cover letter as ATS-safe .docx files from a fixed template:
 // one column, standard section headings, no tables, text boxes or images, and the contact details in the body
 // (not in a header or footer, which many ATS parsers skip). Content comes from packet.ts's resolveResume.
+// render_pdf.ts draws the same layout as a text-based PDF.
 import { AlignmentType, BorderStyle, Document, LevelFormat, Packer, Paragraph, TabStopType, TextRun } from 'npm:docx@9.11.0'
 import type { BaseResumes, ResolvedEntry, ResolvedResume } from './packet.ts'
 
@@ -27,8 +28,8 @@ const lineWithRight = (left: TextRun[], right: string | null) => new Paragraph({
 
 const bullet = (text: string) => new Paragraph({ children: [run(text)], numbering: { reference: 'bullets', level: 0 }, spacing: { after: 20 } })
 
-const contactLine = (contact: BaseResumes['contact']) => (
-  [contact.location, contact.email, contact.phone, ...contact.links].filter(Boolean).join(' | ')
+export const contactLine = (contact: BaseResumes['contact']) => (
+  [contact.location, contact.relocation, contact.email, contact.phone, ...contact.links].filter(Boolean).join(' | ')
 )
 
 const entry = (item: ResolvedEntry) => [
@@ -66,9 +67,12 @@ export const renderResume = async (resume: ResolvedResume): Promise<Uint8Array<A
     ...(resume.projects.length ? [heading('Projects'), ...resume.projects.flatMap(entry)] : []),
     heading('Skills'),
     ...resume.skills.map((group) => new Paragraph({ children: [run(`${group.label}: `, { bold: true }), run(group.items.join(', '))] })),
+    ...(resume.certifications.length ? [heading('Certifications'), ...resume.certifications.map(bullet)] : []),
   ]
   return new Uint8Array(await Packer.toBuffer(document(children)))
 }
+
+export const letterDate = (date: Date) => date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' })
 
 export const renderCoverLetter = async (
   contact: BaseResumes['contact'],
@@ -80,7 +84,7 @@ export const renderCoverLetter = async (
   const children = [
     new Paragraph({ children: [run(contact.name, { bold: true, size: 28 })] }),
     spaced([run(contactLine(contact))], 320),
-    spaced([run(date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/New_York' }))]),
+    spaced([run(letterDate(date))]),
     spaced([run(`Re: ${job.role_title}`, { bold: true })]),
     spaced([run(`Dear ${job.company} Hiring Team,`)]),
     ...paragraphs.map((paragraph) => spaced([run(paragraph.trim())])),

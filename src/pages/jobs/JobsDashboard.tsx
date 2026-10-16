@@ -49,7 +49,7 @@ const compareValues = (left: string | number | boolean | null, right: string | n
 }
 
 const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
-  const { jobs, queuedCount, packets, packetFileUrl, packetFile, approvePacket, regeneratePacket, loading, error, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob } = useJobs(session.user)
+  const { jobs, queuedCount, packets, packetFileUrl, packetFile, approvePacket, regeneratePacket, editPacket, loading, error, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob } = useJobs(session.user)
   const [filters, setFilters] = useState<JobFilters>(initialFilters)
   const [sort, setSort] = useState<SortState>({ key: 'date_found', direction: 'desc' })
   const [editingJob, setEditingJob] = useState<Job | null>(null)
@@ -254,6 +254,7 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
           fileBlob={packetFile}
           onApprove={approvePacket}
           onRegenerate={regeneratePacket}
+          onEdit={editPacket}
           onClose={() => setPacketJob(null)}
         />
       )}

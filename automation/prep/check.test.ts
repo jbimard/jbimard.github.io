@@ -129,7 +129,7 @@ test('word diff and number words', () => {
 
 test('the Edge Function copy is identical', () => {
   const read = (file: string) => readFileSync(path.join(import.meta.dirname, file), 'utf8')
-  assert.equal(read('../../supabase/functions/job-prep/check.ts'), read('check.ts'))
+  assert.equal(read('../../supabase/functions/_shared/check.ts'), read('check.ts'))
 })
 
 test('coursework-only terms must be framed as coursework, and in-progress courses as current', () => {
@@ -145,4 +145,28 @@ test('coursework-only terms must be framed as coursework, and in-progress course
   assert.deepEqual(rules(run((p) => { p.answers.why_role = 'I am currently taking a Network Security class that covers TCP/IP.' }, base)), [])
   // Terms the base already backs need no framing.
   assert.deepEqual(rules(run((p) => { p.answers.why_role = 'It matches my Azure work.' }, base)), [])
+})
+
+test('read-aloud pass: run-on sentences, stuffed keywords, duty openers and passive voice are yellow', () => {
+  const long = Array.from({ length: 40 }, () => 'word').join(' ')
+  assert.ok(rules(run((p) => { p.cover_letter.paragraphs[0] = `${long}.` })).includes('yellow:long_sentence'))
+  assert.ok(!rules(run((p) => { p.cover_letter.paragraphs[0] = 'Short one. Another short one.' })).includes('yellow:long_sentence'))
+  const stuffed = run((p) => { p.experience[0].bullets[0].text = 'Provisioned identity infrastructure as Terraform modules, reviewed in Terraform plans across dev, staging and production.' })
+  assert.ok(rules(stuffed).includes('yellow:keyword_repeat'))
+  // A paragraph may name a tool twice.
+  assert.ok(!rules(run((p) => { p.cover_letter.paragraphs[1] = 'At Acme I wrote Terraform. The Terraform work covered three environments.' })).includes('yellow:keyword_repeat'))
+  assert.ok(rules(run((p) => { p.experience[0].bullets[1].text = 'Responsible for an access review tool in PowerShell covering 3 identity platforms.' })).includes('yellow:duty_phrase'))
+  assert.ok(rules(run((p) => { p.experience[0].bullets[1].text = 'An access review tool was built in PowerShell covering 3 identity platforms.' })).includes('yellow:passive'))
+})
+
+test('read-aloud pass: spell an acronym out once, and not two per line', () => {
+  const stacked = run((p) => { p.answers.why_role = 'It pairs SIEM (Security Information and Event Management) with Identity and Access Management (IAM) work.' })
+  assert.ok(rules(stacked).includes('yellow:stacked_expansions'))
+  const twice = run((p) => {
+    p.answers.why_role = 'It uses SIEM (Security Information and Event Management) tools.'
+    p.answers.relevant_project = 'My honeypot fed a SIEM (Security Information and Event Management).'
+  })
+  assert.ok(twice.flags.some((flag) => flag.rule === 'repeated_expansion' && flag.message.startsWith('SIEM')))
+  // "Splunk (SIEM)" names a product, it doesn't spell anything out.
+  assert.ok(!rules(run((p) => { p.answers.why_role = 'I used Splunk (SIEM) and Azure (cloud).' })).some((rule) => rule.includes('expansion')))
 })
