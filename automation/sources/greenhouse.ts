@@ -35,7 +35,6 @@ export const fetchGreenhouse = async (company: Company): Promise<RawPosting[]> =
     description: job.content ? htmlToText(job.content) : null,
     workplaceHint: null,
     salaryText: null,
-    sponsorTier: company.sponsorTier,
     simplifySponsorship: null,
   }))
 }

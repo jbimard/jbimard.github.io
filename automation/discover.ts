@@ -4,6 +4,7 @@ import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { mapWithConcurrency, postJson } from './http.ts'
 import { evaluatePosting, type Breakdown } from './rules/score.ts'
+import { fromSponsorFile, indexSponsors, lookupSponsor, type SponsorFile, type SponsorRecord } from './rules/sponsors.ts'
 import { scoreLocation, shortLocation } from './rules/text.ts'
 import { fetchAshby } from './sources/ashby.ts'
 import { enrichPostings } from './sources/enrich.ts'
@@ -11,7 +12,7 @@ import { fetchGreenhouse } from './sources/greenhouse.ts'
 import { fetchLever } from './sources/lever.ts'
 import { fetchSimplify, stripTracking } from './sources/simplify.ts'
 import { fetchWorkday } from './sources/workday.ts'
-import type { Company, IntakeJob, Profile, RawPosting } from './types.ts'
+import type { Company, IntakeJob, Profile, RawPosting, SponsorTier } from './types.ts'
 
 const ROOT = import.meta.dirname
 const OUT_DIR = path.join(ROOT, 'out')
@@ -30,7 +31,7 @@ type IntakeResponse = {
   invalid?: Array<{ index: number; errors: string[] }>
   possible_duplicates?: unknown[]
 }
-type ScoredJob = { job: IntakeJob; breakdown: Breakdown }
+type ScoredJob = { job: IntakeJob; breakdown: Breakdown; sponsorTier: SponsorTier }
 
 const readJson = async <T>(file: string) => JSON.parse(await readFile(path.join(ROOT, file), 'utf8')) as T
 
@@ -105,6 +106,19 @@ const main = async () => {
   if (limit !== null && (!Number.isInteger(limit) || limit < 1)) throw new Error(`--limit must be a positive integer, got "${limitArg}".`)
   const profile = await readJson<Profile>('config/profile.json')
   const companies = await readJson<Company[]>('config/companies.json')
+  const sponsors = indexSponsors(fromSponsorFile(await readJson<SponsorFile>('data/h1b-sponsors.json')))
+  // Board companies may list the USCIS spelling in h1bNames; Simplify jobs at those companies use it too.
+  const h1bNames = new Map(companies.map((company) => [company.name.toLowerCase(), company.h1bNames]))
+  const sponsorCache = new Map<string, SponsorRecord>()
+  const sponsorFor = (company: string) => {
+    const key = company.toLowerCase()
+    let record = sponsorCache.get(key)
+    if (!record) {
+      record = lookupSponsor(sponsors, company, profile.sponsorTiers, h1bNames.get(key))
+      sponsorCache.set(key, record)
+    }
+    return record
+  }
   const sourceStats: SourceStat[] = []
 
   console.log(`Fetching ${companies.length} company boards…`)
@@ -114,7 +128,7 @@ const main = async () => {
   const postings: RawPosting[] = perCompany.flat()
 
   console.log('Fetching Simplify lists…')
-  const simplify = (await collect('simplify', sourceStats, () => fetchSimplify(companies, profile)))
+  const simplify = (await collect('simplify', sourceStats, () => fetchSimplify(profile)))
     // Skip non-US listings before spending enrichment requests on them.
     .filter((posting) => scoreLocation(posting.location, profile).points !== null)
   console.log(`Enriching up to ${profile.maxEnrichPerRun} Simplify postings with descriptions…`)
@@ -125,10 +139,11 @@ const main = async () => {
   const blocked: Array<{ company: string; title: string; url: string; reason: string }> = []
   const kept: ScoredJob[] = []
   for (const posting of postings) {
-    const result = evaluatePosting(posting, profile)
+    const sponsor = sponsorFor(posting.company)
+    const result = evaluatePosting(posting, profile, sponsor)
     if (result.kind === 'irrelevant') dropped[result.reason] = (dropped[result.reason] ?? 0) + 1
     else if (result.kind === 'blocked') blocked.push({ company: posting.company, title: posting.title, url: posting.url, reason: result.reason })
-    else kept.push({ job: result.job, breakdown: result.breakdown })
+    else kept.push({ job: result.job, breakdown: result.breakdown, sponsorTier: sponsor.tier })
   }
 
   const unique = dedupe(kept)
@@ -140,7 +155,10 @@ const main = async () => {
     ...ranked.filter((entry) => entry.job.job_type !== 'Internship').slice(0, profile.maxPerRun),
     ...ranked.filter((entry) => entry.job.job_type === 'Internship').slice(0, profile.maxInternshipsPerRun),
   ].sort((a, b) => b.job.match_score - a.job.match_score)
-  const jobs = selected.slice(0, limit ?? selected.length).map((entry) => entry.job)
+  const sent = selected.slice(0, limit ?? selected.length)
+  const jobs = sent.map((entry) => entry.job)
+  const sponsorTiers: Record<SponsorTier, number> = { strong: 0, some: 0, rare: 0, none: 0 }
+  for (const entry of sent) sponsorTiers[entry.sponsorTier] += 1
 
   const counts = {
     fetched: postings.length,
@@ -153,6 +171,8 @@ const main = async () => {
     internships: jobs.filter((job) => job.job_type === 'Internship').length,
     citizenshipFlagged: jobs.filter((job) => job.sponsorship_notes?.includes('Citizenship stated')).length,
     noSponsorshipFlagged: jobs.filter((job) => job.sponsorship_notes?.includes('No sponsorship')).length,
+    // USCIS New Employment tier of the selected jobs' companies (counts only — the repo is public).
+    sponsorTiers,
   }
 
   console.log('\nSummary', JSON.stringify({ ...counts, enrich: enrichStats }, null, 2))
@@ -182,6 +202,7 @@ const main = async () => {
       `## Job discovery ${dryRun ? '(dry run)' : ''}`,
       `Fetched **${counts.fetched}** postings · blocked (clearance) **${counts.blockedClearance}** · selected **${counts.selected}** (≥ ${profile.minScore})`,
       `Internships ${counts.internships} · citizenship-flagged ${counts.citizenshipFlagged} · no-sponsorship-flagged ${counts.noSponsorshipFlagged}`,
+      `USCIS sponsor tier: strong ${sponsorTiers.strong} · some ${sponsorTiers.some} · rare ${sponsorTiers.rare} · none on record ${sponsorTiers.none}`,
       intake ? `Intake: inserted **${intake.inserted}**, skipped duplicates ${intake.skipped}, invalid ${intake.invalid}` : '',
       failed.length > 0 ? `\n**Failed sources:** ${failed.map((stat) => stat.source).join(', ')}` : '',
       'Review the new rows in /jobs (status: Found).',

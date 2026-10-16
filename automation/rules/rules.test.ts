@@ -5,6 +5,7 @@ import { test } from 'node:test'
 import type { Profile, RawPosting } from '../types.ts'
 import { detectFlags } from './flags.ts'
 import { evaluatePosting, titleGroup } from './score.ts'
+import { NO_SPONSOR_DATA, type SponsorRecord } from './sponsors.ts'
 import { htmlToText, parseAnnualSalary, scoreLocation, shortLocation } from './text.ts'
 
 const profile = JSON.parse(readFileSync(path.join(import.meta.dirname, '../config/profile.json'), 'utf8')) as Profile
@@ -18,13 +19,16 @@ const posting = (overrides: Partial<RawPosting> = {}): RawPosting => ({
   description: 'Build secure AWS infrastructure with Terraform and Python.',
   workplaceHint: null,
   salaryText: null,
-  sponsorTier: 'unknown',
   simplifySponsorship: null,
   ...overrides,
 })
 
-const evaluateKept = (overrides: Partial<RawPosting>) => {
-  const result = evaluatePosting(posting(overrides), profile)
+// A company with 50+ USCIS New Employment approvals; NO_SPONSOR_DATA is the "none on record" tier.
+const strongSponsor: SponsorRecord = { ...NO_SPONSOR_DATA, tier: 'strong', fiscalYear: 2025, count: 212, matchedNames: ['ACME INC'] }
+const evaluate = (overrides: Partial<RawPosting>, sponsor: SponsorRecord = NO_SPONSOR_DATA) => evaluatePosting(posting(overrides), profile, sponsor)
+
+const evaluateKept = (overrides: Partial<RawPosting>, sponsor: SponsorRecord = NO_SPONSOR_DATA) => {
+  const result = evaluate(overrides, sponsor)
   assert.equal(result.kind, 'kept')
   return result
 }
@@ -35,11 +39,11 @@ test('clearance is the one hard block', () => {
     'Requires TS/SCI with polygraph.',
     'Must be able to obtain and maintain a security clearance.',
   ]) {
-    assert.equal(evaluatePosting(posting({ description }), profile).kind, 'blocked', description)
+    assert.equal(evaluate({ description }).kind, 'blocked', description)
   }
-  assert.equal(evaluatePosting(posting({ title: 'Security Engineer - Top Secret Clearance Required' }), profile).kind, 'blocked')
-  assert.equal(evaluatePosting(posting({ description: 'No security clearance required for this role.' }), profile).kind, 'kept')
-  assert.equal(evaluatePosting(posting({ description: 'This role may require a security clearance at the TS/SCI level.' }), profile).kind, 'blocked')
+  assert.equal(evaluate({ title: 'Security Engineer - Top Secret Clearance Required' }).kind, 'blocked')
+  assert.equal(evaluate({ description: 'No security clearance required for this role.' }).kind, 'kept')
+  assert.equal(evaluate({ description: 'This role may require a security clearance at the TS/SCI level.' }).kind, 'blocked')
 })
 
 test('conditional clearance wording is labeled, not blocked', () => {
@@ -77,14 +81,13 @@ test('EEO boilerplate about citizenship status is not a requirement', () => {
 
 test('no-sponsorship postings are kept with a label', () => {
   const result = evaluateKept({
-    sponsorTier: 'known',
     description: 'Candidates must be authorized to work in the US without the need for current or future visa sponsorship.',
-  })
+  }, strongSponsor)
   if (result.kind !== 'kept') return
   assert.match(result.job.sponsorship_notes ?? '', /No sponsorship/)
-  assert.equal(result.breakdown.sponsor, 5) // known 20 − 15
+  assert.equal(result.breakdown.sponsor, 5) // strong 20 − 15
   const unknown = evaluateKept({ description: 'We are unable to sponsor visas for this role.' })
-  if (unknown.kind === 'kept') assert.equal(unknown.breakdown.sponsor, -5) // unknown 10 − 15
+  if (unknown.kind === 'kept') assert.equal(unknown.breakdown.sponsor, -5) // none on record 10 − 15
 })
 
 test('Simplify sponsorship labels feed the same flags', () => {
@@ -121,7 +124,7 @@ test('seniority and irrelevant titles are dropped, not blocked', () => {
   assert.equal(titleGroup('Cloud Security Engineer', profile), 'A')
   assert.equal(titleGroup('Site Reliability Engineer', profile), 'B')
   assert.equal(titleGroup('Software Engineer, New Grad', profile), 'C')
-  assert.equal(evaluatePosting(posting({ description: 'Requires 5+ years of professional experience.' }), profile).kind, 'irrelevant')
+  assert.equal(evaluate({ description: 'Requires 5+ years of professional experience.' }).kind, 'irrelevant')
 })
 
 test('location scoring prefers Charlotte/Triangle, then Boston/NYC, then remote US', () => {
@@ -137,10 +140,10 @@ test('location scoring prefers Charlotte/Triangle, then Boston/NYC, then remote 
 })
 
 test('title fit scales the other points so unrelated roles sink', () => {
-  const base = { sponsorTier: 'known' as const, location: 'New York, NY', salaryText: '$60/hr' }
-  const security = evaluateKept({ ...base, title: 'Cloud Security Intern' })
-  const generic = evaluateKept({ ...base, title: 'Software Engineer Intern' })
-  const offTarget = evaluateKept({ ...base, title: 'Analytics Engineer Intern' })
+  const base = { location: 'New York, NY', salaryText: '$60/hr' }
+  const security = evaluateKept({ ...base, title: 'Cloud Security Intern' }, strongSponsor)
+  const generic = evaluateKept({ ...base, title: 'Software Engineer Intern' }, strongSponsor)
+  const offTarget = evaluateKept({ ...base, title: 'Analytics Engineer Intern' }, strongSponsor)
   if (security.kind !== 'kept' || generic.kind !== 'kept' || offTarget.kind !== 'kept') return
   assert.equal(security.breakdown.fit, 1)
   assert.equal(generic.breakdown.fit, 0.75)
@@ -149,7 +152,7 @@ test('title fit scales the other points so unrelated roles sink', () => {
   assert.ok(generic.job.match_score > offTarget.job.match_score)
   assert.ok(offTarget.job.match_score < profile.minScore)
   // A security title is never off-target, even with "AI" in it.
-  const ai = evaluateKept({ ...base, title: 'AI Security Engineer' })
+  const ai = evaluateKept({ ...base, title: 'AI Security Engineer' }, strongSponsor)
   if (ai.kind === 'kept') assert.equal(ai.breakdown.fit, 1)
 })
 
@@ -167,7 +170,7 @@ test('salary parsing handles ranges, k-suffixes, hourly and ignores company size
 })
 
 test('score adds up to the breakdown and maps to priority', () => {
-  const result = evaluateKept({ sponsorTier: 'known', salaryText: '$130,000 - $150,000' })
+  const result = evaluateKept({ salaryText: '$130,000 - $150,000' }, strongSponsor)
   if (result.kind !== 'kept') return
   const { role, sponsor, level, location, pay } = result.breakdown
   assert.deepEqual({ role, sponsor, level, location, pay }, { role: 30, sponsor: 20, level: 15, location: 15, pay: 15 })

@@ -1,6 +1,6 @@
 import { fetchJson } from '../http.ts'
 import { titleGroup } from '../rules/score.ts'
-import type { Company, Profile, RawPosting, SimplifySponsorship } from '../types.ts'
+import type { Profile, RawPosting, SimplifySponsorship } from '../types.ts'
 
 type SimplifyListing = {
   company_name: string
@@ -32,10 +32,7 @@ export const stripTracking = (url: string) => {
 }
 
 // Simplify listings carry no description; enrich.ts fills it in afterwards where possible.
-export const fetchSimplify = async (companies: Company[], profile: Profile): Promise<RawPosting[]> => {
-  const knownSponsors = new Set(
-    companies.filter((company) => company.sponsorTier === 'known').map((company) => company.name.toLowerCase()),
-  )
+export const fetchSimplify = async (profile: Profile): Promise<RawPosting[]> => {
   const cutoff = Date.now() / 1000 - profile.simplifyLookbackDays * 86_400
   const postings: RawPosting[] = []
 
@@ -55,7 +52,6 @@ export const fetchSimplify = async (companies: Company[], profile: Profile): Pro
         description: null,
         workplaceHint: null,
         salaryText: null,
-        sponsorTier: knownSponsors.has(listing.company_name.trim().toLowerCase()) ? 'known' : 'unknown',
         simplifySponsorship: listing.sponsorship ?? null,
       })
     }

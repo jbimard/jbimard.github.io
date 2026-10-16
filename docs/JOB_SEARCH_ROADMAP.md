@@ -11,8 +11,8 @@ Work through the steps in order. Update the status column as each step lands, an
 | # | Step | Status |
 |---|------|--------|
 | 1 | Ship daily discovery | Done — PR #6 merged, secrets set, 1-job test inserted OK. **Workflow paused** until 1b: re-enable with `gh workflow enable discover-jobs.yml` |
-| 2a | Real H-1B sponsor data (USCIS) | Not started — **next** |
-| 1b | Daily batch of 10 + "Next batch" button | Not started — after 2a; **finish by re-enabling the workflow** |
+| 2a | Real H-1B sponsor data (USCIS) | Done — USCIS FY2024–FY2026 (Q3) data in `automation/data/h1b-sponsors.json`; workflow still paused |
+| 1b | Daily batch of 10 + "Next batch" button | Not started — **next**; **finish by re-enabling the workflow** |
 | 3 | Claude screening + preparation (incl. ATS-optimized resumes, Resume check, resume preview + ATS score in dashboard), review queue | Not started — after 1b |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
@@ -56,14 +56,14 @@ The work: `automation/` (the script), `.github/workflows/discover-jobs.yml` (the
 
 ## 2. Make the data more accurate
 
-### 2a. Real H-1B sponsor data (next)
+### 2a. Real H-1B sponsor data (done)
 
 - **Real H-1B sponsor data:** use the **USCIS H-1B Employer Data Hub**, which is free, official, and gives per-company initial approvals.
   - Download the CSVs for the last 2–3 fiscal years and commit a trimmed copy (company → initial approvals per year).
   - Replace the hand-set `sponsorTier` with tiers based on real counts (e.g. 50+ = strong, 5–49 = some, 0 = none on record), and score sponsorship from that.
   - Match company names loosely ("Wells Fargo Bank NA" = "Wells Fargo"), so Simplify jobs at unlisted companies also get a real signal.
   - Show the count in the label, e.g. "USCIS: 212 initial H-1B approvals in FY2025."
-  - Refresh once a year.
+  - Refresh once a year (steps in `docs/JOBS_SETUP.md` §10).
 ### 2b. More local companies (after step 3)
 
 - **More local companies:** Bank of America, Lowe's corporate tech, Honeywell, Duke Energy IT, SAS, Lenovo and MetLife aren't reachable through the current boards. Some need a new adapter, such as SmartRecruiters.
@@ -211,3 +211,13 @@ Settled; don't reopen without a new reason.
 - **Resume check (2026-10-16):** every tailored resume passes a check screen before use. Every claim must trace to his experience inventory, and AI-sounding wording is flagged. The goal is accuracy and his own voice, not evading AI detectors.
 - **Order (2026-10-15):** step 2 is split. 2a (USCIS sponsor data) goes before step 3 so screening uses real data; 2b (new board adapters) goes after step 3.
 - **H-1B data:** use the USCIS Employer Data Hub, not the Apify "H-1B Visa Salary Search" actor. That actor returns per-filing LCA salary records (not sponsorship counts), costs $0.05 per record, and doesn't clearly state its source.
+- **USCIS sponsor data (2026-10-16, step 2a):**
+  - The count used is **New Employment approvals** only: first-time H-1B hires, including F-1 → H-1B. Continuation, amended, change-of-employer and concurrent petitions are left out.
+  - The tier comes from the latest complete fiscal year: strong 50+ (20 points), some 5–49 (15), rare 1–4 (12), none on record (10). The partial current year is shown as "to date" but never sets the tier. "None" stays at 10, the old `unknown` value, so a missed name match costs nothing extra. The +5 / −15 / −20 adjustments are unchanged.
+  - The hand-set `sponsorTier` is removed.
+  - Name matching:
+    - USCIS names count toward a company when they start with its name and add only generic corporate words (bank, services, holdings, markets, …).
+    - A "DBA" name counts as the company name.
+    - Names that differ completely go in `h1bNames` in `companies.json`.
+  - USCIS blocks scripted downloads (Akamai 403), so the export is downloaded by hand once a year. Only the trimmed JSON (about 2 MB, public data) is committed.
+  - Step 2a did not re-enable the workflow; that still happens at the end of 1b.

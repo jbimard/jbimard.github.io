@@ -178,8 +178,9 @@ Automatic intake only adds new jobs. Everything else, including status changes, 
   - titles outside the three title groups, and senior titles
   - postings outside the US
   - postings that require more than `maxRequiredYears` of experience
+- **Sponsorship uses real USCIS data.** `automation/data/h1b-sponsors.json` holds each employer's **New Employment** H-1B approvals (first-time H-1B hires, including F-1 → H-1B) from the USCIS H-1B Employer Data Hub. The latest complete fiscal year sets the tier: strong is 50 or more (20 points), some is 5–49 (15), rare is 1–4 (12), and none on record is 0 or no match (10). Both the thresholds and the points are in `profile.json`. Each row's sponsorship notes include a line like `USCIS: 61 new-employment H-1B approvals in FY2025 (FY2026 to date: 62; FY2024: 118).`
 - **Score out of 100:** role 30 + sponsorship 25 + level 15 + location 15 + pay 15. The breakdown is written to each row's `notes`.
-  - **Title fit scales everything except role:** security/cloud titles ×1, adjacent titles ×0.9, generic engineering ×0.75, off-target fields such as analytics, data, ML, frontend or mobile ×0.5. A big salary or a known sponsor can't lift an unrelated role. Tune this with `fitWeights` and `offTargetTitle`.
+  - **Title fit scales everything except role:** security/cloud titles ×1, adjacent titles ×0.9, generic engineering ×0.75, off-target fields such as analytics, data, ML, frontend or mobile ×0.5. A big salary or a strong sponsor can't lift an unrelated role. Tune this with `fitWeights` and `offTargetTitle`.
   - **Jobs with no level signal are scaled ×0.8 overall** (`noLevelSignalFactor`). That means no new-grad, intern or graduation-year wording, which usually indicates an experienced hire.
   - Priority: High is 75 or more, Medium is 55–74, Low is anything lower.
   - Only rows scoring at least `minScore` are sent.
@@ -214,6 +215,13 @@ To add companies to `automation/config/companies.json`:
 
 - For Greenhouse, Lever, or Ashby, `board` is the slug in the board URL.
 - For Workday, `board` is `tenant/wdN/site`, taken from a URL like `https://tenant.wdN.myworkdayjobs.com/site`.
-- `sponsorTier: "known"` is a hand-kept starting list. Replace it with H-1B employer data later.
+- Company names are matched to USCIS names loosely: "Wells Fargo" also counts "Wells Fargo Bank N A" and "Wells Fargo Securities LLC", and a "DBA" name counts as the company name. If the USCIS name is different, for example Citi → "Citibank", add `"h1bNames": ["Citibank", …]`. To see what a company matches, run a dry run and read its sponsorship notes in `automation/out/report.json`.
+
+**Refresh the H-1B data (once a year, after USCIS adds a full fiscal year, usually around January):**
+
+1. USCIS blocks scripted downloads, so download by hand. Open the [H-1B Employer Data Hub](https://www.uscis.gov/tools/reports-and-studies/h-1b-employer-data-hub), select the last two complete fiscal years plus the current one, and download the full employer table as CSV. It arrives as `Employer Information.csv` (UTF-16, tab-separated), which the script reads as-is.
+2. Remove the old export from `automation/data/raw/` (it's gitignored) and put the new file there.
+3. Run `npm run sponsors:build -- --partial-year=YYYY`, where YYYY is the fiscal year still in progress. Partial years appear as "to date" and are never used for the tier.
+4. Run a dry run, check the counts for a few known companies, then commit `automation/data/h1b-sponsors.json`.
 
 Running again never creates duplicates: `job-intake` skips any `job_link` already in the table, including jobs you have archived or rejected.
