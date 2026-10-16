@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { buildChatGptPrompt, buildClaudePrompt, copyToClipboard } from './prompts'
-import { CHECK_LABELS, PRIORITY_OPTIONS, PIPELINE_STATUS_OPTIONS, type Job, type JobPriority, type JobStatus, type JobUpdate, type ApplicationPacket } from './types'
+import { CHECK_LABELS, PREP_ROUTINE_URL, PRIORITY_OPTIONS, PIPELINE_STATUS_OPTIONS, type Job, type JobPriority, type JobStatus, type JobUpdate, type ApplicationPacket } from './types'
 
 type JobRowProps = {
   job: Job
@@ -120,6 +120,18 @@ const JobRow = ({ job, onEdit, onArchive, onUpdate, packet, onOpenPacket }: JobR
             <button type="button" onClick={() => onOpenPacket(job)} className={`rounded border px-2 py-1 text-xs ${packetButtonClass(packet)}`}>
               {packet.approved_at ? 'Packet · Approved' : `Packet · ${CHECK_LABELS[packet.check_status]}`}
             </button>
+          )}
+          {!packet && job.status === 'Ready to Apply' && !job.archived && (
+            // Approved, no packet yet (new, or after Regenerate): the preparation routine writes it on its next run.
+            <a
+              href={PREP_ROUTINE_URL}
+              target="_blank"
+              rel="noreferrer"
+              title="The preparation routine writes this packet daily at 10:00 AM. Open Job preparation and click Run now to write it sooner."
+              className="whitespace-nowrap rounded border border-sky-300 bg-sky-50 px-2 py-1 text-xs text-sky-800 hover:bg-sky-100"
+            >
+              Packet pending · Run now
+            </a>
           )}
           <button type="button" onClick={() => onEdit(job)} className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">Edit</button>
           {job.job_link && (

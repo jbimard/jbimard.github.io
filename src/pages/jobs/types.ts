@@ -157,6 +157,10 @@ export class PacketEditError extends Error {
   }
 }
 
+// Where to start the "Job preparation" routine by hand (claude.ai, signed in). The dashboard can't start it itself:
+// that needs the claude.ai login, which this public site never holds.
+export const PREP_ROUTINE_URL = 'https://claude.ai/code/scheduled'
+
 export const CHECK_LABELS: Record<ApplicationPacket['check_status'], string> = {
   pending: 'Not checked',
   pass: 'Pass',

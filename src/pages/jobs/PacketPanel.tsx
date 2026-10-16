@@ -315,7 +315,7 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
         <div onClick={(event) => event.stopPropagation()}>
         <ConfirmDialog
           title="Regenerate this packet?"
-          message="This deletes the packet. The job stays Ready to Apply, so the next preparation run (or Run now) writes a new one."
+          message="This deletes the packet. The job stays Ready to Apply and its row shows Packet pending · Run now: the routine writes a new one at 10:00 AM, or right away if you open Job preparation and click Run now."
           confirmLabel="Regenerate"
           destructive
           onCancel={() => setConfirmRegenerate(false)}
