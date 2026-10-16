@@ -13,7 +13,7 @@ Work through the steps in order. Update the status column as each step lands, an
 | 1 | Ship daily discovery | Done — PR #6 merged, secrets set, 1-job test inserted OK. **Workflow paused** until 1b: re-enable with `gh workflow enable discover-jobs.yml` |
 | 2a | Real H-1B sponsor data (USCIS) | Not started — **next** |
 | 1b | Daily batch of 10 + "Next batch" button | Not started — after 2a; **finish by re-enabling the workflow** |
-| 3 | Claude screening + preparation (incl. ATS-optimized resumes), review queue | Not started — after 1b |
+| 3 | Claude screening + preparation (incl. ATS-optimized resumes + Resume check screen), review queue | Not started — after 1b |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
@@ -98,7 +98,43 @@ Most applications are screened by an Applicant Tracking System (Workday, Greenho
   - real gaps, and which of those could be honestly added (because the experience exists) versus which are true gaps to mention or skip
 - **Strictly truthful.** Never invent skills, titles, dates or experience, and never hide keywords (white text, tiny fonts). That is dishonest, and ATS and AI screeners increasingly detect and penalize it. The tailoring only reorders and rewords real experience.
 - **Storage:** tailored resume files stay out of Supabase and out of this public repo. The database only records which tailored version was sent (label plus the match-report summary).
-- **Step 5** uploads this tailored file during supervised applying.
+- **Step 5** uploads this tailored file during supervised applying, but only after it passes the Resume check below.
+
+### Resume check screen (truthful and in his own voice)
+
+A review screen that every tailored resume must pass, and that a person must approve, before it can be used. It runs two checks.
+
+**1. Truthfulness: nothing beyond real qualifications**
+
+- **One source of truth:** an **experience inventory**, a private file that he writes and keeps up to date. It lists every job, project, skill, certification, tool, date and metric he can honestly claim. Tailoring may only use facts from it.
+- **Every claim is traced:** each bullet, skill and number in the tailored resume is linked back to its line in the inventory. Anything that can't be traced is flagged **red** and blocks approval until it's removed or added to the inventory by him.
+- **Specific red flags:**
+  - skill levels inflated (e.g. "used" → "expert in", "assisted" → "led")
+  - numbers that don't match the inventory
+  - titles, dates or employers that changed
+  - certifications not yet earned
+  - tools from the posting that never appear in the inventory
+- **Side-by-side view:** the base resume next to the tailored version, with every change highlighted, so it's quick to see exactly what was reworded.
+
+**2. Authentic voice: reads like him, not like AI**
+
+The aim is not to beat "AI detectors"; those tools are unreliable. The aim is a resume that sounds like a real person, because recruiters notice generic AI phrasing and it hurts credibility.
+
+- **Flag AI-sounding wording:**
+  - stock buzzwords: "leveraged", "spearheaded", "seamlessly", "robust", "cutting-edge", "passionate", "results-driven", "dynamic", "synergy", "orchestrated", "pivotal", "in today's fast-paced…"
+  - heavy em-dash use
+  - every bullet built the same way
+  - vague claims with no specifics
+- **Stay close to the base resume.** Tailoring changes order, emphasis and keywords, not the whole voice. Bullets rewritten past a set threshold are flagged so he can keep his original wording.
+- **Prefer specifics** over adjectives: tools, numbers and outcomes from the inventory.
+- **Read-aloud check:** a short "does this sound like you?" pass where he can edit any line, and those edits are kept for future tailoring.
+
+**Result:** each tailored resume gets **Pass / Needs edits / Blocked**. Only **Pass**, plus his approval, makes it available to step 5.
+
+**Open decision for step 3 planning:** the current rule says resume text is never stored in Supabase, but a review screen in `/jobs` needs to display the text. The options are:
+
+- (a) generate the review as a **local page** on his machine and keep the rule
+- (b) store tailored resume text in Supabase, protected by row-level security like the rest of his data, and relax the rule
 
 Constraint: the resume text is never stored in Supabase. The routine reads it from local profile files; the database only records the resume label used.
 
@@ -153,5 +189,6 @@ Settled; don't reopen without a new reason.
 - **Privacy:** the repo is public, so CI logs print only counts, never company or job names. No visa details or resume text in committed files.
 - **Daily volume (2026-10-16):** the dashboard shows the best 10 per day; more come only on request with "Next batch" (step 1b). The workflow stays paused until 1b exists.
 - **Resume tailoring (2026-10-16):** each application gets an ATS-optimized version of the chosen base resume (step 3). Tailoring is strictly truthful: rewording and reordering real experience only.
+- **Resume check (2026-10-16):** every tailored resume passes a check screen before use. Every claim must trace to his experience inventory, and AI-sounding wording is flagged. The goal is accuracy and his own voice, not evading AI detectors.
 - **Order (2026-10-15):** step 2 is split. 2a (USCIS sponsor data) goes before step 3 so screening uses real data; 2b (new board adapters) goes after step 3.
 - **H-1B data:** use the USCIS Employer Data Hub, not the Apify "H-1B Visa Salary Search" actor. That actor returns per-filing LCA salary records (not sponsorship counts), costs $0.05 per record, and doesn't clearly state its source.
