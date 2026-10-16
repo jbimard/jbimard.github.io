@@ -145,6 +145,16 @@ test('coursework may back the cover letter and answers, never bullets or the sum
   assert.match(validateBase(broken).errors.join(' '), /inventory.coursework\[0\] must be/)
 })
 
+test('inventory.not_yet lists gaps and may not overlap the tools he claims', () => {
+  const b = base()
+  b.inventory = { tools: [{ name: 'Azure', depth: 'built', evidence: 'x' }], certifications: [], not_yet: [{ name: 'Kubernetes', note: 'never used' }] }
+  assert.deepEqual(validateBase(b).errors, [])
+  b.inventory.not_yet = [{ name: 'azure', note: '' }]
+  assert.match(validateBase(b).errors.join(' '), /not_yet\[0\]: azure is also in inventory.tools/)
+  b.inventory.not_yet = [{ name: 'Helm' }] as never
+  assert.match(validateBase(b).errors.join(' '), /not_yet\[0\] must be \{ name, note \}/)
+})
+
 test('relevant coursework: inventory codes only, titles from the base, in-progress marked', () => {
   const b = base()
   b.inventory = {

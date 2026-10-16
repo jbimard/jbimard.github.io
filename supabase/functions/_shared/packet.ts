@@ -79,6 +79,9 @@ export type Inventory = {
   tools: Array<{ name: string; depth: (typeof TOOL_DEPTHS)[number]; evidence: string }>
   certifications: Array<{ name: string; status: (typeof CERT_STATUSES)[number]; date: string | null }>
   coursework?: Course[]
+  // Tools he doesn't have yet, so Fit & Gap can call them gaps. Never claimed anywhere; `note` says where he stands
+  // ("never used", "learning it in ITIS 5261").
+  not_yet?: Array<{ name: string; note: string }>
 }
 
 export type PacketEntry = { id: string; bullets: Array<{ from: string; text: string }> }
@@ -195,6 +198,15 @@ export const validateBase = (input: unknown): { base: BaseResumes | null; errors
           errors.push(`inventory.coursework[${i}] must be { code, title, term, status: ${COURSE_STATUSES.join('|')}, topics: [...], tools: [...] }.`)
         }
       })
+      const notYet = inventory.not_yet
+      if (notYet !== undefined && !Array.isArray(notYet)) errors.push('inventory.not_yet must be an array.')
+      else {
+        const claimed = new Set(inventory.tools.filter(isObj).map((tool) => String(tool.name).toLowerCase()))
+        notYet?.forEach((gap, i) => {
+          if (!isObj(gap) || !isText(gap.name) || typeof gap.note !== 'string') errors.push(`inventory.not_yet[${i}] must be { name, note }.`)
+          else if (claimed.has(gap.name.toLowerCase())) errors.push(`inventory.not_yet[${i}]: ${gap.name} is also in inventory.tools.`)
+        })
+      }
     }
   }
   return { base: errors.length === 0 ? (input as BaseResumes) : null, errors }
