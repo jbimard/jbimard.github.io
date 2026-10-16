@@ -40,11 +40,12 @@ const quote = (sentence: string) => `"${sentence.length > QUOTE_LIMIT ? `${sente
 const sponsorPoints = (sponsor: SponsorRecord, flags: Flags, profile: Profile) => {
   let points = profile.sponsorPoints[sponsor.tier]
   if (flags.sponsorshipOffered || flags.eVerify) points += 5
-  // No sponsorship means no H-1B path within the ~3-year OPT window, so it costs more.
-  if (flags.noSponsorship) points -= 15
+  // No sponsorship means no H-1B path, and his truthful "now or in the future" answer usually fails the
+  // application's first screen, so it costs more than any sponsor tier can make up.
+  if (flags.noSponsorship) points -= 30
   if (flags.citizenship) points -= 20
   // Allowed below zero so penalties still bite for companies that start low (no USCIS record).
-  return clamp(points, -15, 25)
+  return clamp(points, -30, 25)
 }
 
 const entryLevel = (flags: Flags) => flags.internship || flags.targetYear === 2027 || flags.newGradSignal

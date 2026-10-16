@@ -138,7 +138,7 @@
   "noLevelSignalFactor": 0.8,
   "maxRequiredYears": 2,
   "sponsorTiers": { "strong": 50, "some": 5 },
-  "sponsorPoints": { "strong": 20, "some": 15, "rare": 12, "none": 10 },
+  "sponsorPoints": { "strong": 25, "some": 17, "rare": 10, "none": 5 },
   "metros": {
     "charlotte": { "label": "Charlotte", "points": 15, "match": ["charlotte", "fort mill", "concord, nc", "matthews, nc"] },
     "triangle": { "label": "Triangle", "points": 15, "match": ["raleigh", "durham", "cary", "morrisville", "research triangle", "rtp", "chapel hill", "apex, nc"] },

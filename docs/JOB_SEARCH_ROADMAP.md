@@ -316,3 +316,9 @@ Settled; don't reopen without a new reason.
   - Hands-on `tools` are only what he confirmed (C, Java OOP, MySQL, MongoDB, sockets). `topics` come from the catalog and syllabi and are never claimed as hands-on use.
   - **Where it can appear:** the cover letter and answers, as coursework, plus a **Relevant Coursework** line under Education: up to 6 course codes per packet (`coursework`), with titles taken from the inventory and "(in progress)" added automatically. Bullets, the summary and skills still have to trace to the base resumes. The ATS estimate counts the coursework line.
   - **Check:** a term only coursework backs is red (`coursework_framing`) unless the text says course/class, and for an in-progress course, that he's taking it now.
+- **Sponsor weight (2026-10-16, after 3c-A):** the daily 10 now lean on sponsorship more. This reopens two 2a decisions, at his request.
+  - **Why:** he answers "now or in the future require sponsorship?" truthfully (Yes), which automated screens at non-sponsors often reject. So the time is better spent where that answer passes.
+  - **Tier points:** strong 25, some 17, rare 10, none on record 5 (were 20 / 15 / 12 / 10). The strong-to-none gap doubles from 10 to 20. A missed name match now costs 5; add the name to `h1bNames` if a known sponsor shows as "none".
+  - **"No sponsorship" in the posting:** −30 (was −15). The sponsor component is clamped to −30…25, so the total stays within 0–100.
+  - **Effect on the 2026-10-16 dry run (71 jobs):** strong sponsors in the top 10 go from 2 to 5, and no-sponsorship postings from 5 to 0. 51 jobs still clear `minScore` 50.
+  - Rows already queued keep their old scores, because intake skips postings it already has. They age out after 21 days (`queue_max_age_days`). New postings use the new weights from the next discovery run.
