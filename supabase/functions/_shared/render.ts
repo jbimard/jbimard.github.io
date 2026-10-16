@@ -5,7 +5,8 @@
 import { AlignmentType, BorderStyle, Document, LevelFormat, Packer, Paragraph, TabStopType, TextRun } from 'npm:docx@9.11.0'
 import type { BaseResumes, ResolvedEntry, ResolvedResume } from './packet.ts'
 
-const FONT = 'Calibri'
+// Arial: on every machine (so the browser preview matches Word) and the same metrics as the PDF's Helvetica.
+const FONT = 'Arial'
 const BODY = 21 // half-points: 10.5 pt
 const PAGE = { margin: { top: 720, bottom: 720, left: 806, right: 806 } } // twips: 0.5 in / 0.56 in
 const RIGHT_TAB = 10640 // right edge of the text area, for dates

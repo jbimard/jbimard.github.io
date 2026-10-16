@@ -36,10 +36,14 @@ The validator and the Resume check enforce this (see "What gets rejected").
    1. Read `job_description`. If it's short or cut off, open `job_link` for the full posting. Use **only the posting** for facts about the company and role: no outside research, and never state a company fact the posting doesn't.
    2. Start from `resume_version` (screening's pick) unless the posting clearly fits another version better.
    3. **Experience (1–4 entries) and projects (0–3):** pick the most relevant entries by `id`, most relevant first. For each one, choose up to 6 bullets, most relevant first. Each bullet is `{ "from": "<base bullet id>", "text": "<your wording>" }`.
+      - **The resume must fit on one page.** The Resume check estimates the length and blocks anything longer, and `job-prep` measures the real PDF too. In practice that means 2–3 experience entries and 1–2 projects, with 2–4 bullets each, and bullets of one or two lines. Cut the least relevant bullet first, not the most specific one.
+      - **Lead each entry with its strongest bullet for this posting**: what he built or shipped, with a result. Never lead with "Used…", "Assisted…" or "Helped…".
+      - **Pick projects that add something new.** A project from the same employer as an experience entry (for example the True Homes analytics pipeline next to the True Homes internship) repeats it. Choose the project that covers a posting requirement the experience doesn't, such as the Linux forensics project when the posting asks for Linux.
+      - **Name a tool in at most two resume lines** (summary and bullets). Claude Code especially: once where it matters most.
       - Keep his wording where it already fits. Change emphasis and use the posting's exact term where it truthfully describes the same thing. For example, write "AWS IAM" only if the source bullet is about AWS IAM.
       - Keep every number exactly as the source has it.
       - Don't add a tool, platform or skill the source bullet doesn't mention.
-   4. **Summary (≤ 700 characters):** a few plain sentences built from the base summaries and bullets, aimed at this role. Add no new numbers or tools.
+   4. **Summary (≤ 360 characters, 2–3 lines):** built from the base summaries and bullets, aimed at this role. Resume style: no "I", "my" or "me". Start with what he is ("Cybersecurity MS student (May 2027) who builds…"), then the two or three strengths this posting cares about most. No filler like "likes taking an idea from rough workflow to working system". Add no new numbers or tools.
    5. **Skills (1–5 groups):** use base skill group `id`s with items copied from the base skill lists, reordered so the posting's matches come first. Drop irrelevant items. Don't add any.
       - **Relevant coursework (0–6 courses):** `coursework` lists course `code`s from `inventory.coursework`, most relevant to the posting first. The resume shows their titles under Education, with "(in progress)" added automatically. Pick only courses whose title, topics or tools match what the posting asks for. Leave it as `[]` when nothing fits, or when the experience already covers the posting well.
    6. **Cover letter (3–5 paragraphs, ≤ 2,500 characters):** no greeting and no sign-off, because the template adds both.
@@ -99,6 +103,7 @@ The validator and the Resume check enforce this (see "What gets rejected").
 - Missing fields, or text over the limits.
 - Numbers written as words count as numbers: "six platforms" against a source that says four is rejected.
 - **Resume check, red** (never sent):
+  - a resume that doesn't fit on one page
   - a lead verb raised above the source's, or "led", "managed" or "owned" added
   - an expert-level claim about a tool the inventory marks `used`
   - a tool not in the inventory
@@ -111,6 +116,7 @@ The validator and the Resume check enforce this (see "What gets rejected").
   - 3 or more bullets opening with the same verb
   - a bullet keeping less than half its source's words
   - leadership wording in the cover letter or answers that no base bullet has
+  - resume style: "I", "my" or "me" in the summary or a bullet; a weak first bullet ("Used…", "Assisted…"); a tool named in three or more resume lines; a project from the same employer as an experience entry
   - read-aloud problems: a sentence over 35 words; a tool named twice in one bullet or the summary (three times in a paragraph or answer); two spelled-out acronyms in one line, or the same acronym spelled out in more than one place; a bullet opening with "Responsible for" or "Worked on"; a bullet in the passive voice ("was configured")
 
 ## Rules

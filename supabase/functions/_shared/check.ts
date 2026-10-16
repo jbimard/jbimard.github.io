@@ -11,6 +11,7 @@ import {
   splitSkills,
   type BaseResumes,
   type Packet,
+  type ResolvedEntry,
   type ResolvedResume,
 } from './packet.ts'
 
@@ -162,6 +163,84 @@ const resumeText = (resume: ResolvedResume) => [
   ...resume.skills.flatMap((group) => group.items),
 ].join('\n')
 
+// ---------- one-page estimate ----------
+
+// Mirrors render_pdf.ts (Helvetica metrics, the same sizes, spacing and word wrap), so the routine can tell without
+// rendering whether the resume fits on one page. job-prep also measures the real PDF and refuses anything longer.
+// render_pdf.ts imports LAYOUT, and a Deno test checks the estimate against the rendered PDF.
+export const LAYOUT = { width: 612 - 2 * 40, pageHeight: 792 - 36 - 36, body: 10.5, leading: 1.2 }
+// Helvetica advance widths (per 1000 em) for characters 32-126; anything else counts as a digit's width.
+const HELVETICA = [278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556, 333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584]
+const BOLD_FACTOR = 1.07
+type Run = { text: string; bold?: boolean }
+const textWidth = (text: string, size: number, bold = false) => {
+  let units = 0
+  for (const char of text) {
+    const code = char.charCodeAt(0)
+    units += code >= 32 && code <= 126 ? HELVETICA[code - 32] : 556
+  }
+  return (units / 1000) * size * (bold ? BOLD_FACTOR : 1)
+}
+// Same wrap as Writer.paragraph: word by word, `indent` on every line, `hanging` added after the first.
+const lineCount = (runs: Run[], size: number, width: number, indent = 0, hanging = 0) => {
+  const words = runs.flatMap(({ text, bold }) => text.split(/(\s+)/).filter(Boolean).map((word) => ({ word, bold })))
+  let lines = 1
+  let used = 0
+  let empty = true
+  for (const { word, bold } of words) {
+    const w = textWidth(word, size, bold)
+    if (/^\s+$/.test(word)) {
+      if (!empty) used += w
+      continue
+    }
+    const start = lines === 1 ? indent : indent + hanging
+    if (used + w > width - start && !empty) {
+      lines++
+      used = 0
+    }
+    used += w
+    empty = false
+  }
+  return lines
+}
+
+export const estimateResumeHeight = (resume: ResolvedResume) => {
+  const { width, body, leading } = LAYOUT
+  const para = (runs: Run[], size = body, w = width, indent = 0, hanging = 0) => lineCount(runs, size, w, indent, hanging) * size * leading
+  const heading = () => 8 + 12 * leading + 4
+  const withRight = (run: Run, right: string | null) => para([run], body, right ? width - textWidth(right, body) - 12 : width)
+  const bullet = (text: string) => para([{ text: '\u2022  ' }, { text }], body, width, 14, 9)
+  const contact = [resume.contact.location, resume.contact.relocation, resume.contact.email, resume.contact.phone, ...resume.contact.links].filter(Boolean).join(' | ')
+  let height = para([{ text: resume.contact.name, bold: true }], 16) + para([{ text: contact }])
+  height += heading() + para([{ text: resume.summary }])
+  height += heading()
+  for (const school of resume.education) {
+    height += para([{ text: `${school.school}${school.location ? `, ${school.location}` : ''}`, bold: true }])
+    for (const degree of school.degrees) height += withRight({ text: degree.degree }, degree.date)
+  }
+  if (resume.coursework.length) height += para([{ text: 'Relevant Coursework: ', bold: true }, { text: resume.coursework.join(', ') }])
+  const entries = (items: ResolvedEntry[]) => {
+    for (const item of items) {
+      height += 3 + withRight({ text: item.heading, bold: true }, item.subheading ? null : item.right)
+      if (item.subheading) height += withRight({ text: item.subheading }, item.right)
+      for (const text of item.bullets) height += bullet(text)
+    }
+  }
+  height += heading()
+  entries(resume.experience)
+  if (resume.projects.length) {
+    height += heading()
+    entries(resume.projects)
+  }
+  height += heading()
+  for (const group of resume.skills) height += para([{ text: `${group.label}: `, bold: true }, { text: group.items.join(', ') }])
+  if (resume.certifications.length) {
+    height += heading()
+    for (const cert of resume.certifications) height += bullet(cert)
+  }
+  return height
+}
+
 // ---------- the check ----------
 
 export const checkPacket = (packet: Packet, base: BaseResumes, resume: ResolvedResume, job: PostingFields): CheckResult => {
@@ -312,6 +391,41 @@ export const checkPacket = (packet: Packet, base: BaseResumes, resume: ResolvedR
   const expansions = new Map<string, number>()
   for (const { text } of everything) for (const acronym of expansionsIn(text)) expansions.set(acronym, (expansions.get(acronym) ?? 0) + 1)
   for (const [acronym, count] of expansions) if (count > 1) add('yellow', 'repeated_expansion', '*', `${acronym} is spelled out in ${count} places; spell it out once and use the short form after.`)
+
+  // Red: the resume has to fit on one page. Estimated here; job-prep measures the real PDF as well.
+  const height = estimateResumeHeight(resume)
+  // A few points of slack: the estimate can run slightly short of the rendered PDF.
+  if (height > LAYOUT.pageHeight - 4) {
+    const over = Math.ceil((height - LAYOUT.pageHeight) / (LAYOUT.body * LAYOUT.leading))
+    add('red', 'over_one_page', '*', `The resume runs about ${over} line${over === 1 ? '' : 's'} past one page; drop or shorten bullets (most bullets take 1-2 lines).`)
+  }
+
+  // Yellow: resume-specific style. No first person, a strong first bullet, one mention of a tool is enough,
+  // and no project that repeats an experience entry.
+  const resumeLines = [{ path: 'summary', text: resume.summary }, ...bullets]
+  for (const { path, text } of resumeLines) {
+    if (/(^|[\s(])I(?=[\s',.;:)]|$)/.test(text) || /\b(my|me|myself)\b/i.test(text)) add('yellow', 'first_person', path, 'Resume lines leave out "I" and "my"; start with the verb or the role.', text)
+  }
+  for (const [kind, entries] of [['experience', resume.experience], ['projects', resume.projects]] as const) {
+    entries.forEach((entry, i) => {
+      const first = entry.bullets[0] ?? ''
+      if (/^(used|assisted|helped|supported|participated|worked)\b/i.test(first.trim())) {
+        add('yellow', 'weak_lead', `${kind}[${i}].bullets[0]`, `"${leadVerb(first)}" is a weak first bullet; lead with the strongest result for this posting.`, first)
+      }
+    })
+  }
+  const toolNames = [...new Set([...vocabulary.map((entry) => entry.term), ...(inventory?.tools ?? []).map((tool) => tool.name)])]
+  for (const name of toolNames) {
+    const pattern = termPattern(name, 'i')
+    const count = resumeLines.filter(({ text }) => pattern.test(text)).length
+    if (count >= 3) add('yellow', 'tool_overuse', '*', `"${name}" appears in ${count} resume lines; keep it where it shows the most.`)
+  }
+  resume.projects.forEach((project, i) => {
+    const org = project.right?.trim()
+    if (org && resume.experience.some((job) => job.heading === org || job.heading.startsWith(`${org},`))) {
+      add('yellow', 'duplicate_project', `projects[${i}]`, `"${project.heading}" repeats the ${org} experience; pick a project that adds something new.`)
+    }
+  })
 
   // ATS estimate: posting keywords covered by the tailored resume, next to the full base version.
   const terms = vocabulary.map((entry) => entry.term)
