@@ -238,3 +238,37 @@ To add companies to `automation/config/companies.json`:
 4. Run a dry run, check the counts for a few known companies, then commit `automation/data/h1b-sponsors.json`.
 
 Running again never creates duplicates: `job-intake` skips any `job_link` already in the table, including jobs you have archived or rejected.
+
+## 11. Claude Screening (Review Tab)
+
+Each morning a scheduled Claude routine reads the day's `Found` jobs against the resumes. For each one it writes a score, a reason, a recommendation (Apply / Maybe / Skip), checks for sponsorship (including the USCIS employer match), citizenship and clearance, and a resume version. The job then moves to `Fit Check` and appears in **/jobs → Review**. There, **Approve** moves it to `Ready to Apply` and **Reject** archives it. Keyboard: `j`/`k` to move, `a` approve, `r` reject, `l` later. The routine's instructions are in `automation/screening/ROUTINE.md`.
+
+**One-time setup:**
+
+1. Deploy the database change and the function:
+   ```bash
+   supabase db push
+   supabase functions deploy job-screening
+   ```
+2. Set the function's token yourself, and never paste it into chat or commit it:
+   ```bash
+   supabase secrets set JOB_SCREENING_TOKEN=$(openssl rand -hex 32)
+   ```
+   Copy the value into your password manager; the routine needs it. The function also reuses `JOB_INTAKE_USER_ID` from section 9.
+3. Create the routine as a scheduled Claude Code cloud agent (`/schedule`) on this repo:
+   - **Schedule:** daily at 11:30 UTC, after discovery (10:00) and the morning batch (11:00).
+   - **Prompt:** `Follow automation/screening/ROUTINE.md exactly.`
+   - **Environment variables:** `JOB_SCREENING_URL` = `https://PROJECT_REF.supabase.co/functions/v1/job-screening`, and `JOB_SCREENING_TOKEN` = the value from step 2.
+   - **Network access:** it needs your Supabase URL and the job boards, to read full postings.
+
+**Running it on demand:** after you click **Next batch**, run the routine now from its page to screen the new jobs right away.
+
+**Locally:**
+
+```bash
+npm run screening:sponsor -- "Commonwealth Fusion Systems"   # USCIS lookup, no network
+JOB_SCREENING_URL=… JOB_SCREENING_TOKEN=… npm run screening:pull -- --out=/tmp/jobs.json
+npm run screening:push -- /tmp/results.json --dry-run          # validate only
+```
+
+The `job-screening` function updates only that user's `Found` rows that haven't been screened yet, so it can't change jobs you're already working on.

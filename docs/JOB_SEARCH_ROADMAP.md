@@ -12,13 +12,15 @@ Work through the steps in order. Update the status column as each step lands, an
 |---|------|--------|
 | 1 | Ship daily discovery | Done — PR #6 merged, secrets set, 1-job test inserted OK. Workflow re-enabled at the end of 1b |
 | 2a | Real H-1B sponsor data (USCIS) | Done — PR #8; USCIS FY2024–FY2026 (Q3) data in `automation/data/h1b-sponsors.json` |
-| 1b | Daily batch of 10 + "Next batch" button | Done — `Queued` status, 11:00 UTC batch via `pg_cron`, "Next batch" button; migration + intake deployed and **workflow re-enabled** |
-| 3 | Claude screening + preparation (incl. ATS-optimized resumes, Resume check, resume preview + ATS score in dashboard), review queue | Not started — **next** |
+| 1b | Daily batch of 10 + "Next batch" button | Done — PR #9, deployed 2026-10-16; `Queued` status, 11:00 UTC batch via `pg_cron`, "Next batch" button; migration + intake deployed and **workflow re-enabled** |
+| 3a | Claude screening + review queue | Done — `job-screening` function, routine instructions in `automation/screening/ROUTINE.md`, Review tab in `/jobs`. Live once the function is deployed and the routine is created (`docs/JOBS_SETUP.md` §11) |
+| 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Not started — **next** |
+| 3c | Resume check screen, resume preview + estimated ATS score in the dashboard | Not started — after 3b |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
 
-Order: **1 → 2a → 1b → 3 → 2b → 4 → 5.**
+Order: **1 → 2a → 1b → 3a → 3b → 3c → 2b → 4 → 5.**
 
 - 2a is small and gives step 3 real sponsorship data from day one.
 - 1b comes before the workflow is turned back on, so the dashboard never gets flooded with the whole backlog.
@@ -71,15 +73,22 @@ The work: `automation/` (the script), `.github/workflows/discover-jobs.yml` (the
 
 ## 3. Claude screening and preparation
 
-A scheduled Claude routine that runs after discovery each morning and, for each new `Found` job:
+Split into three parts: **3a** screening + review queue (done), **3b** preparation (cover letter, answers, ATS-optimized resume, private storage), **3c** Resume check screen + resume preview and ATS score.
 
-- reads the full posting against the resume and gives a real match score with a reason, replacing the rule-based guess
-- double-checks the sponsorship, citizenship and clearance labels
+### 3a. Screening + review queue (done)
+
+A scheduled Claude routine runs at 11:30 UTC, after the morning batch. For each new `Found` job, it:
+
+- reads the full posting against the resumes and gives a real match score with a reason, replacing the rule-based guess (the rule score is kept)
+- double-checks the sponsorship, citizenship and clearance labels, including the USCIS employer match (it can correct a missed or wrong match)
 - picks a resume version (Cloud / Security / Cloud Security)
-- drafts a cover letter and answers to the standard application questions
-- moves strong matches to `Ready to Apply`
+- recommends **Apply / Maybe / Skip** and moves the job to `Fit Check`
 
-This step also needs a **review queue** view in `/jobs` where the day's batch of 10 (from 1b) gets approved or rejected in about 15 minutes.
+The **Review** tab in `/jobs` shows the day's screened jobs. Approve moves a job to `Ready to Apply`, which is where 3b starts. Reject archives it.
+
+### 3b. Preparation (next)
+
+For each approved (`Ready to Apply`) job: draft a cover letter and answers to the standard application questions, and tailor the ATS-optimized resume below.
 
 ### ATS-optimized resume for each application
 
@@ -228,3 +237,11 @@ Settled; don't reopen without a new reason.
   - Queued rows older than `queue_max_age_days` (default 21) are never promoted and are archived by the daily run.
   - Both paths share one function, `private.promote_queued`. The button calls `public.promote_next_batch()`, a `security definer` function scoped by `auth.uid()` and executable only by signed-in users. It does the same job as the RLS-only approach first planned, and still needs no new token or Edge Function.
   - `job-intake` now reads existing rows in pages of 1000 (the PostgREST `max_rows` limit), so duplicate checks still work once the queue grows past 1000 rows.
+- **Screening (2026-10-16, step 3a):**
+  - **Claude recommends; he approves.** Screening never moves a job past `Fit Check`. Approve in the Review tab moves it to `Ready to Apply`, and Reject archives it. This replaces "moves strong matches to `Ready to Apply`".
+  - The routine runs on the Claude subscription as a scheduled cloud routine at 11:30 UTC, after discovery at 10:00 and the batch at 11:00. Its instructions are versioned in `automation/screening/ROUTINE.md`. The repo still makes no AI API calls.
+  - It reads and writes only through the `job-screening` Edge Function, with its own `JOB_SCREENING_TOKEN`, separate from the insert-only intake token. Writes only touch that user's unscreened `Found` rows.
+  - Claude's score replaces `match_score`. The rule score is kept in `screening.rule_score` and in `notes`.
+  - The sponsorship check uses the USCIS data from 2a. Claude can correct a missed or wrong employer match (`source: "corrected"`) but never guesses one.
+  - A clearance requirement is always a Skip (enforced by the validator).
+  - The routine never changes the repo.

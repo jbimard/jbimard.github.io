@@ -4,6 +4,7 @@ import ConfirmDialog from './ConfirmDialog'
 import BulkImportDialog from './import/BulkImportDialog'
 import JobFormDrawer from './JobFormDrawer'
 import JobsTable, { type SortKey, type SortState } from './JobsTable'
+import ReviewQueue, { type ReviewDecision } from './ReviewQueue'
 import SummaryBar from './SummaryBar'
 import Toolbar, { type JobFilters } from './Toolbar'
 import { useJobs } from './useJobs'
@@ -23,7 +24,7 @@ const initialFilters: JobFilters = {
   archive: 'active',
 }
 
-const searchableFields: (keyof Job)[] = [
+const searchableFields: Exclude<keyof Job, 'screening'>[] = [
   'company',
   'role_title',
   'location',
@@ -56,6 +57,15 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
   const [archiveTarget, setArchiveTarget] = useState<Job | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [promoting, setPromoting] = useState(false)
+  const [view, setView] = useState<'pipeline' | 'review'>('pipeline')
+
+  // Screened by the Claude routine and waiting for a decision.
+  const reviewJobs = useMemo(
+    () => jobs
+      .filter((job) => job.status === 'Fit Check' && job.screening && !job.archived)
+      .sort((a, b) => (b.screening?.score ?? 0) - (a.screening?.score ?? 0)),
+    [jobs],
+  )
 
   const visibleJobs = useMemo(() => {
     const search = filters.search.trim().toLowerCase()
@@ -122,6 +132,16 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
     }
   }
 
+  const handleReviewDecision = async (job: Job, decision: ReviewDecision) => {
+    if (decision === 'later') return
+    setActionError(null)
+    try {
+      await updateJob(job.id, decision === 'approve' ? { status: 'Ready to Apply' } : { status: 'Rejected', archived: true })
+    } catch (decisionError) {
+      setActionError(decisionError instanceof Error ? decisionError.message : 'Unable to save the decision.')
+    }
+  }
+
   const handleUpdate = async (id: string, patch: JobUpdate) => {
     setActionError(null)
     try {
@@ -147,7 +167,19 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
         </header>
 
         <SummaryBar jobs={jobs} />
-        <Toolbar
+        <nav className="grid w-full grid-cols-2 rounded-md border border-slate-300 bg-white p-1 text-sm sm:w-80">
+          {(['pipeline', 'review'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setView(option)}
+              className={`rounded px-3 py-2 ${view === option ? 'bg-slate-950 text-white' : 'text-slate-600'}`}
+            >
+              {option === 'pipeline' ? 'Pipeline' : `Review (${reviewJobs.length})`}
+            </button>
+          ))}
+        </nav>
+        {view === 'pipeline' && <Toolbar
           filters={filters}
           onFiltersChange={setFilters}
           onAddJob={openCreate}
@@ -155,7 +187,7 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
           queuedCount={queuedCount}
           promoting={promoting}
           onNextBatch={() => void handleNextBatch()}
-        />
+        />}
 
         {(error || actionError) && (
           <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error || actionError}</p>
@@ -163,6 +195,8 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
 
         {loading ? (
           <section className="rounded-md border border-slate-200 bg-white px-4 py-10 text-center text-sm text-slate-500">Loading jobs...</section>
+        ) : view === 'review' ? (
+          <ReviewQueue jobs={reviewJobs} onDecide={handleReviewDecision} />
         ) : (
           <JobsTable
             jobs={visibleJobs}

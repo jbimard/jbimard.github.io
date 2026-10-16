@@ -26,6 +26,33 @@ export type JobPriority = (typeof PRIORITY_OPTIONS)[number]
 export type JobType = (typeof JOB_TYPE_OPTIONS)[number]
 export type WorkMode = (typeof WORK_MODE_OPTIONS)[number]
 
+// Written by the Claude screening routine (automation/screening/results.ts, StoredScreening).
+export interface Screening {
+  score: number
+  recommendation: 'apply' | 'maybe' | 'skip'
+  reason: string
+  strengths: string[]
+  gaps: string[]
+  resume_version: 'Cloud' | 'Security' | 'Cloud Security'
+  checks: {
+    sponsorship: {
+      verdict: 'ok' | 'no_sponsorship' | 'unclear'
+      note: string
+      uscis: {
+        employer: string | null
+        fiscalYear: number | null
+        count: number | null
+        tier: 'strong' | 'some' | 'rare' | 'none'
+        source: 'discovery' | 'corrected' | 'none'
+      }
+    }
+    citizenship: { verdict: 'none' | 'required' | 'unclear'; note: string }
+    clearance: { verdict: 'none' | 'conditional' | 'required'; note: string }
+  }
+  rule_score: number | null
+  screened_by: string
+}
+
 export interface Job {
   id: string
   user_id: string
@@ -52,11 +79,13 @@ export interface Job {
   date_applied: string | null
   follow_up_date: string | null
   archived: boolean
+  screening: Screening | null
+  screened_at: string | null
   created_at: string
   updated_at: string
 }
 
-export type JobDraft = Omit<Job, 'id' | 'created_at' | 'updated_at'>
+export type JobDraft = Omit<Job, 'id' | 'created_at' | 'updated_at' | 'screening' | 'screened_at'>
 export type JobUpdate = Partial<Omit<Job, 'id' | 'created_at' | 'updated_at' | 'user_id'>>
 
 export const EMPTY_JOB_VALUES = {
