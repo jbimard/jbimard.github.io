@@ -48,7 +48,6 @@ export const fetchLever = async (company: Company): Promise<RawPosting[]> => {
       description: leverDescription(posting),
       workplaceHint: posting.workplaceType ?? null,
       salaryText: leverSalary(posting),
-      sponsorTier: company.sponsorTier,
       simplifySponsorship: null,
     }))
 }

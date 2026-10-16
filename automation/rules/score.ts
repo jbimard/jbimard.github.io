@@ -1,5 +1,6 @@
 import type { IntakeJob, Profile, RawPosting } from '../types.ts'
 import { detectFlags, type Flags } from './flags.ts'
+import type { SponsorRecord } from './sponsors.ts'
 import { findSkills, matchesAny, parseAnnualSalary, scoreLocation } from './text.ts'
 
 export type TitleGroup = 'A' | 'B' | 'C'
@@ -36,13 +37,13 @@ export type Evaluation =
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 const quote = (sentence: string) => `"${sentence.length > QUOTE_LIMIT ? `${sentence.slice(0, QUOTE_LIMIT)}…` : sentence}"`
 
-const sponsorPoints = (posting: RawPosting, flags: Flags) => {
-  let points = posting.sponsorTier === 'known' ? 20 : 10
+const sponsorPoints = (sponsor: SponsorRecord, flags: Flags, profile: Profile) => {
+  let points = profile.sponsorPoints[sponsor.tier]
   if (flags.sponsorshipOffered || flags.eVerify) points += 5
   // No sponsorship means no H-1B path within the ~3-year OPT window, so it costs more.
   if (flags.noSponsorship) points -= 15
   if (flags.citizenship) points -= 20
-  // Allowed below zero so penalties still bite for companies that start low (unknown sponsor).
+  // Allowed below zero so penalties still bite for companies that start low (no USCIS record).
   return clamp(points, -15, 25)
 }
 
@@ -84,18 +85,18 @@ const jobTypeOf = (flags: Flags): IntakeJob['job_type'] => {
 
 const priorityOf = (score: number): IntakeJob['priority'] => (score >= 75 ? 'High' : score >= 55 ? 'Medium' : 'Low')
 
-const sponsorshipNotes = (posting: RawPosting, flags: Flags) => {
+const sponsorshipNotes = (sponsor: SponsorRecord, flags: Flags) => {
   const notes: string[] = []
   if (flags.citizenship) notes.push(`⚠ Citizenship stated: ${quote(flags.citizenship)}`)
   if (flags.possibleClearance) notes.push(`⚠ Clearance possibly required: ${quote(flags.possibleClearance)}`)
   if (flags.noSponsorship) notes.push(`No sponsorship (OPT/STEM OPT still applies): ${quote(flags.noSponsorship)}`)
   if (flags.sponsorshipOffered) notes.push(`Sponsorship mentioned: ${quote(flags.sponsorshipOffered)}`)
-  if (posting.sponsorTier === 'known') notes.push('Company is on the known-sponsor seed list (verify with H-1B data).')
+  if (sponsor.label) notes.push(sponsor.label)
   if (!flags.descriptionAvailable) notes.push('Description unavailable — clearance/citizenship not checked.')
   return notes.length > 0 ? notes.join('\n') : null
 }
 
-export const evaluatePosting = (posting: RawPosting, profile: Profile): Evaluation => {
+export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: SponsorRecord): Evaluation => {
   const group = titleGroup(posting.title, profile)
   if (!group) return { kind: 'irrelevant', reason: 'title' }
 
@@ -119,7 +120,7 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile): Evaluati
   const weighted = (points: number) => Math.round(points * fit * levelFactor)
   const breakdown: Breakdown = {
     role: Math.round((offTarget ? OFF_TARGET_ROLE_POINTS : ROLE_POINTS[group]) * levelFactor),
-    sponsor: weighted(sponsorPoints(posting, flags)),
+    sponsor: weighted(sponsorPoints(sponsor, flags, profile)),
     level: weighted(levelPoints(flags)),
     location: weighted(location.points),
     pay: weighted(payPoints(annual, flags)),
@@ -150,7 +151,7 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile): Evaluati
       work_mode: flags.workMode,
       match_score: score,
       required_skills: skills.length > 0 ? skills.join(', ') : null,
-      sponsorship_notes: sponsorshipNotes(posting, flags),
+      sponsorship_notes: sponsorshipNotes(sponsor, flags),
       e_verify_notes: flags.eVerify ? `Mentions E-Verify: ${quote(flags.eVerify)}` : null,
       graduation_requirement: flags.graduation ? flags.graduation.slice(0, QUOTE_LIMIT) : null,
       job_description: description ? description.slice(0, DESCRIPTION_LIMIT) : null,

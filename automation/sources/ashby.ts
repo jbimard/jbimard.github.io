@@ -47,7 +47,6 @@ export const fetchAshby = async (company: Company): Promise<RawPosting[]> => {
       description: job.descriptionPlain?.trim() || null,
       workplaceHint: job.workplaceType ?? (job.isRemote ? 'Remote' : null),
       salaryText: job.compensation?.compensationTierSummary ?? null,
-      sponsorTier: company.sponsorTier,
       simplifySponsorship: null,
     }))
 }

@@ -1,12 +1,14 @@
 export type Ats = 'greenhouse' | 'lever' | 'ashby' | 'workday'
-export type SponsorTier = 'known' | 'unknown'
+// From USCIS New Employment approvals in the latest complete fiscal year (see rules/sponsors.ts).
+export type SponsorTier = 'strong' | 'some' | 'rare' | 'none'
 
 export type Company = {
   name: string
   ats: Ats
   // greenhouse/lever/ashby: board slug. workday: "tenant/wdN/site".
   board: string
-  sponsorTier: SponsorTier
+  // Names to look up in the USCIS data instead of `name`, when they differ (e.g. Fidelity → "FMR").
+  h1bNames?: string[]
 }
 
 export type MetroConfig = { label: string; points: number; match: string[] }
@@ -20,6 +22,9 @@ export type Profile = {
   fitWeights: { A: number; B: number; C: number; offTarget: number }
   noLevelSignalFactor: number
   maxRequiredYears: number
+  // New Employment approvals in the latest complete fiscal year needed for each tier.
+  sponsorTiers: { strong: number; some: number }
+  sponsorPoints: Record<SponsorTier, number>
   metros: Record<string, MetroConfig>
   remoteUsPoints: number
   otherUsPoints: number
@@ -51,7 +56,6 @@ export type RawPosting = {
   description: string | null
   workplaceHint: string | null
   salaryText: string | null
-  sponsorTier: SponsorTier
   simplifySponsorship: SimplifySponsorship | null
 }
 

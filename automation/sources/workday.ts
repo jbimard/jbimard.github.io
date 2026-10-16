@@ -83,7 +83,6 @@ export const fetchWorkday = async (company: Company, profile: Profile): Promise<
         description: detail.description,
         workplaceHint: null,
         salaryText: null,
-        sponsorTier: company.sponsorTier,
         simplifySponsorship: null,
       })
     } catch (error) {

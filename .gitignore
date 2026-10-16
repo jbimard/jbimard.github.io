@@ -28,3 +28,6 @@ dist-ssr
 
 # Job discovery run output
 automation/out/
+
+# Raw USCIS H-1B Employer Data Hub exports (large; only the trimmed JSON is committed)
+automation/data/raw/
