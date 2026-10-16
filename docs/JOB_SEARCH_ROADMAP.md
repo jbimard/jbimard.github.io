@@ -10,8 +10,8 @@ Work through the steps in order. Update the status column as each step lands, an
 
 | # | Step | Status |
 |---|------|--------|
-| 1 | Ship daily discovery | In progress — PR #6 open; then add secrets + first real run |
-| 2a | Real H-1B sponsor data (USCIS) | Not started — **next** |
+| 1 | Ship daily discovery | Done — PR #6 merged, secrets set, 1-job test inserted OK. **Workflow paused** until 2a: re-enable with `gh workflow enable discover-jobs.yml` |
+| 2a | Real H-1B sponsor data (USCIS) | Not started — **next**; finish by re-enabling the workflow |
 | 3 | Claude screening + preparation, review queue | Not started — after 2a |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
