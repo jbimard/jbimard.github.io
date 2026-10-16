@@ -14,14 +14,15 @@ Work through the steps in order. Update the status column as each step lands, an
 | 2a | Real H-1B sponsor data (USCIS) | Done — PR #8; USCIS FY2024–FY2026 (Q3) data in `automation/data/h1b-sponsors.json` |
 | 1b | Daily batch of 10 + "Next batch" button | Done — PR #9, deployed 2026-10-16; `Queued` status, 11:00 UTC batch via `pg_cron`, "Next batch" button; migration + intake deployed and **workflow re-enabled** |
 | 3a | Claude screening + review queue | Done — `job-screening` function, routine instructions in `automation/screening/ROUTINE.md`, Review tab in `/jobs`. Live once the function is deployed and the routine is created (`docs/JOBS_SETUP.md` §11) |
-| 1c | Closed-posting check: archive jobs whose posting is gone | Done — PR #14, deployed 2026-10-16 (migration + `job-link-check`). Runs once `JOB_LINK_CHECK_TOKEN` and the two repo secrets are set (`docs/JOBS_SETUP.md` §12) |
-| 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Done — PR #15; `job-prep` function, `application_packets` table, private bucket, routine instructions in `automation/prep/ROUTINE.md`, Packet panel in `/jobs`. Live once deployed, the base file is uploaded, and the routine is created (`docs/JOBS_SETUP.md` §13) |
-| 3c | Resume check screen, resume preview + estimated ATS score in the dashboard | Not started — **next** |
+| 1c | Closed-posting check: archive jobs whose posting is gone | Live — PR #14; deployed and secrets set 2026-10-16; workflow dry run checked 71 postings (67 open, 4 couldn't verify) |
+| 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Live — PR #15; deployed, base file uploaded, routine "Job preparation" daily at 14:00 UTC in its own environment (first run 2026-10-16: OK, 0 jobs) |
+| 3c-A | Resume check, preview, ATS score, Approve / Regenerate | Done — PR #16; `automation/prep/check.ts`, experience inventory in the private base file, Packet panel tabs. Live once deployed and the inventory is re-uploaded (`docs/JOBS_SETUP.md` §13) |
+| 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | Not started — **next** |
 | 2b | More local companies (new board adapters) | Not started — after 3 |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
 
-Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c → 2b → 4 → 5.**
+Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B → 2b → 4 → 5.**
 
 - 2a is small and gives step 3 real sponsorship data from day one.
 - 1b comes before the workflow is turned back on, so the dashboard never gets flooded with the whole backlog.
@@ -298,3 +299,15 @@ Settled; don't reopen without a new reason.
   - **Files are DOCX only;** PDF and the in-dashboard preview come in 3c. Storage is a private bucket with owner-read-only policies and one-minute signed download links. The `application_packets` table is owner-select-only, and all writes go through the service role.
   - **A separate cloud environment for the routine:** a network secret applies to every request to the Supabase host, so the screening environment would attach the screening token. `job-prep` has its own `JOB_PREP_TOKEN` in its own environment.
   - **Schedule:** daily at 14:00 UTC, after the 11:30 screening and his morning review, plus Run now. One packet per job (`job_id` unique); 3c's Regenerate will replace it.
+  - **Internship record (2026-10-16):** the True Homes entry gained the public-safe bullets from his internship record, with three corrections he confirmed: the audit tool covers four Microsoft platforms (not six); "two weeks ahead of schedule" stays; 62 → 4 minutes stays. The record's internal names and audit findings stay out of the base file.
+- **Resume check (2026-10-16, step 3c-A):**
+  - **Split:** 3c-A is the automatic check, preview, ATS estimate and Approve/Regenerate. 3c-B (next) is editing in the dashboard, re-rendering, the read-aloud pass and voice memory.
+  - **Experience inventory** lives in the private base file as `inventory.tools` (each `used` / `built` / `led`, with evidence) and `inventory.certifications` (`earned` / `in_progress`). It's optional in the schema so older uploads keep working; a packet checked without it gets a yellow flag. The draft marks `built` only where a bullet shows building with the tool, and nothing as `led`.
+  - **Check rules** (`automation/prep/check.ts`, deterministic, an exact copy in the function):
+    - **Red (Blocked):** lead-verb inflation on the assist < build < lead ladder, or leadership words the source lacks; expert-level claims about `used` tools; tools not in the inventory; certifications not earned; locked fields drifting from the base.
+    - **Yellow (Needs edits):** buzzwords, vague words, more than 2 em dashes, 3+ bullets with the same opening verb, less than 50% of the source's words kept, leadership words in the letter or answers that no base bullet has, no inventory.
+  - **Approval rule (changes the original "only Pass"):** Pass, or Needs edits with every yellow flag acknowledged. Blocked can never be approved; Regenerate deletes the packet so the next run rewrites it. Enforced by `approve_packet` / `regenerate_packet` (security definer, scoped to `auth.uid()`).
+  - **The routine never sends a packet with red flags:** `client.ts push` runs the same check and refuses.
+  - **Numbers written as words** ("six", "forty-two") are compared like digits; "one" is skipped as a likely pronoun.
+  - **ATS estimate:** posting keywords (the shared term list, base skills, required skills), classed required or preferred by section heading. Score = 85 × (2·required covered + preferred covered) / (2·required + preferred) + 15 for format safety. The full base version is scored the same way. With fewer than 3 keywords, no score.
+  - **Preview:** the stored .docx rendered in the browser with `docx-preview` (lazy-loaded), so the preview is the exact file.

@@ -1,5 +1,5 @@
 import JobRow from './JobRow'
-import type { Job, JobUpdate } from './types'
+import type { ApplicationPacket, Job, JobUpdate } from './types'
 
 export type SortKey = 'company' | 'role_title' | 'priority' | 'status' | 'match_score' | 'date_found' | 'date_applied' | 'follow_up_date'
 export type SortState = { key: SortKey; direction: 'asc' | 'desc' }
@@ -11,7 +11,7 @@ type JobsTableProps = {
   onEdit: (job: Job) => void
   onArchive: (job: Job) => void
   onUpdate: (id: string, patch: JobUpdate) => Promise<void>
-  packetJobIds: Set<string>
+  packets: Map<string, ApplicationPacket>
   onOpenPacket: (job: Job) => void
 }
 
@@ -26,7 +26,7 @@ const columns: { key: SortKey; label: string; align?: string }[] = [
   { key: 'follow_up_date', label: 'Follow-up' },
 ]
 
-const JobsTable = ({ jobs, sort, onSort, onEdit, onArchive, onUpdate, packetJobIds, onOpenPacket }: JobsTableProps) => (
+const JobsTable = ({ jobs, sort, onSort, onEdit, onArchive, onUpdate, packets, onOpenPacket }: JobsTableProps) => (
   <section className="overflow-hidden rounded-md border border-slate-200 bg-white">
     <div className="overflow-x-auto">
       <table className="min-w-[1180px] w-full border-collapse text-left text-sm">
@@ -58,7 +58,7 @@ const JobsTable = ({ jobs, sort, onSort, onEdit, onArchive, onUpdate, packetJobI
               onEdit={onEdit}
               onArchive={onArchive}
               onUpdate={onUpdate}
-              hasPacket={packetJobIds.has(job.id)}
+              packet={packets.get(job.id)}
               onOpenPacket={onOpenPacket}
             />
           ))}

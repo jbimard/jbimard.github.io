@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { buildChatGptPrompt, buildClaudePrompt, copyToClipboard } from './prompts'
-import { PRIORITY_OPTIONS, PIPELINE_STATUS_OPTIONS, type Job, type JobPriority, type JobStatus, type JobUpdate } from './types'
+import { CHECK_LABELS, PRIORITY_OPTIONS, PIPELINE_STATUS_OPTIONS, type Job, type JobPriority, type JobStatus, type JobUpdate, type ApplicationPacket } from './types'
 
 type JobRowProps = {
   job: Job
   onEdit: (job: Job) => void
   onArchive: (job: Job) => void
   onUpdate: (id: string, patch: JobUpdate) => Promise<void>
-  hasPacket: boolean
+  packet?: ApplicationPacket
   onOpenPacket: (job: Job) => void
 }
 
@@ -28,7 +28,13 @@ const Badge = ({ children, className }: { children: string; className: string })
   <span className={`inline-flex rounded px-2 py-1 text-xs font-medium ring-1 ${className}`}>{children}</span>
 )
 
-const JobRow = ({ job, onEdit, onArchive, onUpdate, hasPacket, onOpenPacket }: JobRowProps) => {
+const packetButtonClass = (packet: ApplicationPacket) => {
+  if (packet.approved_at || packet.check_status === 'pass') return 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+  if (packet.check_status === 'blocked') return 'border-red-300 bg-red-50 text-red-800 hover:bg-red-100'
+  return 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+}
+
+const JobRow = ({ job, onEdit, onArchive, onUpdate, packet, onOpenPacket }: JobRowProps) => {
   const [copied, setCopied] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [editingPriority, setEditingPriority] = useState(false)
@@ -110,8 +116,10 @@ const JobRow = ({ job, onEdit, onArchive, onUpdate, hasPacket, onOpenPacket }: J
       <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">{job.follow_up_date || '-'}</td>
       <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">
         <div className="flex flex-nowrap items-center gap-1">
-          {hasPacket && (
-            <button type="button" onClick={() => onOpenPacket(job)} className="rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs text-emerald-800 hover:bg-emerald-100">Packet</button>
+          {packet && (
+            <button type="button" onClick={() => onOpenPacket(job)} className={`rounded border px-2 py-1 text-xs ${packetButtonClass(packet)}`}>
+              {packet.approved_at ? 'Packet · Approved' : `Packet · ${CHECK_LABELS[packet.check_status]}`}
+            </button>
           )}
           <button type="button" onClick={() => onEdit(job)} className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">Edit</button>
           {job.job_link && (

@@ -9,7 +9,13 @@ You are preparing application materials for jobs Joseph has already approved in 
 
 ## The one rule: truthful
 
-Tailoring **rewords and reorders real experience only**. Never invent or inflate a skill, tool, title, date, employer, metric or responsibility. Never turn "used" into "expert in" or "assisted" into "led". Never hide keywords. A posting keyword he doesn't have goes in `match_report.gaps`, not in the resume. The validator enforces the mechanical part of this (see "What gets rejected"); the rest is on you.
+Tailoring **rewords and reorders real experience only**. Never invent or inflate a skill, tool, title, date, employer, metric or responsibility. Never hide keywords. A posting keyword he doesn't have goes in `match_report.gaps`, not in the resume.
+
+- The base file's `inventory` lists every tool he can claim, each with a depth: `used`, `built` or `led`. Name only tools in it. Never call him "expert", "advanced" or "proficient" in a tool marked `used`.
+- Only certifications with `status: "earned"` may be claimed. An `in_progress` one must say "expected" or "in progress".
+- Keep each bullet's lead verb at or below its source's level. "Assisted" or "supported" never becomes "built", and nothing becomes "led", "managed" or "owned" unless the source says so.
+
+The validator and the Resume check enforce this (see "What gets rejected").
 
 ## Steps
 
@@ -63,8 +69,11 @@ Tailoring **rewords and reorders real experience only**. Never invent or inflate
 }
 ```
 
-6. Validate: `node automation/prep/client.ts push /tmp/prep-packets.json --dry-run`. Fix every error. Warnings are allowed, but reconsider any heavily reworded bullet.
-7. Send: `node automation/prep/client.ts push /tmp/prep-packets.json`. Report the counts it prints (created, invalid, not found, warnings).
+6. Validate: `node automation/prep/client.ts push /tmp/prep-packets.json --dry-run`.
+   - It prints errors, then the **Resume check** for each packet: PASS, NEEDS_EDITS or BLOCKED, with red and yellow flags and the ATS estimate.
+   - Fix every error and every **red** flag. A packet with red flags is never sent.
+   - Fix yellow flags where you can do it truthfully: buzzwords, vague words, em dashes, bullets that all open with the same verb, heavy rewording. He reviews whatever yellow flags remain before approving.
+7. Send: `node automation/prep/client.ts push /tmp/prep-packets.json`. Report the counts it prints: created, invalid, not found, and the check (pass / needs_edits / blocked).
 
 ## What gets rejected
 
@@ -73,6 +82,19 @@ Tailoring **rewords and reorders real experience only**. Never invent or inflate
 - A known tool, platform or certification named in a bullet that its source bullet doesn't name. The term list is the posting's required skills, the base skills and a common tech list. The same applies to the summary, cover letter and answers, checked against the whole base.
 - Skill items that aren't in the base skill lists.
 - Missing fields, or text over the limits.
+- Numbers written as words count as numbers: "six platforms" against a source that says four is rejected.
+- **Resume check, red** (never sent):
+  - a lead verb raised above the source's, or "led", "managed" or "owned" added
+  - an expert-level claim about a tool the inventory marks `used`
+  - a tool not in the inventory
+  - a certification that isn't earned
+- **Resume check, yellow** (he reviews before approving):
+  - buzzwords ("leveraged", "robust", "spearheaded", "passionate", "dynamic", …)
+  - vague words ("various", "numerous")
+  - more than 2 em dashes
+  - 3 or more bullets opening with the same verb
+  - a bullet keeping less than half its source's words
+  - leadership wording in the cover letter or answers that no base bullet has
 
 ## Rules
 

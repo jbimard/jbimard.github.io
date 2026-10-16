@@ -4,6 +4,7 @@
 // user, service-role client. Writes only touch that user's Ready to Apply jobs that don't have a packet yet.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { ANSWER_QUESTIONS, buildVocabulary, resolveResume, splitSkills, validateBase, validatePacket, type BaseResumes } from './packet.ts'
+import { checkPacket } from './check.ts'
 import { fileStem, renderCoverLetter, renderResume } from './render.ts'
 
 const BUCKET = 'application-packets'
@@ -98,6 +99,7 @@ Deno.serve(async (req) => {
     const invalid: Array<{ index: number; errors: string[] }> = []
     const notFound: Array<{ index: number; job_id: unknown }> = []
     let warningCount = 0
+    const statusCounts = { pass: 0, needs_edits: 0, blocked: 0 }
     const now = new Date()
 
     for (const [index, input] of packets.entries()) {
@@ -114,6 +116,8 @@ Deno.serve(async (req) => {
       }
 
       const resume = resolveResume(packet, base)
+      // Resume check (step 3c): verdict, flags, side-by-side comparisons and the ATS estimate, stored with the packet.
+      const check = checkPacket(packet, base, resume, job)
       const stem = fileStem(base.contact.name)
       const folder = `${userId}/${job.id}`
       const resumePath = `${folder}/${stem}-Resume-${fileStem(job.company)}.docx`
@@ -139,6 +143,11 @@ Deno.serve(async (req) => {
         work_authorization: base.workAuthorization,
         match_report: packet.match_report,
         warnings,
+        check_status: check.status,
+        check_flags: check.flags,
+        comparisons: check.comparisons,
+        ats: check.ats,
+        checked_at: now.toISOString(),
       })
       // A packet created meanwhile (unique job_id) counts as not found; the files were simply overwritten.
       if (insertError?.code === '23505') {
@@ -148,6 +157,7 @@ Deno.serve(async (req) => {
       if (insertError) throw insertError
       created.push(job.id)
       warningCount += warnings.length
+      statusCounts[check.status]++
     }
 
     return jsonResponse({
@@ -155,6 +165,7 @@ Deno.serve(async (req) => {
       invalid_count: invalid.length,
       not_found_count: notFound.length,
       warning_count: warningCount,
+      check: statusCounts,
       created,
       invalid,
       not_found: notFound,

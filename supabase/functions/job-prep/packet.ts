@@ -59,6 +59,15 @@ export type BaseResumes = {
   // Fixed, truthful answers he wrote himself; copied into every packet as-is, never written by AI.
   workAuthorization: Array<{ question: string; answer: string }>
   versions: Record<ResumeVersion, BaseVersion>
+  // Step 3c: everything he can honestly claim, with how deeply. Optional so older uploads stay valid.
+  inventory?: Inventory
+}
+
+export const TOOL_DEPTHS = ['used', 'built', 'led'] as const
+export const CERT_STATUSES = ['earned', 'in_progress'] as const
+export type Inventory = {
+  tools: Array<{ name: string; depth: (typeof TOOL_DEPTHS)[number]; evidence: string }>
+  certifications: Array<{ name: string; status: (typeof CERT_STATUSES)[number]; date: string | null }>
 }
 
 export type PacketEntry = { id: string; bullets: Array<{ from: string; text: string }> }
@@ -138,6 +147,23 @@ export const validateBase = (input: unknown): { base: BaseResumes | null; errors
       }
     }
   }
+  if (input.inventory !== undefined) {
+    const inventory = input.inventory
+    if (!isObj(inventory) || !Array.isArray(inventory.tools) || !Array.isArray(inventory.certifications)) {
+      errors.push('inventory must be { tools: [...], certifications: [...] }.')
+    } else {
+      inventory.tools.forEach((tool, i) => {
+        if (!isObj(tool) || !isText(tool.name) || !TOOL_DEPTHS.includes(tool.depth as never) || typeof tool.evidence !== 'string') {
+          errors.push(`inventory.tools[${i}] must be { name, depth: ${TOOL_DEPTHS.join('|')}, evidence }.`)
+        }
+      })
+      inventory.certifications.forEach((cert, i) => {
+        if (!isObj(cert) || !isText(cert.name) || !CERT_STATUSES.includes(cert.status as never) || (cert.date !== null && typeof cert.date !== 'string')) {
+          errors.push(`inventory.certifications[${i}] must be { name, status: ${CERT_STATUSES.join('|')}, date }.`)
+        }
+      })
+    }
+  }
   return { base: errors.length === 0 ? (input as BaseResumes) : null, errors }
 }
 
@@ -177,7 +203,24 @@ type Vocabulary = ReturnType<typeof buildVocabulary>
 // jobs.required_skills is a comma-separated list from discovery.
 export const splitSkills = (value: string | null) => (value ?? '').split(/[,;]/).map((skill) => skill.trim()).filter(Boolean)
 
-const numbersIn = (text: string) => new Set(text.match(/\d+(?:\.\d+)?/g) ?? [])
+// Numbers written as words count too ("six platforms" vs "4"). "one" is left out: it's usually a pronoun.
+const UNITS: Record<string, number> = {
+  two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+  thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+}
+const TENS: Record<string, number> = { twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 }
+const ONES_AFTER_TENS: Record<string, number> = { one: 1, ...Object.fromEntries(Object.entries(UNITS).filter(([, n]) => n < 10)) }
+
+export const numbersIn = (text: string) => {
+  const found = new Set(text.match(/\d+(?:\.\d+)?/g) ?? [])
+  for (const match of text.toLowerCase().matchAll(/\b([a-z]+)(?:-([a-z]+))?\b/g)) {
+    const [, first, second] = match
+    if (TENS[first] !== undefined) found.add(String(TENS[first] + (second ? ONES_AFTER_TENS[second] ?? 0 : 0)))
+    else if (UNITS[first] !== undefined) found.add(String(UNITS[first]))
+    else if (first === 'hundred') found.add('100')
+  }
+  return found
+}
 const termsIn = (text: string, vocabulary: Vocabulary) => vocabulary.filter(({ pattern }) => pattern.test(text)).map(({ term }) => term)
 
 // Problems with `text` given what its source says: numbers or known tools the source never mentions.
@@ -364,7 +407,14 @@ export const validatePacket = (
 // ---------- the resolved resume (what gets rendered and stored) ----------
 
 // `right` is the right-aligned text on the entry's last heading line: dates for a job, "GitHub" or an employer for a project.
-export type ResolvedEntry = { heading: string; subheading: string | null; right: string | null; bullets: string[] }
+// `sources` lines up with `bullets`: the base bullet each one rewords (kept for the Resume check's side-by-side view).
+export type ResolvedEntry = {
+  heading: string
+  subheading: string | null
+  right: string | null
+  bullets: string[]
+  sources: Array<{ id: string; text: string }>
+}
 export type ResolvedResume = {
   contact: BaseResumes['contact']
   summary: string
@@ -391,11 +441,18 @@ export const resolveResume = (packet: Packet, base: BaseResumes): ResolvedResume
         subheading: source.title ?? null,
         right: source.dates ?? null,
         bullets: entry.bullets.map((bullet) => bullet.text.trim()),
+        sources: entry.bullets.map((bullet) => ({ id: bullet.from, text: bulletsFor(base, 'experience', entry.id).get(bullet.from) ?? '' })),
       }
     }),
     projects: packet.projects.map((entry) => {
       const source = findEntry(base, 'projects', entry.id, packet.resume_version)!
-      return { heading: source.name!, subheading: null, right: source.context ?? null, bullets: entry.bullets.map((bullet) => bullet.text.trim()) }
+      return {
+        heading: source.name!,
+        subheading: null,
+        right: source.context ?? null,
+        bullets: entry.bullets.map((bullet) => bullet.text.trim()),
+        sources: entry.bullets.map((bullet) => ({ id: bullet.from, text: bulletsFor(base, 'projects', entry.id).get(bullet.from) ?? '' })),
+      }
     }),
     skills: packet.skills.map((group) => ({ label: labels.get(group.id)!, items: group.items.map((item) => spelling.get(item.toLowerCase()) ?? item) })),
   }

@@ -10,14 +10,15 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fetchJson, postJson } from '../http.ts'
-import { buildVocabulary, splitSkills, validateBase, validatePacket, type BaseResumes } from './packet.ts'
+import { checkPacket } from './check.ts'
+import { buildVocabulary, resolveResume, splitSkills, validateBase, validatePacket, type BaseResumes } from './packet.ts'
 
 const ROOT = path.join(import.meta.dirname, '..')
 const JOBS_FILE = '/tmp/prep-jobs.json'
 const BASE_FILE = '/tmp/prep-base.json'
 const DEFAULT_BASE = path.join(ROOT, 'private/base-resumes.json')
 
-type PulledJob = { id: string; company: string; role_title: string; required_skills: string | null }
+type PulledJob = { id: string; company: string; role_title: string; required_skills: string | null; job_description: string | null }
 
 const option = (name: string) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.split('=').slice(1).join('=')
 const positional = (index: number) => process.argv.slice(2).filter((arg) => !arg.startsWith('--'))[index]
@@ -59,10 +60,21 @@ const push = async () => {
       console.error(`packet ${index}: job_id is not one of the pulled jobs.`)
       return
     }
-    const { errors, warnings } = validatePacket(packet, base, buildVocabulary(base, splitSkills(job.required_skills)))
+    const { packet: valid, errors } = validatePacket(packet, base, buildVocabulary(base, splitSkills(job.required_skills)))
     for (const error of errors) console.error(`packet ${index}: ${error}`)
-    for (const warning of warnings) console.warn(`packet ${index} (warning) ${warning.path}: ${warning.message}`)
-    if (errors.length) problems++
+    if (!valid) {
+      problems++
+      return
+    }
+    // The same Resume check the function stores: red flags block approval, yellow ones need a look.
+    const check = checkPacket(valid, base, resolveResume(valid, base), job)
+    console.log(`packet ${index}: Resume check ${check.status.toUpperCase()}, ATS estimate ${check.ats.score ?? 'n/a'} (base ${check.ats.base_score ?? 'n/a'})`)
+    for (const flag of check.flags) console.log(`  ${flag.severity} ${flag.rule} ${flag.path}: ${flag.message}`)
+    // Red flags are never sent: rewrite until they're gone. Yellow ones go through for his review.
+    if (check.status === 'blocked') {
+      problems++
+      console.error(`packet ${index}: has red flags; fix them before sending.`)
+    }
   })
   if (problems > 0) throw new Error(`${problems} of ${packets.length} packet(s) are invalid; nothing was sent.`)
   if (process.argv.includes('--dry-run')) {

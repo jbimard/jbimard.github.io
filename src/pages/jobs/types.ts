@@ -101,8 +101,27 @@ export interface ApplicationPacket {
   work_authorization: Array<{ question: string; answer: string }>
   match_report: { coverage: number; covered: string[]; gaps: Array<{ keyword: string; addable: boolean; note: string }> }
   warnings: Array<{ path: string; message: string }>
+  // Resume check (automation/prep/check.ts): red flags block approval, yellow ones must be acknowledged.
   check_status: 'pending' | 'pass' | 'needs_edits' | 'blocked'
+  check_flags: Array<{ id: string; severity: 'red' | 'yellow'; rule: string; path: string; message: string; text?: string }>
+  comparisons: Array<{ path: string; source: string; text: string; diff: Array<['=' | '-' | '+', string]> }>
+  ats: {
+    score: number | null
+    base_score: number | null
+    required: { covered: string[]; missing: string[] }
+    preferred: { covered: string[]; missing: string[] }
+  } | null
+  checked_at: string | null
+  acknowledged_flags: string[]
+  approved_at: string | null
   created_at: string
+}
+
+export const CHECK_LABELS: Record<ApplicationPacket['check_status'], string> = {
+  pending: 'Not checked',
+  pass: 'Pass',
+  needs_edits: 'Needs edits',
+  blocked: 'Blocked',
 }
 
 export type JobDraft = Omit<Job, 'id' | 'created_at' | 'updated_at' | 'screening' | 'screened_at' | 'link_status' | 'link_missing_count' | 'link_checked_at'>

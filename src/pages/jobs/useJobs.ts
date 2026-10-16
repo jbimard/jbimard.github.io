@@ -3,7 +3,7 @@ import type { User } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabaseClient'
 import type { ApplicationPacket, Job, JobDraft, JobUpdate } from './types'
 
-const PACKET_FIELDS = 'id, job_id, resume_version, resume_path, cover_letter_path, cover_letter, answers, work_authorization, match_report, warnings, check_status, created_at'
+const PACKET_FIELDS = 'id, job_id, resume_version, resume_path, cover_letter_path, cover_letter, answers, work_authorization, match_report, warnings, check_status, check_flags, comparisons, ats, checked_at, acknowledged_flags, approved_at, created_at'
 const PACKET_BUCKET = 'application-packets'
 
 export function useJobs(user: User | undefined) {
@@ -125,5 +125,31 @@ export function useJobs(user: User | undefined) {
     return data.signedUrl
   }
 
-  return { jobs, queuedCount, packets, packetFileUrl, loading, error, reload: loadJobs, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob }
+  // Resume check actions (step 3c); both are owner-scoped database functions.
+  const approvePacket = async (packetId: string, acknowledged: string[]) => {
+    if (!supabase) throw new Error('Supabase is not configured.')
+
+    const { error: approveError } = await supabase.rpc('approve_packet', { p_packet: packetId, p_acknowledged: acknowledged })
+    if (approveError) throw approveError
+    await loadJobs()
+  }
+
+  const regeneratePacket = async (packetId: string) => {
+    if (!supabase) throw new Error('Supabase is not configured.')
+
+    const { error: regenerateError } = await supabase.rpc('regenerate_packet', { p_packet: packetId })
+    if (regenerateError) throw regenerateError
+    await loadJobs()
+  }
+
+  // The stored .docx itself, for the in-browser preview.
+  const packetFile = async (path: string) => {
+    if (!supabase) throw new Error('Supabase is not configured.')
+
+    const { data, error: downloadError } = await supabase.storage.from(PACKET_BUCKET).download(path)
+    if (downloadError) throw downloadError
+    return data
+  }
+
+  return { jobs, queuedCount, packets, packetFileUrl, packetFile, approvePacket, regeneratePacket, loading, error, reload: loadJobs, promoteNextBatch, createJob, createJobsBulk, updateJob, archiveJob, deleteJob }
 }
