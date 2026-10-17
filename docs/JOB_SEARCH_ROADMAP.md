@@ -21,10 +21,10 @@ Work through the steps in order. Update the status column as each step lands, an
 | 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | Done — with B1 (PR #19); graduation-window fit and ATS from posting text in #22–#23; `inventory.not_yet` gap list in #24. First full test (Marvell): ATS 59 → 77 after the base gained AWS, MySQL, Java and GitHub Actions; packet approved 2026-10-16 |
 | 2b | More local companies (new board adapters) | Done — 8 companies on existing boards (#28); iCIMS + Jibe for SAS and First Citizens (#29); SuccessFactors for Duke and Novo Nordisk (#30). Phenom / Avature / Eightfold left for later |
 | 2c | More Charlotte companies | Done — 12 companies on existing adapters (#31); Oracle + Radancy + SuccessFactors entries for Honeywell, Charter, Nucor, Brighthouse (#32); Eightfold adapter for Microsoft, with a PERM-suspension warning (#33) |
-| 4 | Visa timeline card | Done — this PR: `visa_profile` table, "My timeline" card, rules-to-watch list with the OPT fee proposal. Migration pushed 2026-10-16 (#34) |
-| 5 | Supervised applying | Not started |
+| 4 | Visa timeline card | Done — #34: `visa_profile` table, "My timeline" card, rules-to-watch list with the OPT fee proposal. Migration pushed 2026-10-16 |
+| 5 | Supervised applying | Built — this PR: Apply box in the packet panel (instructions for Claude in Chrome, Open posting, Mark applied with a follow-up a week out). First supervised run still to do |
 
-Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 2c → 4 → 5.** Next: **5**.
+Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 2c → 4 → 5.** Next: **the first supervised application**, then use the pipeline daily.
 
 - 2a is small and gives step 3 real sponsorship data from day one.
 - 1b comes before the workflow is turned back on, so the dashboard never gets flooded with the whole backlog.
@@ -258,7 +258,7 @@ It stores dates only, in a `visa_profile` table protected by row-level security 
 - **H-1B registrations** are worked out, not fixed: every March from the program end year while status lasts until April 1 (when petitions are filed). With an estimated STEM OPT end that is four Marches, not three.
 - **Unemployment counter:** days from earlier gaps, plus the current gap from "Not working since". It counts today (the safer side of a limit) and shows the date it would run out.
 
-## 5. Supervised applying
+## 5. Supervised applying (built)
 
 Claude in Chrome:
 
@@ -269,6 +269,11 @@ Claude in Chrome:
 The status then changes to `Applied`, and a `follow_up_date` is set for 7–10 days later.
 
 Work-authorization questions are always answered truthfully, never with whatever gets past the filter.
+
+**Built (2026-10-16):** the instructions are built from the approved packet (`src/pages/jobs/applyPrompt.ts`, tested) and copied from the packet panel's Apply box; setup and the full rule list are in `docs/JOBS_SETUP.md` §15. Two changes from the plan above:
+
+- **He uploads the files**, not Claude, so the exact approved file is the one sent. Claude says which format the field takes.
+- **He signs in and creates accounts.** Claude never types passwords or handles verification codes.
 
 ---
 
@@ -403,3 +408,4 @@ Settled; don't reopen without a new reason.
 - **Microsoft stays in, with a warning (2026-10-16):** the 2026-10-08 suspension covers PERM (green cards) for Microsoft, Adobe, Capgemini, Cognizant, HCL, Infosys, Tata and Wipro, not H-1B or OPT. Its postings carry the note so screening and review see the green-card risk. Revisit if H-1B petitions are restricted too.
 - **OPT fee proposal to watch (2026-10-16):** DHS proposed (2026-10-08, docket ICEB-2026-0100) that schools pay $70,000 per student's first OPT and $30,000 per STEM OPT extension. Not in effect; comments close 2026-11-09. He graduates May 2027, so a final rule could land before his OPT. Ask UNC Charlotte ISSS; step 4's timeline card should show its status.
 - **Visa timeline card (2026-10-16, step 4):** dates only, owner-only through RLS; no document numbers. Later dates are estimated from the program end date until the EAD dates are entered. Rule statuses checked 2026-10-16: the OPT fee proposal is not in effect (comments close 2026-11-09); the wage-weighted H-1B lottery has been in effect since March 2026; the $100,000 H-1B fee was struck down (2026-06-08), the First Circuit refused to reinstate it (2026-07-24), and it never applied to an F-1 change of status. The watch list is updated by hand when a status changes.
+- **Supervised applying (2026-10-16, step 5):** no automation server and no new secrets. The dashboard copies instructions for Claude in Chrome that carry only approved packet text. Claude fills the form and stops before Submit; he signs in, uploads files and submits. Mark applied sets `Applied`, `date_applied` and a follow-up 7 days out (the low end of 7–10, so nothing slips; the row's date can be moved). Questions outside the packet are asked, never guessed, and the employer's pages are treated as data, not instructions.

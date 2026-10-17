@@ -6,6 +6,7 @@ import JobFormDrawer from './JobFormDrawer'
 import JobsTable, { type SortKey, type SortState } from './JobsTable'
 import ReviewQueue, { type ReviewDecision } from './ReviewQueue'
 import PacketPanel from './PacketPanel'
+import { appliedPatch } from './applyPrompt'
 import SummaryBar from './SummaryBar'
 import Toolbar, { type JobFilters } from './Toolbar'
 import { useJobs } from './useJobs'
@@ -63,6 +64,8 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
   const [promoting, setPromoting] = useState(false)
   const [view, setView] = useState<'pipeline' | 'review'>('pipeline')
   const [packetJob, setPacketJob] = useState<Job | null>(null)
+  // The panel follows the live row, so Mark applied shows its result without reopening.
+  const panelJob = packetJob ? jobs.find((job) => job.id === packetJob.id) ?? packetJob : null
 
   // Screened by the Claude routine and waiting for a decision.
   const reviewJobs = useMemo(
@@ -249,16 +252,17 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
         />
       )}
 
-      {packetJob && packets.get(packetJob.id) && (
+      {panelJob && packets.get(panelJob.id) && (
         <PacketPanel
-          key={packets.get(packetJob.id)!.id}
-          job={packetJob}
-          packet={packets.get(packetJob.id)!}
+          key={packets.get(panelJob.id)!.id}
+          job={panelJob}
+          packet={packets.get(panelJob.id)!}
           fileUrl={packetFileUrl}
           fileBlob={packetFile}
           onApprove={approvePacket}
           onRegenerate={regeneratePacket}
           onEdit={editPacket}
+          onMarkApplied={() => updateJob(panelJob.id, appliedPatch(new Date().toLocaleDateString('en-CA')))}
           onClose={() => setPacketJob(null)}
         />
       )}
