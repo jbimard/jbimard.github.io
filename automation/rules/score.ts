@@ -64,11 +64,23 @@ const graduationMismatch = (flags: Flags, profile: Profile) => {
   return null
 }
 
-// An internship that starts after he graduates usually needs current enrollment. He still wants to see these when the
-// posting doesn't state a window, so it's only a note to check the requirement, not a penalty.
+// An internship that starts after he graduates needs current enrollment, so he can't take it.
 const startsAfterGraduation = (flags: Flags, profile: Profile) => (
   flags.internshipStart !== null && flags.internshipStart > graduationMonth(profile)
 )
+
+// Internships he can't take because of his May graduation: a stated window that excludes it, one that requires
+// returning to school afterwards (unless it starts before his last semester), or one that starts after he graduates.
+const cannotApply = (flags: Flags, profile: Profile) => {
+  const mismatch = graduationMismatch(flags, profile)
+  if (mismatch) return mismatch
+  const lastSemester = graduationMonth(profile) - 4
+  if (flags.internship && flags.returnToSchool && (flags.internshipStart === null || flags.internshipStart >= lastSemester)) {
+    return `requires returning to school after the internship, which a ${profile.graduation} graduation rules out: ${quote(flags.returnToSchool)}`
+  }
+  if (startsAfterGraduation(flags, profile)) return `internship starts after the ${profile.graduation} graduation, so it needs current enrollment`
+  return null
+}
 
 const levelPoints = (flags: Flags, mismatch: string | null) => {
   if (mismatch) return 0
@@ -127,6 +139,7 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: 
 
   const flags = detectFlags(posting)
   const mismatch = graduationMismatch(flags, profile)
+  const blocker = cannotApply(flags, profile)
   // The one hard block: clearance roles need citizenship and can never work out.
   if (flags.clearance) return { kind: 'blocked', reason: flags.clearance, posting }
   if (flags.requiredYears !== null && flags.requiredYears > profile.maxRequiredYears) {
@@ -150,17 +163,15 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: 
     fit,
   }
   const total = breakdown.role + breakdown.sponsor + breakdown.level + breakdown.location + breakdown.pay
-  // A graduation mismatch can't be applied to truthfully, so it stays just under the cutoff however good the rest is.
-  const score = mismatch ? Math.min(total, profile.minScore - 1) : total
+  // He can't truthfully apply to these, so they stay just under the cutoff however good the rest is.
+  const score = blocker ? Math.min(total, profile.minScore - 1) : total
 
   const description = posting.description ?? ''
   const skills = findSkills(`${posting.title}\n${description}`, profile.skills)
   const extras = [
     location.metro ? `metro=${location.metro}` : null,
     annual ? `pay≈$${Math.round(annual / 1000)}k` : null,
-    flags.returnToSchool ? `⚠ requires returning to school: ${quote(flags.returnToSchool)}` : null,
-    mismatch ? `⚠ ${mismatch}` : null,
-    !mismatch && startsAfterGraduation(flags, profile) ? `⚠ internship starts after the ${profile.graduation} graduation; check whether it requires current enrollment` : null,
+    blocker ? `⚠ ${blocker}` : flags.returnToSchool ? `⚠ requires returning to school: ${quote(flags.returnToSchool)}` : null,
   ].filter(Boolean)
 
   return {

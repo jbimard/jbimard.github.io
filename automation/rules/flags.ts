@@ -55,7 +55,8 @@ const SPONSORSHIP_OFFERED = [
 ]
 
 const E_VERIFY = /\be-?verify\b/i
-const RETURN_TO_SCHOOL = /\b(return(ing)? to (school|university|campus|your studies)|continu\w* (your )?(education|studies|enrollment) after|at least one (semester|quarter|term) remaining)\b/i
+// Cisco: "Expected to continue enrollment in degree program following completion of the internship".
+const RETURN_TO_SCHOOL = /\b(return(ing)? to (school|university|campus|your studies)|continu\w* (your )?(education|studies|enrollment)\b[^.]{0,50}\b(after|following)|(remain|stay) enrolled\b[^.]{0,50}\b(after|following)|at least one (semester|quarter|term) (of (school|study) )?remaining)\b/i
 const GRADUATION = /\b(graduat\w*|class of|degree|program start|start date)\b[^.]{0,80}\b(20(2[5-9]))\b|\b(20(2[5-9]))\b[^.]{0,40}\bgraduat/i
 
 // Dates like "May 2027" or "Fall 2027" ("Spring '27" isn't matched).
@@ -67,7 +68,12 @@ const MONTH_NUMBERS: Record<string, number> = {
 // … and as the month an internship term starts.
 const TERM_STARTS: Record<string, number> = { spring: 1, summer: 6, fall: 9, autumn: 9, winter: 1 }
 const DATE_MENTION = /\b(?:(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec|spring|summer|fall|autumn|winter)\.?\s+)?(20(?:2[5-9]|3[0-2]))\b/gi
-const TERM_TITLE = /\b(spring|summer|fall|autumn|winter)\s*'?(20\d\d)\b/i
+// "Summer 2027", or the year first: "2027 IT Summer Intern".
+const TERM_TITLE = /\b(spring|summer|fall|autumn|winter)\s*'?(20\d\d)\b|\b(20\d\d)\s+(?:[a-z&]+\s+){0,2}?(spring|summer|fall|autumn|winter)\b/i
+// The month (year * 12 + month) an internship term starts.
+const termStart = (match: RegExpMatchArray) => Number(match[2] ?? match[3]) * 12 + TERM_STARTS[(match[1] ?? match[4]).toLowerCase()]
+// A description sentence about the internship itself ("our Summer 2027 internship"), when the title names no term.
+const INTERNSHIP_TERM = /\b(intern|internship|co-?op|interns)\b/i
 
 export type GraduationWindow = { from: number; to: number }
 
@@ -146,6 +152,7 @@ export const detectFlags = (posting: RawPosting): Flags => {
 
   const internship = INTERNSHIP.test(posting.title)
   const term = posting.title.match(TERM_TITLE)
+    ?? (internship ? firstSentence(all.slice(1), (s) => INTERNSHIP_TERM.test(s) && TERM_TITLE.test(s))?.match(TERM_TITLE) ?? null : null)
 
   const years = [...description.matchAll(YEARS_REQUIRED)].map((match) => Number(match[1])).filter((n) => n > 0 && n < 20)
 
@@ -160,7 +167,7 @@ export const detectFlags = (posting: RawPosting): Flags => {
     graduation,
     targetYear,
     graduationWindow: graduation ? graduationWindow(graduation) : null,
-    internshipStart: internship && term ? Number(term[2]) * 12 + TERM_STARTS[term[1].toLowerCase()] : null,
+    internshipStart: internship && term ? termStart(term) : null,
     newGradSignal: NEW_GRAD.test(posting.title) || LEVEL_ONE_TITLE.test(posting.title) || NEW_GRAD.test(description),
     internship,
     rotational: ROTATIONAL.test(posting.title) || /\brotational\b/i.test(description),
