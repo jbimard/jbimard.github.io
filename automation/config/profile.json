@@ -144,8 +144,8 @@
   "sponsorTiers": { "strong": 50, "some": 5 },
   "sponsorPoints": { "strong": 25, "some": 17, "rare": 10, "none": 5 },
   "metros": {
-    "charlotte": { "label": "Charlotte", "points": 15, "match": ["charlotte", "fort mill", "concord, nc", "matthews, nc"] },
-    "triangle": { "label": "Triangle", "points": 15, "match": ["raleigh", "durham", "cary", "morrisville", "research triangle", "rtp", "chapel hill", "apex, nc"] },
+    "charlotte": { "label": "Charlotte", "points": 15, "match": ["charlotte", "fort mill", "concord, nc", "concord, north carolina", "matthews, nc", "matthews, north carolina", "monroe, nc", "monroe, north carolina", "waxhaw"] },
+    "triangle": { "label": "Triangle", "points": 15, "match": ["raleigh", "durham", "cary", "morrisville", "research triangle", "rtp", "chapel hill", "apex, nc", "apex, north carolina", "wake forest, nc", "wake forest, north carolina"] },
     "boston": { "label": "Boston", "points": 11, "match": ["boston", "cambridge, ma", "somerville", "waltham", "burlington, ma"] },
     "nyc": { "label": "New York", "points": 11, "match": ["new york", "nyc", "brooklyn", "manhattan", "jersey city"] }
   },
