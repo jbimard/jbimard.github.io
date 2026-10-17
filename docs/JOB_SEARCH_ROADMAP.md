@@ -20,7 +20,7 @@ Work through the steps in order. Update the status column as each step lands, an
 | 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | Done — **B1** PR #19 (plus #20–#22); **B2** voice memory PR #26, deployed 2026-10-16: pull returns his last 40 edits, `ROUTINE.md` follows them |
 | 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | In progress — on `feat/packet-edit` with B1 |
 | 2b | More local companies (new board adapters) | Done — 8 companies on existing boards (#28); iCIMS + Jibe for SAS and First Citizens (#29); SuccessFactors for Duke and Novo Nordisk (this PR). Phenom / Avature / Eightfold left for later |
-| 2c | More Charlotte companies | Done — 12 companies on existing adapters (this PR); Honeywell (Oracle), Charter/Spectrum, Truist and Lowe's (Phenom) need new adapters |
+| 2c | More Charlotte companies | Done — 12 companies on existing adapters (#31); Oracle + Radancy adapters and SuccessFactors entries add Honeywell, Charter, Nucor and Brighthouse (this PR). Microsoft left out by his choice |
 | 4 | Visa timeline card | Not started — independent, can slot in anytime |
 | 5 | Supervised applying | Not started |
 
@@ -98,7 +98,7 @@ The work: `automation/` (the script), `.github/workflows/discover-jobs.yml` (the
   - Refresh once a year (steps in `docs/JOBS_SETUP.md` §10).
 ### 2b. More local companies (after step 3)
 
-- **More local companies:** Bank of America, Lowe's corporate tech, Honeywell, Duke Energy IT, SAS, Lenovo and MetLife aren't reachable through the current boards. Some need a new adapter, such as SmartRecruiters.
+- **More local companies:** the original gap list (Bank of America, Lowe's corporate tech, Honeywell, Duke Energy IT, SAS, Lenovo, MetLife). Now covered: Bank of America and Honeywell (2c), SAS (2b), and Lowe's and Duke Energy, which were already on Workday. Still out: Lenovo, MetLife.
 - **Many more Triangle companies (Raleigh, Durham, RTP, Cary, Morrisville), at his request (2026-10-16).** Already covered: Red Hat, Cisco, Fidelity, IQVIA, Labcorp, Epic Games, Pendo and Bandwidth. Candidates to check first, for open cloud and security roles, their ATS and their H-1B record:
   - **Tech:** SAS, IBM (RTP), Lenovo, NetApp, Cloud Software Group (Citrix), Google (Durham), Apple (Raleigh), Wolfspeed, Jaggaer, Brightly, Spreedly, Relias, CommerceHub
   - **Finance and insurance:** First Citizens Bank, MetLife (Cary), UBS (RTP), Truist (Raleigh)
@@ -123,7 +123,8 @@ Added at his request after 2b. Already covered before: Wells Fargo, Truist, TIAA
 
 - **Added** (all on existing adapters): Bank of America (Workday `ghr/lateral-us`; strong H-1B record, ~70 a year), Ally, Atrium Health (Advocate Health's Workday; USCIS lists it as The Charlotte Mecklenburg Hospital Authority), Premier Inc, Albemarle, Allstate, Daimler Truck North America, RSM, Huntington Bank, AvidXchange and Red Ventures (Greenhouse), Novant Health (Jibe, like First Citizens). H-1B names set where USCIS spells them differently.
 - **First dry run:** every board answered; Bank of America added 3 jobs to the selection (cloud security, IAM, infrastructure platform).
-- **Not reachable yet:** Honeywell (Oracle Recruiting Cloud), Charter/Spectrum (its own site), Nucor, Brighthouse Financial, Sonic Automotive (Workday sites not found), Siemens Energy, Electrolux, Microsoft (own systems). Truist and Lowe's are already in through Workday even though their front pages run on Phenom.
+- **Part 2, same day:** two more adapters. `sources/oracle.ts` reads Oracle Recruiting Cloud's Candidate Experience JSON (Honeywell; reusable for other Oracle employers). `sources/radancy.ts` reads Radancy/TalentBrew search results (Charter/Spectrum at jobs.spectrum.com); both Radancy and iCIMS posting pages are read through a shared schema.org JobPosting parser (`sources/jsonld.ts`). Nucor and Brighthouse Financial turned out to be SuccessFactors Career Site Builder sites, so they needed only list entries. First dry run: Honeywell 40 postings in his title lanes, Nucor 11, Charter 6, Brighthouse 0. H-1B: Honeywell International (~34–60 a year), Charter Communications (18 in FY2025), Nucor (~9); Brighthouse has no USCIS record.
+- **Left out:** Microsoft (his call, 2026-10-16), Siemens Energy (its site returns an empty page to scripts), Electrolux and Sonic Automotive (sites didn't answer). Truist and Lowe's are already in through Workday even though their front pages run on Phenom.
 - **Skipped:** Movement Mortgage (no roles in his lanes), City of Charlotte.
 
 ## 3. Claude screening and preparation

@@ -82,5 +82,9 @@
   { "name": "First Citizens Bank", "ats": "jibe", "board": "firstcitizens", "h1bNames": ["First Citizens Bank and Trust Co"] },
   { "name": "Novant Health", "ats": "jibe", "board": "novanthealth", "h1bNames": ["Novant Health Inc", "Novant Health Medical Group", "Novant Medical Group"] },
   { "name": "Duke University", "ats": "successfactors", "board": "careers.duke.edu", "h1bNames": ["Duke University-Univ-Med Ctr-Affil", "Duke University", "Duke University Health System Inc"] },
-  { "name": "Novo Nordisk", "ats": "successfactors", "board": "careers.novonordisk.com", "h1bNames": ["Novo Nordisk Inc", "Novo Nordisk Pharmaceutical Industries LP", "Novo Nordisk Research and Development US Inc"] }
+  { "name": "Novo Nordisk", "ats": "successfactors", "board": "careers.novonordisk.com", "h1bNames": ["Novo Nordisk Inc", "Novo Nordisk Pharmaceutical Industries LP", "Novo Nordisk Research and Development US Inc"] },
+  { "name": "Nucor", "ats": "successfactors", "board": "jobs.nucor.com", "h1bNames": ["Nucor Corporation", "Nucor Business Technology Inc", "Nucor Corporation Nucor Steel Brandenburg"] },
+  { "name": "Brighthouse Financial", "ats": "successfactors", "board": "jobs.brighthousefinancial.com" },
+  { "name": "Honeywell", "ats": "oracle", "board": "ibqbjb.fa.ocs.oraclecloud.com/CX_1", "h1bNames": ["Honeywell International Inc"] },
+  { "name": "Charter Communications", "ats": "radancy", "board": "jobs.spectrum.com", "h1bNames": ["Charter Communications Inc"] }
 ]
