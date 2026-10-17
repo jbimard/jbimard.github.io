@@ -20,7 +20,8 @@
     "links:check": "node automation/links/check.ts",
     "prep:pull": "node automation/prep/client.ts pull",
     "prep:push": "node automation/prep/client.ts push",
-    "prep:base": "node automation/prep/client.ts base"
+    "prep:base": "node automation/prep/client.ts base",
+    "prep:base:upload": "doppler run -- sh -c 'JOB_PREP_URL=\"${JOB_INTAKE_URL%/job-intake}/job-prep\" node automation/prep/client.ts base upload'"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.109.0",
