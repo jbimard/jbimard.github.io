@@ -457,3 +457,27 @@ npm run prep:base -- check                                        # validate the
 JOB_PREP_URL=… JOB_PREP_TOKEN=… npm run prep:pull                 # → /tmp/prep-jobs.json, /tmp/prep-base.json
 npm run prep:push -- /tmp/prep-packets.json --dry-run             # validate packets, nothing sent
 ```
+
+## 14. Visa Timeline Card
+
+**My timeline** sits at the top of `/jobs`. Enter the program end date from the I-20 once, and the card works out the rest in the browser:
+
+- the OPT filing window (90 days before the program end date to 60 days after)
+- the latest OPT end date (14 months after the program end date)
+- the STEM OPT filing window (the 90 days before OPT ends; E-Verify employer, I-983 plan)
+- each March H-1B registration while status lasts to April 1 of that year
+- the OPT unemployment counter (90 days, 150 with STEM OPT)
+
+Collapsed, it shows the next date, the unemployment counter and the OPT fee proposal's status. **Show details** lists every date and the rules to watch.
+
+Add the OPT and STEM OPT dates from the EAD cards once they're approved; until then the later dates are marked "estimated". For the unemployment counter, set **Not working since** to the OPT start date before the first job, and clear it while working. When a gap ends, add its days to **Unemployed days from earlier gaps**.
+
+The dates live in `visa_profile`, one row per user, owner-only through RLS like `jobs`. **Dates only:** never enter or store SEVIS IDs, A-numbers, EAD card numbers or receipt numbers. The card is a reminder tool; confirm every date with the school's DSO.
+
+The "Rules to watch" list (`watchList` in `src/pages/jobs/visaTimeline.ts`) is kept up to date by hand. When a rule's status changes, update its wording and `checked` date.
+
+**One-time setup** (after merging):
+
+```bash
+supabase db push
+```

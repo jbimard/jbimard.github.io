@@ -11,7 +11,7 @@
     "api": "node server.js",
     "dev:all": "concurrently \"npm run api\" \"npm run dev\"",
     "discover": "node automation/discover.ts",
-    "discover:test": "node --test \"automation/**/*.test.ts\"",
+    "discover:test": "node --test \"automation/**/*.test.ts\" \"src/**/*.test.ts\"",
     "discover:typecheck": "tsc -p tsconfig.automation.json",
     "sponsors:build": "node automation/scripts/build-sponsors.ts",
     "screening:pull": "node automation/screening/client.ts pull",
