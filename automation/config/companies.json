@@ -25,6 +25,15 @@
   { "name": "Wolfspeed", "ats": "workday", "board": "cree/wd108/EXT" },
   { "name": "Syneos Health", "ats": "workday", "board": "syneoshealth/wd12/Syneos_Health_External_Site" },
   { "name": "Cloud Software Group", "ats": "workday", "board": "tibco/wd5/Cloud_Software_Group", "h1bNames": ["Cloud Software Group Inc", "Cloud Software Group Holdings Inc", "Citrix Systems Inc"] },
+  { "name": "Bank of America", "ats": "workday", "board": "ghr/wd1/lateral-us" },
+  { "name": "Ally", "ats": "workday", "board": "ally/wd1/Ally" },
+  { "name": "Atrium Health", "ats": "workday", "board": "aah/wd5/External", "h1bNames": ["The Charlotte Mecklenburg Hospital Authority D/B/A Atrium Health", "Carolinas Physicians Network Inc D B A Atrium Health Medical Group", "Advocate Health LLC", "Advocate Health and Hospitals Corporation"] },
+  { "name": "Premier Inc", "ats": "workday", "board": "premierinc/wd1/External_Professional", "h1bNames": ["Premier Inc", "Premier Group Services Inc"] },
+  { "name": "Albemarle", "ats": "workday", "board": "albemarle/wd5/External" },
+  { "name": "Allstate", "ats": "workday", "board": "allstate/wd5/allstate_careers", "h1bNames": ["Allstate Insurance Company", "Allstate Technologies Inc"] },
+  { "name": "Daimler Truck North America", "ats": "workday", "board": "dtna/wd5/DTNA_external" },
+  { "name": "RSM", "ats": "workday", "board": "rsm/wd1/RSMCareers", "h1bNames": ["RSM US LLP"] },
+  { "name": "Huntington Bank", "ats": "workday", "board": "huntington/wd12/hnbcareers", "h1bNames": ["The Huntington National Bank"] },
 
   { "name": "Pendo", "ats": "greenhouse", "board": "pendo" },
   { "name": "Epic Games", "ats": "greenhouse", "board": "epicgames" },
@@ -49,6 +58,8 @@
   { "name": "Chainguard", "ats": "greenhouse", "board": "chainguard" },
   { "name": "Squarespace", "ats": "greenhouse", "board": "squarespace" },
   { "name": "Rithum", "ats": "greenhouse", "board": "rithum" },
+  { "name": "AvidXchange", "ats": "greenhouse", "board": "avidxchangeinc" },
+  { "name": "Red Ventures", "ats": "greenhouse", "board": "redventures" },
 
   { "name": "Palantir", "ats": "lever", "board": "palantir" },
   { "name": "Spotify", "ats": "lever", "board": "spotify" },
@@ -69,6 +80,7 @@
   { "name": "Cohere", "ats": "ashby", "board": "cohere" },
   { "name": "SAS", "ats": "icims", "board": "globalcareers-sas", "h1bNames": ["SAS Institute Inc"] },
   { "name": "First Citizens Bank", "ats": "jibe", "board": "firstcitizens", "h1bNames": ["First Citizens Bank and Trust Co"] },
+  { "name": "Novant Health", "ats": "jibe", "board": "novanthealth", "h1bNames": ["Novant Health Inc", "Novant Health Medical Group", "Novant Medical Group"] },
   { "name": "Duke University", "ats": "successfactors", "board": "careers.duke.edu", "h1bNames": ["Duke University-Univ-Med Ctr-Affil", "Duke University", "Duke University Health System Inc"] },
   { "name": "Novo Nordisk", "ats": "successfactors", "board": "careers.novonordisk.com", "h1bNames": ["Novo Nordisk Inc", "Novo Nordisk Pharmaceutical Industries LP", "Novo Nordisk Research and Development US Inc"] }
 ]
