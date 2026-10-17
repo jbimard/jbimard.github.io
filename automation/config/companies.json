@@ -88,5 +88,14 @@
   { "name": "Brighthouse Financial", "ats": "successfactors", "board": "jobs.brighthousefinancial.com" },
   { "name": "Honeywell", "ats": "oracle", "board": "ibqbjb.fa.ocs.oraclecloud.com/CX_1", "h1bNames": ["Honeywell International Inc"] },
   { "name": "Charter Communications", "ats": "radancy", "board": "jobs.spectrum.com", "h1bNames": ["Charter Communications Inc"] },
-  { "name": "Microsoft", "ats": "eightfold", "board": "apply.careers.microsoft.com/microsoft.com", "sponsorNote": "Suspended from PERM (green card labor certification) since 2026-10-08. OPT/STEM OPT unaffected; H-1B not affected as of Oct 2026." }
+  { "name": "Microsoft", "ats": "eightfold", "board": "apply.careers.microsoft.com/microsoft.com", "sponsorNote": "Suspended from PERM (green card labor certification) since 2026-10-08. OPT/STEM OPT unaffected; H-1B not affected as of Oct 2026." },
+  { "name": "JPMorgan Chase", "ats": "oracle", "board": "jpmc.fa.oraclecloud.com/CX_1001" },
+  { "name": "Oracle", "ats": "oracle", "board": "eeho.fa.us2.oraclecloud.com/CX_45001", "h1bNames": ["Oracle America Inc"] },
+  { "name": "Accenture", "ats": "workday", "board": "accenture/wd103/AccentureCareers", "workdayFacets": { "locationCountry": ["bc33aa3152ec42d4995f4791a106ed09"] } },
+  { "name": "PwC", "ats": "workday", "board": "pwc/wd3/US_Entry_Level_Careers", "h1bNames": ["PwC Advisory Services LLC", "PricewaterhouseCoopers LLP", "PwC US Tax LLP", "PwC US Business Advisory LLP", "PwC US Consulting LLP"] },
+  { "name": "Palo Alto Networks", "ats": "workday", "board": "paloaltonetworks/wd5/panwexternalcareers" },
+  { "name": "CrowdStrike", "ats": "workday", "board": "crowdstrike/wd5/crowdstrikecareers" },
+  { "name": "Zscaler", "ats": "greenhouse", "board": "zscaler" },
+  { "name": "SentinelOne", "ats": "greenhouse", "board": "sentinellabs" },
+  { "name": "Wiz", "ats": "greenhouse", "board": "wizinc" }
 ]

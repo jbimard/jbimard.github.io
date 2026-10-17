@@ -1,10 +1,11 @@
 import { fetchJson, postJson } from '../http.ts'
 import { entryLevelTitle } from '../rules/flags.ts'
 import { titleGroup } from '../rules/score.ts'
-import { htmlToText } from '../rules/text.ts'
+import { htmlToText, scoreLocation } from '../rules/text.ts'
 import type { Company, Profile, RawPosting } from '../types.ts'
 
-type WorkdayListItem = { title: string; externalPath: string; locationsText?: string }
+// Some boards (IQVIA, Accenture) list items without a title; those are skipped.
+type WorkdayListItem = { title?: string; externalPath: string; locationsText?: string }
 type WorkdayDetail = {
   jobPostingInfo: {
     title: string
@@ -18,7 +19,8 @@ type WorkdayDetail = {
 }
 
 const PAGE_SIZE = 20
-// Detail calls are the expensive part; early-career and intern titles go first, then group A, B, C.
+// Detail calls are the expensive part; listings with a US location go first (global boards like Accenture and
+// PwC otherwise spend the budget abroad), then early-career and intern titles, then group A, B, C.
 const MAX_DETAILS_PER_COMPANY = 40
 
 export type WorkdayDetailResult = { title: string; description: string | null; location: string; url: string | null }
@@ -51,7 +53,7 @@ export const fetchWorkday = async (company: Company, profile: Profile): Promise<
       for (let page = 0; page < profile.workdayMaxPagesPerTerm; page++) {
         const { jobPostings = [], total = 0 } = await postJson<{ jobPostings?: WorkdayListItem[]; total?: number }>(
           `${apiBase}/jobs`,
-          { appliedFacets: {}, limit: PAGE_SIZE, offset: page * PAGE_SIZE, searchText },
+          { appliedFacets: company.workdayFacets ?? {}, limit: PAGE_SIZE, offset: page * PAGE_SIZE, searchText },
         )
         for (const item of jobPostings) listed.set(item.externalPath, item)
         if ((page + 1) * PAGE_SIZE >= total || jobPostings.length === 0) break
@@ -66,9 +68,13 @@ export const fetchWorkday = async (company: Company, profile: Profile): Promise<
 
   const rank = { A: 0, B: 1, C: 2 }
   const relevant = [...listed.values()]
+    .filter((item): item is WorkdayListItem & { title: string } => typeof item.title === 'string')
     .map((item) => ({ item, group: titleGroup(item.title, profile) }))
-    .filter((entry): entry is { item: WorkdayListItem; group: 'A' | 'B' | 'C' } => entry.group !== null)
-    .sort((a, b) => Number(entryLevelTitle(b.item.title)) - Number(entryLevelTitle(a.item.title)) || rank[a.group] - rank[b.group])
+    .filter((entry): entry is { item: WorkdayListItem & { title: string }; group: 'A' | 'B' | 'C' } => entry.group !== null)
+    .map((entry) => ({ ...entry, us: scoreLocation(entry.item.locationsText ?? '', profile).points !== null }))
+    .sort((a, b) => Number(b.us) - Number(a.us)
+      || Number(entryLevelTitle(b.item.title)) - Number(entryLevelTitle(a.item.title))
+      || rank[a.group] - rank[b.group])
     .slice(0, MAX_DETAILS_PER_COMPANY)
 
   const postings: RawPosting[] = []
