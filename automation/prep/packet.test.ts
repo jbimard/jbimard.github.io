@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { test } from 'node:test'
 import type { Profile } from '../types.ts'
-import { TECH_TERMS, buildVocabulary, resolveResume, retention, validateBase, validatePacket } from './packet.ts'
+import { TECH_TERMS, buildVocabulary, degreeText, resolveResume, retention, validateBase, validatePacket } from './packet.ts'
 import { base, packet } from './test-fixtures.ts'
 
 const check = (input: unknown, jobSkills: string[] = ['Kubernetes', 'AWS']) => {
@@ -222,3 +222,18 @@ test('posting_text is optional text with a size limit', () => {
   assert.match(check({ ...packet(), posting_text: 42 }).errors.join(' '), /posting_text must be a non-empty string/)
 })
 
+
+test('a GPA comes from the base: shown on the degree line, and the only GPA answers may state', () => {
+  const b = base()
+  for (const version of Object.values(b.versions)) version.education[0].degrees[0].gpa = '3.8'
+  assert.deepEqual(validateBase(b).errors, [])
+  assert.equal(degreeText(b.versions.Cloud.education[0].degrees[0]), 'MS in Cybersecurity | GPA: 3.8/4.0')
+  assert.equal(degreeText({ degree: 'BS in CS', date: 'May 2026' }), 'BS in CS')
+  const answer = packet()
+  answer.answers.anything_else = 'I hold a 3.8 GPA in my MS in Cybersecurity.'
+  assert.deepEqual(validatePacket(answer, b, buildVocabulary(b, [])).errors, [])
+  answer.answers.anything_else = 'I hold a 3.9 GPA in my MS in Cybersecurity.'
+  assert.match(validatePacket(answer, b, buildVocabulary(b, [])).errors.join(' '), /numbers not in the source: 3.9/)
+  b.versions.Security.education[0].degrees[0].gpa = '3.8/4.0'
+  assert.match(validateBase(b).errors.join(' '), /Security: education gpa must be a 4.0-scale string/)
+})

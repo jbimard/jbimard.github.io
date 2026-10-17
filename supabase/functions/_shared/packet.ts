@@ -50,7 +50,12 @@ export type BaseEntry = {
   context?: string | null
   bullets: Bullet[]
 }
-export type BaseEducation = { school: string; location: string; degrees: Array<{ degree: string; date: string }> }
+// gpa is optional, on a 4.0 scale ("3.8"); the resume shows it on the degree line.
+export type BaseDegree = { degree: string; date: string; gpa?: string }
+export type BaseEducation = { school: string; location: string; degrees: BaseDegree[] }
+
+export const GPA = /^[0-4]\.\d{1,2}$/
+export const degreeText = (degree: BaseDegree) => (degree.gpa ? `${degree.degree} | GPA: ${degree.gpa}/4.0` : degree.degree)
 export type BaseSkillGroup = { id: string; label: string; items: string[] }
 export type BaseVersion = {
   summary: string
@@ -145,6 +150,13 @@ export const validateBase = (input: unknown): { base: BaseResumes | null; errors
       }
       if (!isText(doc.summary)) errors.push(`${version}: summary is missing.`)
       if (!Array.isArray(doc.education) || doc.education.length === 0) errors.push(`${version}: education is missing.`)
+      else for (const school of doc.education) {
+        for (const degree of isObj(school) && Array.isArray(school.degrees) ? school.degrees : []) {
+          if (isObj(degree) && degree.gpa !== undefined && !(typeof degree.gpa === 'string' && GPA.test(degree.gpa))) {
+            errors.push(`${version}: education gpa must be a 4.0-scale string like "3.8", got ${JSON.stringify(degree.gpa)}.`)
+          }
+        }
+      }
       if (!Array.isArray(doc.skills) || doc.skills.some((group) => !isObj(group) || !isText(group.id) || !isText(group.label) || !Array.isArray(group.items))) {
         errors.push(`${version}: skills must be [{ id, label, items }].`)
       }
@@ -294,7 +306,7 @@ export const allBaseText = (base: BaseResumes) => RESUME_VERSIONS.map((version) 
   const doc = base.versions[version]
   return [
     doc.summary,
-    ...doc.education.flatMap((school) => [school.school, ...school.degrees.flatMap((degree) => [degree.degree, degree.date])]),
+    ...doc.education.flatMap((school) => [school.school, ...school.degrees.flatMap((degree) => [degreeText(degree), degree.date])]),
     ...[...doc.experience, ...doc.projects].flatMap((entry) => [entry.org, entry.title, entry.dates, entry.name, ...entry.bullets.map((bullet) => bullet.text)]),
     ...doc.skills.flatMap((group) => group.items),
   ].filter(Boolean).join('\n')

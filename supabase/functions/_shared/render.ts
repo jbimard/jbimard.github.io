@@ -3,7 +3,7 @@
 // (not in a header or footer, which many ATS parsers skip). Content comes from packet.ts's resolveResume.
 // render_pdf.ts draws the same layout as a text-based PDF.
 import { AlignmentType, BorderStyle, Document, LevelFormat, Packer, Paragraph, TabStopType, TextRun } from 'npm:docx@9.11.0'
-import type { BaseResumes, ResolvedEntry, ResolvedResume } from './packet.ts'
+import { degreeText, type BaseResumes, type ResolvedEntry, type ResolvedResume } from './packet.ts'
 
 // Arial: on every machine (so the browser preview matches Word) and the same metrics as the PDF's Helvetica.
 const FONT = 'Arial'
@@ -60,7 +60,7 @@ export const renderResume = async (resume: ResolvedResume): Promise<Uint8Array<A
     heading('Education'),
     ...resume.education.flatMap((school) => [
       lineWithRight([run(`${school.school}${school.location ? `, ${school.location}` : ''}`, { bold: true })], null),
-      ...school.degrees.map((degree) => lineWithRight([run(degree.degree)], degree.date)),
+      ...school.degrees.map((degree) => lineWithRight([run(degreeText(degree))], degree.date)),
     ]),
     ...(resume.coursework.length ? [new Paragraph({ children: [run('Relevant Coursework: ', { bold: true }), run(resume.coursework.join(', '))] })] : []),
     heading('Experience'),

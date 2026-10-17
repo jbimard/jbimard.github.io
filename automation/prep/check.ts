@@ -6,6 +6,7 @@ import {
   allBaseText,
   buildVocabulary,
   courseText,
+  degreeText,
   resolveResume,
   retention,
   splitSkills,
@@ -219,7 +220,7 @@ export const estimateResumeHeight = (resume: ResolvedResume) => {
   height += heading()
   for (const school of resume.education) {
     height += para([{ text: `${school.school}${school.location ? `, ${school.location}` : ''}`, bold: true }])
-    for (const degree of school.degrees) height += withRight({ text: degree.degree }, degree.date)
+    for (const degree of school.degrees) height += withRight({ text: degreeText(degree) }, degree.date)
   }
   if (resume.coursework.length) height += para([{ text: 'Relevant Coursework: ', bold: true }, { text: resume.coursework.join(', ') }])
   const entries = (items: ResolvedEntry[]) => {
