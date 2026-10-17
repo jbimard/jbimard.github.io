@@ -7,6 +7,7 @@ import { evaluatePosting, type Breakdown } from './rules/score.ts'
 import { fromSponsorFile, indexSponsors, lookupSponsor, type SponsorFile, type SponsorRecord } from './rules/sponsors.ts'
 import { scoreLocation, shortLocation } from './rules/text.ts'
 import { fetchAshby } from './sources/ashby.ts'
+import { fetchEightfold } from './sources/eightfold.ts'
 import { enrichPostings } from './sources/enrich.ts'
 import { fetchGreenhouse } from './sources/greenhouse.ts'
 import { fetchIcims } from './sources/icims.ts'
@@ -51,6 +52,7 @@ const fetchCompany = (company: Company, profile: Profile) => {
     case 'successfactors': return fetchSuccessFactors(company, profile)
     case 'oracle': return fetchOracle(company, profile)
     case 'radancy': return fetchRadancy(company, profile)
+    case 'eightfold': return fetchEightfold(company, profile)
   }
 }
 
@@ -118,12 +120,15 @@ const main = async () => {
   const sponsors = indexSponsors(fromSponsorFile(await readJson<SponsorFile>('data/h1b-sponsors.json')))
   // Board companies may list the USCIS spelling in h1bNames; Simplify jobs at those companies use it too.
   const h1bNames = new Map(companies.map((company) => [company.name.toLowerCase(), company.h1bNames]))
+  const sponsorNotes = new Map(companies.filter((company) => company.sponsorNote).map((company) => [company.name.toLowerCase(), company.sponsorNote!]))
   const sponsorCache = new Map<string, SponsorRecord>()
   const sponsorFor = (company: string) => {
     const key = company.toLowerCase()
     let record = sponsorCache.get(key)
     if (!record) {
       record = lookupSponsor(sponsors, company, profile.sponsorTiers, h1bNames.get(key))
+      const note = sponsorNotes.get(key)
+      if (note) record = { ...record, label: [record.label, `⚠ ${note}`].filter(Boolean).join('\n') }
       sponsorCache.set(key, record)
     }
     return record

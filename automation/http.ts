@@ -50,6 +50,17 @@ export const fetchJson = <T>(url: string, init: RequestInit = {}) => throttled(u
 // HTML career pages (iCIMS has no public JSON API).
 export const fetchText = (url: string) => throttled(url, () => request(url, { headers: { Accept: 'text/html,application/xhtml+xml' } }, (response) => response.text()))
 
+// Session cookies a career site sets on its landing page, as a Cookie header. Eightfold's search needs them.
+export const fetchCookies = (url: string) => throttled(url, async () => {
+  const response = await fetch(url, {
+    headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml', 'Accept-Language': 'en-US' },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  })
+  await response.body?.cancel()
+  if (!response.ok) throw new HttpError(response.status, url)
+  return response.headers.getSetCookie().map((cookie) => cookie.split(';')[0]).join('; ')
+})
+
 // Like fetchJson, but a 4xx comes back as a status instead of an error: the link check needs to see 404s.
 export const probeJson = <T>(url: string, init: RequestInit = {}) => throttled(url, async (): Promise<{ status: number; data: T | null }> => {
   try {

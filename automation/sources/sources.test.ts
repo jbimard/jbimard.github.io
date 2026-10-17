@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { eightfoldUrl } from './eightfold.ts'
 import { parseIcimsSearch } from './icims.ts'
 import { jibePosting } from './jibe.ts'
 import { parseJobPostingLd } from './jsonld.ts'
@@ -125,4 +126,9 @@ test('Radancy results: links, titles, locations, total', () => {
     { id: '102011306064', title: 'Senior Lead Cloud Architect & Engineer', url: 'https://jobs.spectrum.com/job/raleigh/senior-lead-cloud-architect/4673/102011306064', location: 'Raleigh, NC' },
     { id: '1', title: 'Security Engineer', url: 'https://jobs.spectrum.com/job/charlotte/security-engineer/4673/1', location: 'Charlotte, NC' },
   ])
+})
+
+test('Eightfold: public link when given, else built from the id', () => {
+  assert.equal(eightfoldUrl('apply.careers.microsoft.com', { id: 1, name: 'x', publicUrl: 'https://apply.careers.microsoft.com/careers/job/1' }), 'https://apply.careers.microsoft.com/careers/job/1')
+  assert.equal(eightfoldUrl('apply.careers.microsoft.com', { id: 1970393556942310, name: 'x' }), 'https://apply.careers.microsoft.com/careers/job/1970393556942310')
 })
