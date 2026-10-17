@@ -1,4 +1,5 @@
 import { fetchJson, postJson } from '../http.ts'
+import { entryLevelTitle } from '../rules/flags.ts'
 import { titleGroup } from '../rules/score.ts'
 import { htmlToText } from '../rules/text.ts'
 import type { Company, Profile, RawPosting } from '../types.ts'
@@ -17,7 +18,7 @@ type WorkdayDetail = {
 }
 
 const PAGE_SIZE = 20
-// Detail calls are the expensive part; group A titles are fetched first.
+// Detail calls are the expensive part; early-career and intern titles go first, then group A, B, C.
 const MAX_DETAILS_PER_COMPANY = 40
 
 export type WorkdayDetailResult = { title: string; description: string | null; location: string; url: string | null }
@@ -67,7 +68,7 @@ export const fetchWorkday = async (company: Company, profile: Profile): Promise<
   const relevant = [...listed.values()]
     .map((item) => ({ item, group: titleGroup(item.title, profile) }))
     .filter((entry): entry is { item: WorkdayListItem; group: 'A' | 'B' | 'C' } => entry.group !== null)
-    .sort((a, b) => rank[a.group] - rank[b.group])
+    .sort((a, b) => Number(entryLevelTitle(b.item.title)) - Number(entryLevelTitle(a.item.title)) || rank[a.group] - rank[b.group])
     .slice(0, MAX_DETAILS_PER_COMPANY)
 
   const postings: RawPosting[] = []

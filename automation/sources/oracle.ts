@@ -1,4 +1,5 @@
 import { fetchJson } from '../http.ts'
+import { entryLevelTitle } from '../rules/flags.ts'
 import { titleGroup } from '../rules/score.ts'
 import { htmlToText } from '../rules/text.ts'
 import type { Company, Profile, RawPosting } from '../types.ts'
@@ -66,7 +67,7 @@ export const fetchOracle = async (company: Company, profile: Profile): Promise<R
   const relevant = [...listed.values()]
     .map((req) => ({ req, group: titleGroup(req.Title, profile) }))
     .filter((entry): entry is { req: OracleRequisition; group: 'A' | 'B' | 'C' } => entry.group !== null)
-    .sort((a, b) => rank[a.group] - rank[b.group])
+    .sort((a, b) => Number(entryLevelTitle(b.req.Title)) - Number(entryLevelTitle(a.req.Title)) || rank[a.group] - rank[b.group])
     .slice(0, MAX_DETAILS_PER_COMPANY)
 
   const postings: RawPosting[] = []

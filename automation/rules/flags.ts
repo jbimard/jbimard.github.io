@@ -91,9 +91,15 @@ export const graduationWindow = (sentence: string): GraduationWindow | null => {
 }
 
 const NEW_GRAD = /\b(new grad|new graduate|university grad\w*|recent grad\w*|college grad\w*|early career|early-career|entry[- ]level|campus hire|class of 202[67]|graduate program|0\s*[-–]\s*2 years|associate program|analyst program)\b/i
+// Title only: "Software Engineer I", "SRE 1". In a description "I" is just the pronoun. II and III are excluded titles.
+const LEVEL_ONE_TITLE = /\b(engineer|developer|analyst|administrator|sre)\s+(i|1)\b/i
 const INTERNSHIP = /\bintern\b|\binternship\b|\bco-?op\b/i
 const ROTATIONAL = /\brotational\b|\brotation program\b|\b(development|technology|leadership|early talent) program\b/i
 const YEARS_REQUIRED = /\b(\d{1,2})\s*\+?\s*(?:or more\s*)?(?:[-–]\s*\d{1,2}\s*)?years?['’]?\s*(?:of\s*)?(?:[a-z/,&-]+\s+){0,4}?experience\b/gi
+
+// Early-career or internship wording in a title alone, for ranking before the description is fetched.
+// "Graduate" alone counts here (HPE's "Cloud Engineer Graduate"), but not as a level signal in descriptions.
+export const entryLevelTitle = (title: string) => NEW_GRAD.test(title) || LEVEL_ONE_TITLE.test(title) || INTERNSHIP.test(title) || /\bgraduate\b/i.test(title)
 
 const firstSentence = (all: string[], test: (sentence: string) => boolean) => all.find(test) ?? null
 
@@ -155,7 +161,7 @@ export const detectFlags = (posting: RawPosting): Flags => {
     targetYear,
     graduationWindow: graduation ? graduationWindow(graduation) : null,
     internshipStart: internship && term ? Number(term[2]) * 12 + TERM_STARTS[term[1].toLowerCase()] : null,
-    newGradSignal: NEW_GRAD.test(posting.title) || NEW_GRAD.test(description),
+    newGradSignal: NEW_GRAD.test(posting.title) || LEVEL_ONE_TITLE.test(posting.title) || NEW_GRAD.test(description),
     internship,
     rotational: ROTATIONAL.test(posting.title) || /\brotational\b/i.test(description),
     requiredYears: years.length > 0 ? Math.min(...years) : null,

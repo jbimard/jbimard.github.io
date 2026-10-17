@@ -1,4 +1,5 @@
 import { fetchCookies, fetchJson } from '../http.ts'
+import { entryLevelTitle } from '../rules/flags.ts'
 import { titleGroup } from '../rules/score.ts'
 import { htmlToText } from '../rules/text.ts'
 import type { Company, Profile, RawPosting } from '../types.ts'
@@ -45,7 +46,7 @@ export const fetchEightfold = async (company: Company, profile: Profile): Promis
   const relevant = [...listed.values()]
     .map((position) => ({ position, group: titleGroup(position.name, profile) }))
     .filter((entry): entry is { position: EightfoldPosition; group: 'A' | 'B' | 'C' } => entry.group !== null)
-    .sort((a, b) => rank[a.group] - rank[b.group])
+    .sort((a, b) => Number(entryLevelTitle(b.position.name)) - Number(entryLevelTitle(a.position.name)) || rank[a.group] - rank[b.group])
     .slice(0, MAX_DETAILS_PER_COMPANY)
 
   const postings: RawPosting[] = []

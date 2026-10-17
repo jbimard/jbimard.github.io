@@ -1,4 +1,5 @@
 import { fetchText } from '../http.ts'
+import { entryLevelTitle } from '../rules/flags.ts'
 import { titleGroup } from '../rules/score.ts'
 import { decodeEntities, htmlToText } from '../rules/text.ts'
 import type { Company, Profile, RawPosting } from '../types.ts'
@@ -63,7 +64,7 @@ export const fetchSuccessFactors = async (company: Company, profile: Profile): P
   const relevant = [...listed.values()]
     .map((item) => ({ item, group: titleGroup(item.title, profile) }))
     .filter((entry): entry is { item: SuccessFactorsListItem; group: 'A' | 'B' | 'C' } => entry.group !== null)
-    .sort((a, b) => rank[a.group] - rank[b.group])
+    .sort((a, b) => Number(entryLevelTitle(b.item.title)) - Number(entryLevelTitle(a.item.title)) || rank[a.group] - rank[b.group])
     .slice(0, MAX_DETAILS_PER_COMPANY)
 
   const postings: RawPosting[] = []
