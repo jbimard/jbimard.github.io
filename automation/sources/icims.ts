@@ -1,14 +1,14 @@
 import { fetchText } from '../http.ts'
 import { titleGroup } from '../rules/score.ts'
-import { decodeEntities, htmlToText } from '../rules/text.ts'
+import { decodeEntities } from '../rules/text.ts'
 import type { Company, Profile, RawPosting } from '../types.ts'
+import { parseJobPostingLd, type JobPostingLdResult } from './jsonld.ts'
 
 // iCIMS career sites have no public JSON API, so this reads the same HTML pages a browser does ("in_iframe=1" is the
 // bare version without the company's site around it). Each posting page carries a schema.org JobPosting, which is
 // what Google for Jobs reads, so the description comes from there instead of the page layout.
 
 export type IcimsListItem = { id: string; title: string; url: string; location: string }
-export type IcimsJob = { title: string; description: string | null; location: string; url: string | null }
 
 // Same cap as Workday: detail pages are the expensive part, group A titles go first.
 const MAX_DETAILS_PER_COMPANY = 40
@@ -32,33 +32,6 @@ export const parseIcimsSearch = (html: string): { items: IcimsListItem[]; pages:
   })
   const pages = Number(/Page\s*\d+\s*of\s*(\d+)/.exec(html)?.[1] ?? 1)
   return { items, pages }
-}
-
-type JobPostingLd = {
-  '@type'?: string
-  title?: string
-  description?: string
-  url?: string
-  jobLocation?: Array<{ address?: { addressLocality?: string; addressRegion?: string; addressCountry?: string } }>
-}
-
-// A posting page: the schema.org JobPosting block, or null when the page has none (closed or changed layout).
-export const parseIcimsJob = (html: string): IcimsJob | null => {
-  for (const [, body] of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
-    let data: JobPostingLd
-    try {
-      data = JSON.parse(body) as JobPostingLd
-    } catch {
-      continue
-    }
-    if (data['@type'] !== 'JobPosting' || !data.title) continue
-    const location = (data.jobLocation ?? [])
-      .map(({ address }) => [address?.addressLocality, address?.addressRegion, address?.addressCountry].filter((part) => part && part !== 'UNAVAILABLE').join(', '))
-      .filter(Boolean)
-      .join('; ')
-    return { title: data.title.trim(), description: data.description ? htmlToText(data.description) : null, location, url: data.url ?? null }
-  }
-  return null
 }
 
 export const fetchIcims = async (company: Company, profile: Profile): Promise<RawPosting[]> => {
@@ -88,9 +61,9 @@ export const fetchIcims = async (company: Company, profile: Profile): Promise<Ra
 
   const postings: RawPosting[] = []
   for (const { item } of relevant) {
-    let job: IcimsJob | null = null
+    let job: JobPostingLdResult | null = null
     try {
-      job = parseIcimsJob(await fetchText(`${item.url}?in_iframe=1`))
+      job = parseJobPostingLd(await fetchText(`${item.url}?in_iframe=1`))
     } catch (error) {
       console.warn(`  icims:${company.board} detail failed for ${item.url}: ${String(error)}`)
     }

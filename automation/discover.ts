@@ -12,6 +12,8 @@ import { fetchGreenhouse } from './sources/greenhouse.ts'
 import { fetchIcims } from './sources/icims.ts'
 import { fetchJibe } from './sources/jibe.ts'
 import { fetchLever } from './sources/lever.ts'
+import { fetchOracle } from './sources/oracle.ts'
+import { fetchRadancy } from './sources/radancy.ts'
 import { fetchSimplify, linkKey } from './sources/simplify.ts'
 import { fetchSuccessFactors } from './sources/successfactors.ts'
 import { fetchWorkday } from './sources/workday.ts'
@@ -47,6 +49,8 @@ const fetchCompany = (company: Company, profile: Profile) => {
     case 'icims': return fetchIcims(company, profile)
     case 'jibe': return fetchJibe(company, profile)
     case 'successfactors': return fetchSuccessFactors(company, profile)
+    case 'oracle': return fetchOracle(company, profile)
+    case 'radancy': return fetchRadancy(company, profile)
   }
 }
 

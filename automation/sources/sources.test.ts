@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { parseIcimsJob, parseIcimsSearch } from './icims.ts'
+import { parseIcimsSearch } from './icims.ts'
 import { jibePosting } from './jibe.ts'
+import { parseJobPostingLd } from './jsonld.ts'
+import { oracleDescription, oracleLocation, oracleUrl } from './oracle.ts'
+import { parseRadancyResults } from './radancy.ts'
 import { parseSuccessFactorsJob, parseSuccessFactorsSearch } from './successfactors.ts'
 
 // Trimmed from globalcareers-sas.icims.com (2026-10-16).
@@ -36,7 +39,7 @@ ${card('43001', 'Security Engineer &amp; Analyst', [[' Country (Full Name)', 'Un
   assert.deepEqual(parseIcimsSearch('<p>No jobs</p>'), { items: [], pages: 1 })
 })
 
-test('iCIMS posting: the schema.org JobPosting block, skipping broken and unrelated ones', () => {
+test('posting pages: the schema.org JobPosting block, skipping broken and unrelated ones', () => {
   const posting = {
     '@context': 'http://schema.org',
     '@type': 'JobPosting',
@@ -48,12 +51,15 @@ test('iCIMS posting: the schema.org JobPosting block, skipping broken and unrela
   const html = `<script type="application/ld+json">{not json</script>
 <script type="application/ld+json">{"@type":"Organization","name":"SAS"}</script>
 <script type="application/ld+json">${JSON.stringify(posting)}</script>`
-  const job = parseIcimsJob(html)
+  const job = parseJobPostingLd(html)
   assert.equal(job?.title, 'Cloud Security Engineer')
   assert.equal(job?.location, 'Cary, NC, US')
   assert.equal(job?.url, 'https://global-sas.icims.com/jobs/1/x/job')
   assert.match(job?.description ?? '', /Protect Azure & AWS workloads\./)
-  assert.equal(parseIcimsJob('<html>closed</html>'), null)
+  assert.equal(parseJobPostingLd('<html>closed</html>'), null)
+  // Radancy gives one place instead of a list.
+  const single = parseJobPostingLd(`<script type="application/ld+json">${JSON.stringify({ ...posting, jobLocation: { address: { addressLocality: 'Raleigh', addressRegion: 'NC' } } })}</script>`)
+  assert.equal(single?.location, 'Raleigh, NC')
 })
 
 test('Jibe posting: public job page link, full location, plain description', () => {
@@ -97,4 +103,26 @@ test('SuccessFactors posting: the whole jobdescription span, nested spans includ
   assert.match(description, /^Build cloud tools\.\nUse Azure/)
   assert.doesNotMatch(description, /Footer/)
   assert.equal(parseSuccessFactorsJob('<p>No description</p>'), null)
+})
+
+test('Oracle: job link, primary plus secondary locations, description in posting order', () => {
+  assert.equal(oracleUrl('ibqbjb.fa.ocs.oraclecloud.com', 'CX_1', '160254'), 'https://ibqbjb.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/job/160254')
+  assert.equal(oracleLocation({ Id: '1', Title: 'x', PrimaryLocation: 'Charlotte, NC, United States', secondaryLocations: [{ Name: 'Atlanta, GA, United States' }, {}] }), 'Charlotte, NC, United States; Atlanta, GA, United States')
+  assert.equal(oracleDescription({ ExternalDescriptionStr: '<p>About the role.</p>', ExternalResponsibilitiesStr: null, ExternalQualificationsStr: '<ul><li>Python</li></ul>' }), 'About the role.\n• Python')
+  assert.equal(oracleDescription({ ExternalDescriptionStr: ' ', ExternalResponsibilitiesStr: null }), null)
+})
+
+test('Radancy results: links, titles, locations, total', () => {
+  const html = `<section data-total-results="90"><ul>
+<li><a href="/job/raleigh/senior-lead-cloud-architect/4673/102011306064" data-job-id="102011306064">
+<h2>Senior Lead Cloud Architect &amp; Engineer</h2>
+<span class="job-location">Raleigh, NC</span><span class="job-date-posted">10/15/2026</span></a></li>
+<li><a href="/job/charlotte/security-engineer/4673/1" data-job-id="1"><h2>Security Engineer</h2><span class="job-location">Charlotte, NC</span></a></li>
+</ul></section>`
+  const { items, total } = parseRadancyResults(html, 'jobs.spectrum.com')
+  assert.equal(total, 90)
+  assert.deepEqual(items, [
+    { id: '102011306064', title: 'Senior Lead Cloud Architect & Engineer', url: 'https://jobs.spectrum.com/job/raleigh/senior-lead-cloud-architect/4673/102011306064', location: 'Raleigh, NC' },
+    { id: '1', title: 'Security Engineer', url: 'https://jobs.spectrum.com/job/charlotte/security-engineer/4673/1', location: 'Charlotte, NC' },
+  ])
 })
