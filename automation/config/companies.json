@@ -86,5 +86,6 @@
   { "name": "Nucor", "ats": "successfactors", "board": "jobs.nucor.com", "h1bNames": ["Nucor Corporation", "Nucor Business Technology Inc", "Nucor Corporation Nucor Steel Brandenburg"] },
   { "name": "Brighthouse Financial", "ats": "successfactors", "board": "jobs.brighthousefinancial.com" },
   { "name": "Honeywell", "ats": "oracle", "board": "ibqbjb.fa.ocs.oraclecloud.com/CX_1", "h1bNames": ["Honeywell International Inc"] },
-  { "name": "Charter Communications", "ats": "radancy", "board": "jobs.spectrum.com", "h1bNames": ["Charter Communications Inc"] }
+  { "name": "Charter Communications", "ats": "radancy", "board": "jobs.spectrum.com", "h1bNames": ["Charter Communications Inc"] },
+  { "name": "Microsoft", "ats": "eightfold", "board": "apply.careers.microsoft.com/microsoft.com", "sponsorNote": "Suspended from PERM (green card labor certification) since 2026-10-08. OPT/STEM OPT unaffected; H-1B not affected as of Oct 2026." }
 ]
