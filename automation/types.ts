@@ -14,6 +14,8 @@ export type Company = {
   h1bNames?: string[]
   // Added to every posting's sponsorship notes, for news the USCIS counts can't show (e.g. a PERM suspension).
   sponsorNote?: string
+  // workday: search filters, for global boards whose US jobs get crowded out (Accenture: locationCountry = US).
+  workdayFacets?: Record<string, string[]>
 }
 
 export type MetroConfig = { label: string; points: number; match: string[] }
