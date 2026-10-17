@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import ConfirmDialog from './ConfirmDialog'
 import PacketEditor from './PacketEditor'
+import { buildApplyPrompt } from './applyPrompt'
 import { copyToClipboard } from './prompts'
 import { CHECK_LABELS, type ApplicationPacket, type Job, type PacketEdit } from './types'
 
@@ -12,6 +13,7 @@ type PacketPanelProps = {
   onApprove: (packetId: string, acknowledged: string[]) => Promise<void>
   onRegenerate: (packetId: string) => Promise<void>
   onEdit: (packetId: string, revision: number, edit: PacketEdit) => Promise<{ unchanged?: boolean; changed_lines?: number; voice_saved?: boolean }>
+  onMarkApplied: () => Promise<void>
   onClose: () => void
 }
 
@@ -67,7 +69,7 @@ const ResumePreview = ({ path, fileBlob }: { path: string; fileBlob: (path: stri
 }
 
 // Prepared application materials for one approved job (step 3b), with the Resume check (step 3c).
-const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, onEdit, onClose }: PacketPanelProps) => {
+const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, onEdit, onMarkApplied, onClose }: PacketPanelProps) => {
   const [tab, setTab] = useState<Tab>('check')
   const [copied, setCopied] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -167,6 +169,37 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
           <p className="text-sm text-amber-700">Tick each yellow flag under Check once you've read it to enable Approve.</p>
         )}
         {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+        {packet.approved_at && (
+          // Step 5: Claude in Chrome fills the form from these instructions and stops before Submit; he submits.
+          <section className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-slate-700">
+            <h3 className="font-semibold text-slate-950">Apply</h3>
+            {job.status === 'Ready to Apply' ? (
+              <>
+                <ol className="mt-1 list-decimal space-y-1 pl-5">
+                  <li>Copy the instructions and paste them into Claude in Chrome. It opens the posting, fills the form from this packet and stops before Submit.</li>
+                  <li>Sign in or create the account yourself, and upload the resume (and cover letter) when it asks.</li>
+                  <li>Check every field, submit it yourself, then mark it applied here.</li>
+                </ol>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => void copy('apply', buildApplyPrompt(job, packet))} className="rounded-md bg-slate-950 px-3 py-2 text-white hover:bg-slate-800">
+                    {copied === 'apply' ? 'Copied' : 'Copy instructions for Claude in Chrome'}
+                  </button>
+                  {job.job_link && (
+                    <a href={job.job_link} target="_blank" rel="noreferrer" className="rounded-md border border-slate-300 bg-white px-3 py-2 hover:bg-slate-50">Open posting</a>
+                  )}
+                  <button type="button" disabled={busy} onClick={() => void run(onMarkApplied)} className="rounded-md border border-emerald-700 bg-white px-3 py-2 text-emerald-800 hover:bg-emerald-100 disabled:opacity-50">
+                    Mark applied
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="mt-1">
+                {job.status}{job.date_applied ? ` on ${job.date_applied}` : ''}{job.follow_up_date ? ` · follow up ${job.follow_up_date}` : ''}
+              </p>
+            )}
+          </section>
+        )}
 
         <nav className="grid grid-cols-5 rounded-md border border-slate-300 p-1 text-sm">
           {([['check', 'Check'], ['resume', 'Resume'], ['changes', 'Changes'], ['letter', 'Letter & answers'], ['edit', 'Edit']] as const).map(([key, label]) => (
