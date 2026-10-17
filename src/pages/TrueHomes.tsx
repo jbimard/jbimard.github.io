@@ -43,7 +43,7 @@ const TrueHomes: React.FC = () => {
           />
           <p className="mt-6 text-black/60 text-lg md:text-xl">
             Cybersecurity Rotational Intern &middot; Enterprise Technology
-            Services &middot; Summer 2026 &middot; Charlotte, NC
+            Services &middot; Summer 2026 &middot; Monroe, NC
           </p>
           <p className="mt-6 text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 font-light">
             A twelve-week rotational internship across application
@@ -192,7 +192,7 @@ const TrueHomes: React.FC = () => {
                 or unaccountable.
               </p>
               <p>
-                I designed a modular collector for each of six identity and
+                I designed a modular collector for each of four identity and
                 security platforms, all following the same
                 connect-collect-evaluate-emit template, so that findings from
                 platforms with completely different role models could be

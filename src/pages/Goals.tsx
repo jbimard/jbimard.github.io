@@ -32,12 +32,12 @@ const Goals = () => {
             Academic Milestones
           </h2>
           <p className="max-w-[1280px] text-sm md:text-base leading-6 md:leading-7 opacity-80">
-            One of my key goals is to complete my undergraduate degree while continuing my graduate‑level coursework through the University of North Carolina at Charlotte’s
-            Early Entry Cybersecurity M.S. program. This dual‑track path allows me to deepen my expertise while staying focused on the
+            I completed my B.S. in Computer Science with a Cybersecurity Concentration in Spring 2026, and I’m now finishing the University of North Carolina at Charlotte’s
+            Early Entry Cybersecurity M.S. program, graduating in Spring 2027. This path has let me deepen my expertise while staying focused on the
             future of secure systems.
           </p>
           <ul className="max-w-[1280px] text-sm md:text-base leading-6 md:leading-7 space-y-3">
-            <li>🎓 Complete B.S. in Computer Science, Cybersecurity Concentration (Spring 2026)</li>
+            <li>✅ Completed B.S. in Computer Science, Cybersecurity Concentration (Spring 2026)</li>
             <li>🎯 Finish Early Entry M.S. in Cybersecurity (Spring 2027)</li>
             <li>💼 Pursue an MBA at UNC Chapel Hill later in my career to grow as a leader and decision‑maker in the tech industry. (Future)</li>
           </ul>
