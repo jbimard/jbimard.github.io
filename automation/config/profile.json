@@ -106,7 +106,10 @@
     "trading",
     "trader",
     "electrical",
-    "mechanical"
+    "mechanical",
+    "process engineer",
+    "facilities",
+    "product management"
   ],
   "rotationalTitle": ["rotational", "rotation program", "development program", "leadership program", "early talent"],
   "rotationalTechWords": ["technology", "tech", "data", "cyber", "cybersecurity", "security", "cloud", "engineering", "software", "it", "digital", "infrastructure"],
@@ -159,6 +162,6 @@
   "maxInternshipsPerRun": 40,
   "simplifyLookbackDays": 21,
   "maxEnrichPerRun": 200,
-  "workdaySearchTerms": ["security", "cloud", "cyber", "graduate", "intern"],
-  "workdayMaxPagesPerTerm": 3
+  "workdaySearchTerms": ["security", "cloud", "cyber", "graduate", "intern", "new grad", "early career", "entry level", "university"],
+  "workdayMaxPagesPerTerm": 6
 }

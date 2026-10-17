@@ -288,6 +288,7 @@ Settled; don't reopen without a new reason.
     - "No sponsorship": −15, and the sponsorship part of the score can go below zero. Getting sponsorship in the first years matters.
   - Internships are kept, with their own slots each run (`maxInternshipsPerRun`).
   - Rotational and early-talent programs count only when they're tech tracks.
+  - Search-based boards (Workday and the other search adapters) also search `new grad`, `early career`, `entry level` and `university`, up to 6 pages per term. Their 40-detail cap per company takes early-career, intern and "Graduate" titles first. "Engineer I" / "Software Engineer 1" in a title is an entry-level signal; "Associate" is not, since banks use it as a mid-level title (2026-10-17).
 - **Scoring:**
   - role 30 + sponsorship 25 + level 15 + location 15 + pay 15
   - title fit scales the non-role points (×1 core / ×0.9 adjacent / ×0.75 generic / ×0.5 off-target)

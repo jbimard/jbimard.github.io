@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { test } from 'node:test'
 import type { Profile, RawPosting } from '../types.ts'
-import { detectFlags } from './flags.ts'
+import { detectFlags, entryLevelTitle } from './flags.ts'
 import { evaluatePosting, titleGroup } from './score.ts'
 import { NO_SPONSOR_DATA, type SponsorRecord } from './sponsors.ts'
 import { htmlToText, parseAnnualSalary, scoreLocation, shortLocation } from './text.ts'
@@ -229,3 +229,19 @@ test('internships that start after May 2027 are kept at full score with a note; 
   assert.ok(!(stated.job.notes ?? '').includes('internship starts after'))
 })
 
+
+test('"Engineer I" in a title is an entry-level signal; "I" in a description and "Engineer II" are not', () => {
+  const blank = { description: 'Join our team.' }
+  assert.equal(detectFlags(posting({ ...blank, title: 'Site Reliability Engineer I (Full Time)' })).newGradSignal, true)
+  assert.equal(detectFlags(posting({ ...blank, title: 'Software Engineer 1 - Backend' })).newGradSignal, true)
+  assert.equal(detectFlags(posting({ ...blank, title: 'Software Engineer II' })).newGradSignal, false)
+  assert.equal(detectFlags(posting({ ...blank, title: 'Software Engineer 10x Platform' })).newGradSignal, false)
+  assert.equal(detectFlags(posting({ title: 'Cloud Engineer', description: 'As an engineer I will mentor you.' })).newGradSignal, false)
+})
+
+test('entry-level titles are recognized before the description is fetched, so they win the per-company detail cap', () => {
+  for (const title of ['Site Reliability Engineer I', 'Cloud Engineer - New College Grad 2027', 'Entry Level Application Engineer', 'Security Intern', 'Software Engineer Co-op', 'Cloud Engineer Graduate']) {
+    assert.equal(entryLevelTitle(title), true, title)
+  }
+  for (const title of ['Cloud Security Engineer', 'Software Engineer II', 'Associate, Software Engineer']) assert.equal(entryLevelTitle(title), false, title)
+})
