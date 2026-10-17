@@ -145,7 +145,7 @@ test('seniority and irrelevant titles are dropped, not blocked', () => {
 test('location scoring prefers Charlotte/Triangle, then Boston/NYC, then remote US', () => {
   assert.equal(scoreLocation('Charlotte, NC', profile).points, 15)
   // Suburbs count as their metro; bare "Monroe" or "Wake Forest" could be another state (or Winston-Salem's university).
-  for (const place of ['Monroe, NC', 'Waxhaw, NC', 'Concord, North Carolina', 'Wake Forest, NC', 'Apex, North Carolina']) {
+  for (const place of ['Monroe, NC', 'Waxhaw, NC', 'Concord, North Carolina', 'Wake Forest, NC', 'Apex, North Carolina', 'Huntersville, NC', 'Rock Hill, SC', 'Fuquay-Varina, NC', 'Holly Springs, North Carolina']) {
     assert.equal(scoreLocation(place, profile).points, 15, place)
   }
   assert.equal(scoreLocation('Monroe, LA', profile).points, 3)
