@@ -18,13 +18,13 @@ Work through the steps in order. Update the status column as each step lands, an
 | 3b | Preparation: cover letter, application answers, ATS-optimized resume, private storage | Live — PR #15; deployed, base file uploaded, routine "Job preparation" daily at 14:00 UTC in its own environment (first run 2026-10-16: OK, 0 jobs) |
 | 3c-A | Resume check, preview, ATS score, Approve / Regenerate | Done — PR #16; deployed and the inventory uploaded 2026-10-16. Confirm on the next preparation run that new packets carry no "no inventory" flag |
 | 3c-B | Edit packets in the dashboard, re-render, read-aloud pass, voice memory | Done — **B1** PR #19 (plus #20–#22); **B2** voice memory PR #26, deployed 2026-10-16: pull returns his last 40 edits, `ROUTINE.md` follows them |
-| 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | In progress — on `feat/packet-edit` with B1 |
-| 2b | More local companies (new board adapters) | Done — 8 companies on existing boards (#28); iCIMS + Jibe for SAS and First Citizens (#29); SuccessFactors for Duke and Novo Nordisk (this PR). Phenom / Avature / Eightfold left for later |
-| 2c | More Charlotte companies | Done — 12 companies on existing adapters (#31); Oracle + Radancy + SuccessFactors entries for Honeywell, Charter, Nucor, Brighthouse (#32); Eightfold adapter for Microsoft, with a PERM-suspension warning (this PR) |
-| 4 | Visa timeline card | Not started — independent, can slot in anytime |
+| 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | Done — with B1 (PR #19); graduation-window fit and ATS from posting text in #22–#23; `inventory.not_yet` gap list in #24. First full test (Marvell): ATS 59 → 77 after the base gained AWS, MySQL, Java and GitHub Actions; packet approved 2026-10-16 |
+| 2b | More local companies (new board adapters) | Done — 8 companies on existing boards (#28); iCIMS + Jibe for SAS and First Citizens (#29); SuccessFactors for Duke and Novo Nordisk (#30). Phenom / Avature / Eightfold left for later |
+| 2c | More Charlotte companies | Done — 12 companies on existing adapters (#31); Oracle + Radancy + SuccessFactors entries for Honeywell, Charter, Nucor, Brighthouse (#32); Eightfold adapter for Microsoft, with a PERM-suspension warning (#33) |
+| 4 | Visa timeline card | Done — this PR: `visa_profile` table, "My timeline" card, rules-to-watch list with the OPT fee proposal. Needs `supabase db push`, then enter the program end date |
 | 5 | Supervised applying | Not started |
 
-Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 2c → 4 → 5.** Next: **4**.
+Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 2c → 4 → 5.** Next: **5**.
 
 - 2a is small and gives step 3 real sponsorship data from day one.
 - 1b comes before the workflow is turned back on, so the dashboard never gets flooded with the whole backlog.
@@ -241,7 +241,7 @@ Two PRs. **B1** makes packets editable; **B2** feeds the edits back into tailori
 - **Built:** `job-prep` GET returns the newest 40 `packet_edits` rows as `voice`; `client.ts pull` writes them to `/tmp/prep-voice.json`. The routine learns patterns, reuses his wording for the same base bullet, treats removals as a soft signal, follows the newer edit when two disagree, and never carries a company-specific line to another company.
 - **Cleanup:** a new packet removes the `r<n>/` files a regenerated packet's edits left behind.
 
-## 4. Visa timeline card
+## 4. Visa timeline card (done)
 
 A "My Timeline" card at the top of `/jobs`. The program end date is entered once, and everything else is worked out from it:
 
@@ -251,6 +251,12 @@ A "My Timeline" card at the top of `/jobs`. The program end date is entered once
 - each March H-1B registration (2027, 2028, 2029)
 
 It stores dates only, in a `visa_profile` table protected by row-level security like `jobs`. **Never store document numbers** (A-number, SEVIS ID, EAD card number). Confirm all dates with the school's DSO, since this is a reminder tool, not legal advice.
+
+**Built (2026-10-16):** the date logic is in `src/pages/jobs/visaTimeline.ts` (tested in `visaTimeline.test.ts`), the card in `VisaTimelineCard.tsx`, setup in `docs/JOBS_SETUP.md` §14. Beyond the plan above:
+
+- **Rules to watch:** a hand-kept list on the card (`watchList`) with each rule's status, what it means for him, a link and the date it was checked. It starts with the OPT fee proposal (status changes on its own once comments close 2026-11-09), the wage-weighted H-1B lottery, and the $100,000 H-1B fee. The OPT fee line also shows on the collapsed card.
+- **H-1B registrations** are worked out, not fixed: every March from the program end year while status lasts until April 1 (when petitions are filed). With an estimated STEM OPT end that is four Marches, not three.
+- **Unemployment counter:** days from earlier gaps, plus the current gap from "Not working since". It counts today (the safer side of a limit) and shows the date it would run out.
 
 ## 5. Supervised applying
 
@@ -396,3 +402,4 @@ Settled; don't reopen without a new reason.
 - **2c, Charlotte companies (2026-10-16):** a separate step from 2b at his request, done right after it. Only boards the existing adapters can read; new adapters (Oracle for Honeywell, Phenom) wait until a company there is worth it.
 - **Microsoft stays in, with a warning (2026-10-16):** the 2026-10-08 suspension covers PERM (green cards) for Microsoft, Adobe, Capgemini, Cognizant, HCL, Infosys, Tata and Wipro, not H-1B or OPT. Its postings carry the note so screening and review see the green-card risk. Revisit if H-1B petitions are restricted too.
 - **OPT fee proposal to watch (2026-10-16):** DHS proposed (2026-10-08, docket ICEB-2026-0100) that schools pay $70,000 per student's first OPT and $30,000 per STEM OPT extension. Not in effect; comments close 2026-11-09. He graduates May 2027, so a final rule could land before his OPT. Ask UNC Charlotte ISSS; step 4's timeline card should show its status.
+- **Visa timeline card (2026-10-16, step 4):** dates only, owner-only through RLS; no document numbers. Later dates are estimated from the program end date until the EAD dates are entered. Rule statuses checked 2026-10-16: the OPT fee proposal is not in effect (comments close 2026-11-09); the wage-weighted H-1B lottery has been in effect since March 2026; the $100,000 H-1B fee was struck down (2026-06-08), the First Circuit refused to reinstate it (2026-07-24), and it never applied to an F-1 change of status. The watch list is updated by hand when a status changes.
