@@ -74,9 +74,17 @@ class Writer {
       this.y -= size * LEADING
       const total = line.reduce((sum, { word, font }) => sum + this.fonts[font].widthOfTextAtSize(word, size), 0)
       let x = MARGIN.side + (options.align === 'center' ? (width - total) / 2 : i === 0 ? indent : indent + (options.hanging ?? 0))
+      // One text run per font change, spaces included. Drawing each word and each space separately made some
+      // text extractors (and so some ATS parsers) drop the spaces: "Teaching Assistant" read as "TeachingAssistant".
+      const runs: Array<{ text: string; font: keyof Fonts }> = []
       for (const { word, font } of line) {
-        this.page.drawText(word, { x, y: this.y, size, font: this.fonts[font], color: rgb(0, 0, 0) })
-        x += this.fonts[font].widthOfTextAtSize(word, size)
+        const last = runs.at(-1)
+        if (last && last.font === font) last.text += word
+        else runs.push({ text: word, font })
+      }
+      for (const { text, font } of runs) {
+        this.page.drawText(text, { x, y: this.y, size, font: this.fonts[font], color: rgb(0, 0, 0) })
+        x += this.fonts[font].widthOfTextAtSize(text, size)
       }
     })
   }
