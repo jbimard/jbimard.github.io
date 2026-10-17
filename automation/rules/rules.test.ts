@@ -44,6 +44,9 @@ test('clearance is the one hard block', () => {
   assert.equal(evaluate({ title: 'Security Engineer - Top Secret Clearance Required' }).kind, 'blocked')
   assert.equal(evaluate({ description: 'No security clearance required for this role.' }).kind, 'kept')
   assert.equal(evaluate({ description: 'This role may require a security clearance at the TS/SCI level.' }).kind, 'blocked')
+  // EEO footers cite the Employee Polygraph Protection Act, a law that limits polygraphs; it isn't a clearance.
+  assert.equal(evaluate({ description: 'Click these links to view the following notices: "EEOC Know Your Rights" and "Employee Polygraph Protection Act".' }).kind, 'kept')
+  assert.equal(evaluate({ description: 'Requires TS/SCI with full-scope polygraph. See the Employee Polygraph Protection Act notice.' }).kind, 'blocked')
 })
 
 test('conditional clearance wording is labeled, not blocked', () => {

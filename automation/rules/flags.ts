@@ -29,12 +29,13 @@ export type Flags = {
 const CLEARANCE = [
   /\b(security|secret|top secret|ts\/sci|dod|government|federal|public trust) clearance\b/i,
   /\bts\s*\/\s*sci\b/i,
-  /\bpolygraph\b/i,
+  // Not the "Employee Polygraph Protection Act" in EEO footers (a law limiting polygraphs, e.g. Deutsche Bank's).
+  /\bpolygraph\b(?!\s+protection)/i,
   /\b(active|current|obtain|maintain|eligible|eligibility)\b[^.]{0,40}\bclearance\b/i,
   /\bclearance\b[^.]{0,40}\b(required|eligib\w*|obtain|maintain|active)\b/i,
 ]
 // These always mean a clearance, even when phrased conditionally.
-const CLEARANCE_DEFINITE = /\bts\s*\/\s*sci\b|\bpolygraph\b|\b(active|current) (\w+ )?clearance\b/i
+const CLEARANCE_DEFINITE = /\bts\s*\/\s*sci\b|\bpolygraph\b(?!\s+protection)|\b(active|current) (\w+ )?clearance\b/i
 const CONDITIONAL = /\bmay (be )?requir\w*|\bdepending on\b|\bmight (be )?requir\w*|\bpreferred\b|\ba plus\b/i
 const CLEARANCE_NEGATED = /\bno (security )?clearance\b|\bnot require (a |any )?(security )?clearance\b|\bclearance (is )?not required\b/i
 

@@ -12,6 +12,7 @@
   { "name": "Vanguard", "ats": "workday", "board": "vanguard/wd5/vanguard_external" },
   { "name": "State Street", "ats": "workday", "board": "statestreet/wd1/Global", "h1bNames": ["State Street Bank and Trust Company"] },
   { "name": "Citi", "ats": "workday", "board": "citi/wd5/2", "h1bNames": ["Citibank", "Citigroup", "Citigroup Global Markets", "Citigroup Technology"] },
+  { "name": "Deutsche Bank", "ats": "workday", "board": "db/wd3/DBWebsite", "h1bNames": ["DB Global Technology Inc", "Deutsche Bank Securities Inc", "Deutsche Bank New York Branch", "Deutsche Bank Trust Company Americas", "Deutsche Bank National Trust Company"] },
   { "name": "BlackRock", "ats": "workday", "board": "blackrock/wd1/BlackRock_Professional" },
   { "name": "Capital One", "ats": "workday", "board": "capitalone/wd12/Capital_One" },
   { "name": "Mastercard", "ats": "workday", "board": "mastercard/wd1/CorporateCareers" },
