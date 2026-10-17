@@ -466,7 +466,7 @@ npm run prep:push -- /tmp/prep-packets.json --dry-run             # validate pac
 - the latest OPT end date (14 months after the program end date)
 - the STEM OPT filing window (the 90 days before OPT ends; E-Verify employer, I-983 plan)
 - each March H-1B registration while status lasts to April 1 of that year
-- the OPT unemployment counter (90 days, 150 with STEM OPT)
+- the OPT unemployment counter (90 days from the EAD start date; STEM OPT adds 60, 150 in total, but STEM OPT needs a job first)
 
 Collapsed, it shows the next date, the unemployment counter and the OPT fee proposal's status. **Show details** lists every date and the rules to watch.
 

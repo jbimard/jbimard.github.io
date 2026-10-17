@@ -180,7 +180,7 @@ const VisaTimelineCard = ({ profile, loading, error, onSave }: VisaTimelineCardP
           <p className="text-sm text-slate-600">
             {clock.started
               ? `Unemployment: ${clock.used} of ${clock.limit} days used, ${clock.left} left${clock.runsOut ? ` (runs out ${formatDate(clock.runsOut)} if still not working)` : ''}`
-              : `Unemployment: the clock starts on the OPT start date (limit ${clock.limit} days, 150 with STEM OPT)`}
+              : `Unemployment: ${clock.limit} days allowed, counted from the OPT start date on the EAD card. STEM OPT adds 60 (150 in total), but needs a job first.`}
           </p>
           <p className="text-sm text-amber-700">⚠ {watch[0].title}: {watch[0].status}</p>
         </div>

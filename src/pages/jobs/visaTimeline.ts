@@ -5,7 +5,8 @@
 // Rules used (8 CFR 214.2(f)):
 // - Post-completion OPT: file from 90 days before the program end date to 60 days after it, and within 30 days of the
 //   DSO's recommendation. 12 months, which must end within 14 months of the program end date.
-// - Unemployment: 90 days on OPT, 150 in total once STEM OPT is approved.
+// - Unemployment: 90 days on OPT, counted from the EAD start date. STEM OPT adds 60 (150 in total across both), but
+//   STEM OPT itself needs a job with an E-Verify employer, so the first job has to come within the 90.
 // - STEM OPT: file up to 90 days before the OPT EAD ends (USCIS must receive it before then), within 60 days of the
 //   DSO's recommendation, for an E-Verify employer. 24 months.
 // - H-1B registration each March; the petition is filed from April 1, so status must still be valid then. Cap-gap
