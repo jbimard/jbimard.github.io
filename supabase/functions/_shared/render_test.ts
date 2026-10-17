@@ -37,6 +37,12 @@ Deno.test('resume: single column, standard headings, contact in the body, no hea
   assert(!without.includes('Relevant Coursework'), 'no coursework line when none is picked')
 })
 
+Deno.test('resume: a GPA in the base shows on its degree line, and no GPA means none', async () => {
+  const withGpa = { ...resume, education: [{ ...resume.education[0], degrees: [{ degree: 'MS in Cybersecurity', date: 'May 2027', gpa: '3.8' }] }] }
+  assert((await unzip(await renderResume(withGpa))).document.includes('MS in Cybersecurity | GPA: 3.8/4.0'), 'GPA on the degree line')
+  assert(!(await unzip(await renderResume(resume))).document.includes('GPA'), 'no GPA when the base has none')
+})
+
 Deno.test('cover letter: greeting, paragraphs and sign-off', async () => {
   const { document } = await unzip(await renderCoverLetter(resume.contact, { company: 'Acme', role_title: 'Cloud Engineer' }, ['One.', 'Two.', 'Three.'], new Date('2026-10-20T14:00:00Z')))
   for (const text of ['Dear Acme Hiring Team,', 'Re: Cloud Engineer', 'October 20, 2026', 'Two.', 'Sincerely,']) assert(document.includes(text), `missing ${text}`)

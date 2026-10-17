@@ -336,7 +336,7 @@ Open it with the **Packet** button on the job's row in `/jobs`. The routine's in
 - no number or known tool may appear that its source doesn't have
 - skills must already be in your skill lists
 
-Contact details, titles, employers, dates and education are copied from the base, never written by Claude. The .docx files come from one fixed ATS-safe template: single column, standard headings, no tables, headers or footers.
+Contact details, titles, employers, dates and education are copied from the base, never written by Claude. A degree in the base may carry an optional `gpa` on a 4.0 scale (`"gpa": "3.8"`); the resume shows it as `| GPA: 3.8/4.0` on that degree's line, and answers can't state any other GPA. The .docx files come from one fixed ATS-safe template: single column, standard headings, no tables, headers or footers.
 
 **Storage:** everything stays in the private `application-packets` bucket, never in this repo. Files are readable only by you, through one-minute signed download links.
 

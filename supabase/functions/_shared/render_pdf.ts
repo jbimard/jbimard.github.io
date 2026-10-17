@@ -2,7 +2,7 @@
 // selectable text in standard fonts (no images, no outlines), so parsers that only take PDF read it the same way.
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'npm:pdf-lib@1.17.1'
 import { contactLine, letterDate } from './render.ts'
-import type { BaseResumes, ResolvedEntry, ResolvedResume } from './packet.ts'
+import { degreeText, type BaseResumes, type ResolvedEntry, type ResolvedResume } from './packet.ts'
 import { LAYOUT } from './check.ts'
 
 const PAGE: [number, number] = [612, 792] // US Letter, points
@@ -145,7 +145,7 @@ const drawResume = async (resume: ResolvedResume) => {
   w.heading('Education')
   for (const school of resume.education) {
     w.paragraph([{ text: `${school.school}${school.location ? `, ${school.location}` : ''}`, font: 'bold' }])
-    for (const degree of school.degrees) w.lineWithRight({ text: degree.degree, font: 'regular' }, degree.date)
+    for (const degree of school.degrees) w.lineWithRight({ text: degreeText(degree), font: 'regular' }, degree.date)
   }
   if (resume.coursework.length) w.paragraph([{ text: 'Relevant Coursework: ', font: 'bold' }, { text: resume.coursework.join(', '), font: 'regular' }])
   w.heading('Experience')
