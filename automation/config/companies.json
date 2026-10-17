@@ -68,5 +68,7 @@
   { "name": "Socket", "ats": "ashby", "board": "socket" },
   { "name": "Cohere", "ats": "ashby", "board": "cohere" },
   { "name": "SAS", "ats": "icims", "board": "globalcareers-sas", "h1bNames": ["SAS Institute Inc"] },
-  { "name": "First Citizens Bank", "ats": "jibe", "board": "firstcitizens", "h1bNames": ["First Citizens Bank and Trust Co"] }
+  { "name": "First Citizens Bank", "ats": "jibe", "board": "firstcitizens", "h1bNames": ["First Citizens Bank and Trust Co"] },
+  { "name": "Duke University", "ats": "successfactors", "board": "careers.duke.edu", "h1bNames": ["Duke University-Univ-Med Ctr-Affil", "Duke University", "Duke University Health System Inc"] },
+  { "name": "Novo Nordisk", "ats": "successfactors", "board": "careers.novonordisk.com", "h1bNames": ["Novo Nordisk Inc", "Novo Nordisk Pharmaceutical Industries LP", "Novo Nordisk Research and Development US Inc"] }
 ]

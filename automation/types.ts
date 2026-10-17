@@ -1,4 +1,4 @@
-export type Ats = 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'icims' | 'jibe'
+export type Ats = 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'icims' | 'jibe' | 'successfactors'
 // From USCIS New Employment approvals in the latest complete fiscal year (see rules/sponsors.ts).
 export type SponsorTier = 'strong' | 'some' | 'rare' | 'none'
 
@@ -7,6 +7,7 @@ export type Company = {
   ats: Ats
   // greenhouse/lever/ashby: board slug. workday: "tenant/wdN/site". icims: the search host's subdomain
   // ("globalcareers-sas" for globalcareers-sas.icims.com). jibe: the client code ("firstcitizens" for firstcitizens.jibeapply.com).
+  // successfactors: the Career Site Builder host ("careers.duke.edu").
   board: string
   // Names to look up in the USCIS data instead of `name`, when they differ (e.g. Fidelity → "FMR").
   h1bNames?: string[]
@@ -37,7 +38,7 @@ export type Profile = {
   maxInternshipsPerRun: number
   simplifyLookbackDays: number
   maxEnrichPerRun: number
-  // Also used for iCIMS and Jibe, which are searched by keyword the same way.
+  // Also used for iCIMS, Jibe and SuccessFactors, which are searched by keyword the same way.
   workdaySearchTerms: string[]
   workdayMaxPagesPerTerm: number
 }

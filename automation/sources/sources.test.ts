@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { parseIcimsJob, parseIcimsSearch } from './icims.ts'
 import { jibePosting } from './jibe.ts'
+import { parseSuccessFactorsJob, parseSuccessFactorsSearch } from './successfactors.ts'
 
 // Trimmed from globalcareers-sas.icims.com (2026-10-16).
 const card = (id: string, title: string, fields: Array<[string, string]>) => `
@@ -69,4 +70,31 @@ test('Jibe posting: public job page link, full location, plain description', () 
   assert.equal(raw.location, 'Phoenix, Arizona; Raleigh, North Carolina')
   assert.equal(raw.source, 'jibe:firstcitizens')
   assert.match(raw.description ?? '', /Overview Build on AWS\./)
+})
+
+test('SuccessFactors search: rows, absolute links, location, total', () => {
+  const row = (path: string, title: string, location: string) => `<tr class="data-row">
+<td class="colTitle"><span class="jobTitle hidden-phone"><a href="${path}" class="jobTitle-link">${title}</a></span>
+<div class="jobdetail-phone visible-phone"><span class="jobTitle visible-phone"><a class="jobTitle-link" href="${path}">${title}</a></span>
+<span class="jobLocation visible-phone"><span class="jobLocation">
+            ${location}
+        </span></span></div></td></tr>`
+  const html = `<span class="paginationLabel" aria-label="Results 1 – 25">Results <b>1 – 25</b> of <b>1,105</b></span><table>
+${row('/job/Durham-Consultant%2C-IT-NC-27710/1431545500/', 'Consultant, IT', 'Durham, NC, US, 27710')}
+${row('/job/Durham-Cloud-Engineer-NC-27710/1400000000/', 'Cloud &amp; Security Engineer', 'Durham, NC, US')}
+</table>`
+  const { items, total } = parseSuccessFactorsSearch(html, 'careers.duke.edu')
+  assert.equal(total, 1105)
+  assert.deepEqual(items, [
+    { id: '1431545500', title: 'Consultant, IT', url: 'https://careers.duke.edu/job/Durham-Consultant%2C-IT-NC-27710/1431545500/', location: 'Durham, NC, US, 27710' },
+    { id: '1400000000', title: 'Cloud & Security Engineer', url: 'https://careers.duke.edu/job/Durham-Cloud-Engineer-NC-27710/1400000000/', location: 'Durham, NC, US' },
+  ])
+})
+
+test('SuccessFactors posting: the whole jobdescription span, nested spans included', () => {
+  const html = `<span itemprop="description"><span class="jobdescription"><p>Build <span>cloud</span> tools.</p><p>Use <b>Azure</b>.</p></span></span><span>Footer</span>`
+  const description = parseSuccessFactorsJob(html) ?? ''
+  assert.match(description, /^Build cloud tools\.\nUse Azure/)
+  assert.doesNotMatch(description, /Footer/)
+  assert.equal(parseSuccessFactorsJob('<p>No description</p>'), null)
 })
