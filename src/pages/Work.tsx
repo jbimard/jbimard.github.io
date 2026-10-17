@@ -67,7 +67,7 @@ export const Work = () => {
   return (
     <main className="w-screen overflow-x-hidden bg-white">
         
-      {/* Teacher Assistant */}
+      {/* Teaching Assistant */}
       <section className="relative" id="ta">
         
         <div className="relative" style={{ marginTop: "calc(env(safe-area-inset-top) * -1)" }}>
@@ -85,14 +85,17 @@ export const Work = () => {
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-10 mt-0 lg:-mt-32 pb-16 md:pb-24" style={{ marginTop: "calc(env(safe-area-inset-top) + 1.5rem)" }}>
           <div className="lg:-mt-24">
             <TwoCol
-              left={<SectionHeading>Teacher Assistant</SectionHeading>}
+              left={<SectionHeading>Teaching Assistant</SectionHeading>}
               right={
                 <div className="text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 space-y-6 font-light">
                   <p>
-                    In December of 2024, I began working as a Teaching Assistant for ITIS 3135 – Web-Based Application Design and Development at the University of North Carolina at Charlotte. In this course, I supported students as they explored the foundations of interactive web development, from HTML and CSS to DOM manipulation, event-driven programming, and web security fundamentals. My role extended beyond answering questions; I was actively involved in helping students bridge the gap between theory and practical implementation.
+                    In December of 2024, I began working as a Teaching Assistant for ITIS 3135 – Web-Based Application Design and Development at the University of North Carolina at Charlotte, and after finishing my B.S. in Spring 2026, I continued as a Graduate Teaching Assistant in Fall 2026. In ITIS 3135, I supported students as they explored the foundations of interactive web development, from HTML and CSS to DOM manipulation, event-driven programming, and web security fundamentals. My role extended beyond answering questions; I was actively involved in helping students bridge the gap between theory and practical implementation.
                   </p>
                   <p>
-                    Throughout the 2024–2025 academic year, I guided students through their coding challenges, helped debug issues in real time, and provided feedback on both functionality and design. I collaborated with the lead instructor to clarify project expectations, reinforce accessibility standards, and introduce clean coding practices.
+                    Since then, I have guided more than 140 students through their coding challenges, helped debug issues in real time, and provided feedback on both functionality and design. I collaborated with the lead instructor to clarify project expectations, reinforce accessibility standards, and introduce clean coding practices.
+                  </p>
+                  <p>
+                    I also built tools to support the course: a Python-based automated grading pipeline that evaluates programming assignments for 100+ students across 20+ assignments, using Claude Code for assignments that need code reasoning and qualitative review beyond test-based grading, and a custom Model Context Protocol (MCP) integration with Canvas that connects course data and assignment workflows to AI-assisted grading tools.
                   </p>
                   <p>
                     One of the most rewarding aspects of this role was seeing students gain confidence in building client-side interactions, particularly with asynchronous data handling (AJAX) and dynamic DOM manipulation. This experience not only sharpened my communication and mentoring skills but also deepened my technical proficiency in front-end development.
@@ -152,7 +155,7 @@ export const Work = () => {
             right={
               <div className="text-black max-w-[950px] text-base sm:text-lg md:text-xl leading-7 md:leading-9 space-y-6 font-light">
           <p>
-            From March to August 2024, I interned at Linxy, where I helped design and develop the beta version of both the customer-facing and internal admin dashboards. I used Figma to create wireframes and high-fidelity prototypes that focused on clean layout, usability, and information clarity. These dashboards were key to streamlining operational workflows and laid the foundation for user interactions across the platform. This experience is highly relevant in cybersecurity environments where clear data visualization is critical.
+            From May to August 2024, I interned at Linxy, where I helped design and develop the beta version of both the customer-facing and internal admin dashboards. I used Figma to create wireframes and high-fidelity prototypes that focused on clean layout, usability, and information clarity. These dashboards were key to streamlining operational workflows and laid the foundation for user interactions across the platform. This experience is highly relevant in cybersecurity environments where clear data visualization is critical.
           </p>
           <p>
             In addition to interface design, I conducted thorough QA testing across the app. I identified bugs, validated functionality, and worked closely with the development team to ensure a smooth, stable experience for both customers and internal users.

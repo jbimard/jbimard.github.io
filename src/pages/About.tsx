@@ -72,14 +72,18 @@ const About=()=>{
                   <a href="/truehomes" className="underline hover:opacity-80">True Homes</a>
                 </li>
                 <li>
-                  Dec 2024 – Now // TA /{' '}
+                  Aug 2026 – Now // Graduate TA /{' '}
                   <a href="/unccharlotte" className="underline hover:opacity-80">University of North Carolina at Charlotte</a>
                 </li>
                 <li>
-                  Sep 2023 – Dec 2024 // Research /{' '}
+                  Dec 2024 – May 2026 // TA /{' '}
                   <a href="/unccharlotte" className="underline hover:opacity-80">University of North Carolina at Charlotte</a>
                 </li>
-                <li>Mar 2024 – Aug 2024 // Linxy</li>
+                <li>
+                  Sep 2024 – Dec 2024 // Research /{' '}
+                  <a href="/unccharlotte" className="underline hover:opacity-80">University of North Carolina at Charlotte</a>
+                </li>
+                <li>May 2024 – Aug 2024 // Linxy</li>
                 <li>Dec 2023 – Jul 2024 // Honeywell / Central Piedmont Community College</li>
               </ul>
             </Row>
@@ -97,7 +101,7 @@ const About=()=>{
 
             <Row title="Education">
               <ul className="space-y-1">
-                <li>2027 // University of North Carolina at Charlotte – Early Entry Master of Science in Cybersecurity</li>
+                <li>2027 // University of North Carolina at Charlotte – Early Entry Master of Science in Cybersecurity (GPA 3.8)</li>
                 <li>2026 // University of North Carolina at Charlotte – B.S. in Computer Science, Cybersecurity Concentration</li>
                 <li>2024 // Central Piedmont Community College – Associate’s in Computer Science</li>
               </ul>

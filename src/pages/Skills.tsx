@@ -31,7 +31,7 @@ const About=()=>{
               <ul className="list-none pl-0 space-y-2">
               <li>Identity & Access Management (Microsoft Entra ID, Microsoft Graph, RBAC, Active Directory)</li>
               <li>Privileged Access Review & Risk Modeling (NIST 800-53, least privilege)</li>
-              <li>SIEM & Threat Detection (Splunk, SentinelOne, Microsoft Defender XDR)</li>
+              <li>SIEM & Threat Detection (Splunk, SentinelOne, Microsoft Defender XDR, KQL)</li>
               <li>Email Security (Mimecast, SPF/DKIM/DMARC)</li>
               <li>Vulnerability Analysis</li>
               <li>Network Protocols (TCP/IP, OSI Model)</li>
@@ -61,6 +61,7 @@ const About=()=>{
             <Row title="Cloud & Infrastructure">
               <ul className="space-y-1">
                 <li>Microsoft Azure, Microsoft Entra ID, Microsoft Graph</li>
+                <li>AWS (EC2, S3, IAM)</li>
                 <li>Terraform (Infrastructure as Code)</li>
                 <li>Microsoft Fabric, Power BI, Azure SQL</li>
                 <li>Supabase / PostgreSQL</li>
@@ -71,7 +72,8 @@ const About=()=>{
 
             <Row title="Tools & Platforms">
               <ul className="space-y-1">
-                <li>Git & Github</li>
+                <li>Git & GitHub, GitHub Actions</li>
+                <li>Docker</li>
                 <li>Claude Code</li>
                 <li>Codex</li>
                 <li>Wireshark</li>
