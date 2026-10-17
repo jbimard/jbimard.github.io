@@ -21,7 +21,7 @@ Work through the steps in order. Update the status column as each step lands, an
 | 3c-ATS | ATS gaps from the 2026-10-16 check: per-qualification Fit & Gap, Certifications section, PDF copies | Done — with B1 (PR #19); graduation-window fit and ATS from posting text in #22–#23; `inventory.not_yet` gap list in #24. First full test (Marvell): ATS 59 → 77 after the base gained AWS, MySQL, Java and GitHub Actions; packet approved 2026-10-16 |
 | 2b | More local companies (new board adapters) | Done — 8 companies on existing boards (#28); iCIMS + Jibe for SAS and First Citizens (#29); SuccessFactors for Duke and Novo Nordisk (#30). Phenom / Avature / Eightfold left for later |
 | 2c | More Charlotte companies | Done — 12 companies on existing adapters (#31); Oracle + Radancy + SuccessFactors entries for Honeywell, Charter, Nucor, Brighthouse (#32); Eightfold adapter for Microsoft, with a PERM-suspension warning (#33) |
-| 4 | Visa timeline card | Done — this PR: `visa_profile` table, "My timeline" card, rules-to-watch list with the OPT fee proposal. Needs `supabase db push`, then enter the program end date |
+| 4 | Visa timeline card | Done — this PR: `visa_profile` table, "My timeline" card, rules-to-watch list with the OPT fee proposal. Migration pushed 2026-10-16 (#34) |
 | 5 | Supervised applying | Not started |
 
 Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 2c → 4 → 5.** Next: **5**.
