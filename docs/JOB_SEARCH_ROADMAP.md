@@ -287,6 +287,7 @@ Settled; don't reopen without a new reason.
     - "Citizenship stated": −20
     - "No sponsorship": −15, and the sponsorship part of the score can go below zero. Getting sponsorship in the first years matters.
   - Internships are kept, with their own slots each run (`maxInternshipsPerRun`).
+  - Internships he can't take because of the May 2027 graduation are held just under the cutoff, like a graduation-window mismatch: ones requiring a return to school afterwards (unless they start before his last semester) and ones starting after he graduates (term from the title or an internship sentence). This replaces the earlier "keep with a note" rule; screening was skipping them anyway (2026-10-17).
   - Rotational and early-talent programs count only when they're tech tracks.
   - Search-based boards (Workday and the other search adapters) also search `new grad`, `early career`, `entry level` and `university`, up to 6 pages per term. Their 40-detail cap per company takes early-career, intern and "Graduate" titles first. "Engineer I" / "Software Engineer 1" in a title is an entry-level signal; "Associate" is not, since banks use it as a mid-level title (2026-10-17).
 - **Scoring:**

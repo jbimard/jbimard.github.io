@@ -106,14 +106,26 @@ test('internships are kept in their own lane', () => {
   assert.equal(result.breakdown.level, 15)
 })
 
-test('internships requiring a return to school are labeled and scored lower', () => {
+test('internships requiring a return to school are held under the cutoff with the reason', () => {
   const result = evaluateKept({
     title: 'Cloud Engineering Intern',
     description: 'Candidates must be returning to school in the fall following the internship.',
-  })
-  if (result.kind !== 'kept') return
+  }, strongSponsor)
   assert.equal(result.breakdown.level, 5)
-  assert.match(result.job.notes, /returning to school/)
+  assert.ok(result.job.match_score < profile.minScore)
+  assert.match(result.job.notes ?? '', /requires returning to school after the internship/)
+  // Cisco's wording, with "in a degree program" in the middle.
+  const cisco = evaluateKept({
+    title: 'Software Engineer I (Intern)',
+    description: 'You are currently enrolled and expected to continue enrollment in a degree program after the internship.',
+  }, strongSponsor)
+  assert.ok(cisco.flags.returnToSchool)
+  assert.ok(cisco.job.match_score < profile.minScore)
+  const following = evaluateKept({ title: 'AI Operations Engineer I (Intern)', description: 'Expected to continue enrollment in degree program following completion of the internship.' }, strongSponsor)
+  assert.ok(following.job.match_score < profile.minScore)
+  // A co-op that ends before his last semester still works.
+  const fall = evaluateKept({ title: 'Security Co-op - Fall 2026', description: 'Students must return to school after the co-op.' }, strongSponsor)
+  assert.ok(fall.job.match_score >= profile.minScore)
 })
 
 test('seniority and irrelevant titles are dropped, not blocked', () => {
@@ -216,13 +228,20 @@ test('graduation windows that exclude May 2027 stay under the cutoff, with a not
   assert.ok(late.job.match_score < profile.minScore)
 })
 
-test('internships that start after May 2027 are kept at full score with a note; a stated window still filters', () => {
+test('internships that start after May 2027 are held under the cutoff; the term can come from the description', () => {
   const summer = evaluateKept({ title: 'Cloud Security Intern - Summer 2027', description: 'Build secure AWS infrastructure.' }, strongSponsor)
-  assert.ok(summer.job.match_score >= profile.minScore)
-  assert.equal(summer.breakdown.level, 15)
-  assert.match(summer.job.notes ?? '', /internship starts after the 2027-05 graduation; check whether it requires current enrollment/)
+  assert.ok(summer.job.match_score < profile.minScore)
+  assert.match(summer.job.notes ?? '', /internship starts after the 2027-05 graduation, so it needs current enrollment/)
+  const yearFirst = evaluateKept({ title: '2027 IT Summer Intern - Systems Engineer', description: 'Build secure AWS infrastructure.' }, strongSponsor)
+  assert.ok(yearFirst.job.match_score < profile.minScore)
+  const described = evaluateKept({ title: 'Cloud Security Intern', description: 'Join our Summer 2027 internship program. Build secure AWS infrastructure.' }, strongSponsor)
+  assert.ok(described.job.match_score < profile.minScore)
+  // A year elsewhere in the posting isn't the internship's term.
+  const other = evaluateKept({ title: 'Cloud Security Intern', description: 'Founded in 2028? No: we plan our Fall 2027 roadmap now.' }, strongSponsor)
+  assert.ok(!(other.job.notes ?? '').includes('internship starts after'))
   const spring = evaluateKept({ title: 'Cloud Security Intern - Spring 2027', description: 'Build secure AWS infrastructure.' }, strongSponsor)
   assert.ok(!(spring.job.notes ?? '').includes('internship starts after'))
+  assert.ok(spring.job.match_score >= profile.minScore)
   // With a window that excludes May 2027 it's filtered, and only the window note shows.
   const stated = evaluateKept({ title: 'Cloud Security Intern - Summer 2027', description: 'Graduating Spring 2028 or Fall 2027.' }, strongSponsor)
   assert.ok(stated.job.match_score < profile.minScore)

@@ -181,6 +181,8 @@ const main = async () => {
     kept: kept.length,
     unique: unique.length,
     aboveMinScore: unique.filter((entry) => entry.job.match_score >= profile.minScore).length,
+    // Internships he can't take because of his graduation date (enrollment after it, or a window that excludes it).
+    heldForGraduation: unique.filter((entry) => /graduation window excludes|returning to school after the internship|internship starts after/.test(entry.job.notes ?? '')).length,
     selected: jobs.length,
     internships: jobs.filter((job) => job.job_type === 'Internship').length,
     citizenshipFlagged: jobs.filter((job) => job.sponsorship_notes?.includes('Citizenship stated')).length,
@@ -214,7 +216,7 @@ const main = async () => {
     const failed = sourceStats.filter((stat) => stat.error)
     const lines = [
       `## Job discovery ${dryRun ? '(dry run)' : ''}`,
-      `Fetched **${counts.fetched}** postings · blocked (clearance) **${counts.blockedClearance}** · selected **${counts.selected}** (≥ ${profile.minScore})`,
+      `Fetched **${counts.fetched}** postings · blocked (clearance) **${counts.blockedClearance}** · held for graduation date **${counts.heldForGraduation}** · selected **${counts.selected}** (≥ ${profile.minScore})`,
       `Internships ${counts.internships} · citizenship-flagged ${counts.citizenshipFlagged} · no-sponsorship-flagged ${counts.noSponsorshipFlagged}`,
       `USCIS sponsor tier: strong ${sponsorTiers.strong} · some ${sponsorTiers.some} · rare ${sponsorTiers.rare} · none on record ${sponsorTiers.none}`,
       intake ? `Intake: inserted **${intake.inserted}**, skipped duplicates ${intake.skipped}, invalid ${intake.invalid}` : '',
