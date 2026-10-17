@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { test } from 'node:test'
-import { LAYOUT, checkPacket, estimateResumeHeight, postingKeywords, wordDiff, type PostingFields } from './check.ts'
+import { LAYOUT, UNDERFULL_LINES, checkPacket, estimateResumeHeight, postingKeywords, wordDiff, type PostingFields } from './check.ts'
 import { numbersIn, resolveResume, type BaseResumes, type Inventory, type Packet } from './packet.ts'
 import { base as fixtureBase, packet as fixturePacket } from './test-fixtures.ts'
 
@@ -18,10 +18,15 @@ const inventory = (): Inventory => ({
 const withInventory = (patch: Partial<Inventory> = {}): BaseResumes => ({ ...fixtureBase(), inventory: { ...inventory(), ...patch } })
 const noJob: PostingFields = { required_skills: null, job_description: null }
 
+// The fixture resume is deliberately short, so these tests leave out the page-fill flag (tested on its own below)
+// and recompute the verdict without it.
 const run = (edit: (p: ReturnType<typeof fixturePacket>) => void = () => {}, base = withInventory(), job = noJob) => {
   const p = fixturePacket()
   edit(p)
-  return checkPacket(p as Packet, base, resolveResume(p as Packet, base), job)
+  const result = checkPacket(p as Packet, base, resolveResume(p as Packet, base), job)
+  const flags = result.flags.filter((flag) => flag.rule !== 'underfull')
+  const status = flags.some((flag) => flag.severity === 'red') ? 'blocked' : flags.length ? 'needs_edits' : 'pass'
+  return { ...result, flags, status } as typeof result
 }
 const rules = (result: ReturnType<typeof run>) => result.flags.map((flag) => `${flag.severity}:${flag.rule}`)
 
@@ -186,6 +191,31 @@ test('one page: a resume the estimate puts past one page is red', () => {
   const over = checkPacket(p2, b2, resolveResume(p2, b2), noJob)
   assert.ok(over.flags.some((flag) => flag.rule === 'over_one_page' && flag.severity === 'red'))
   assert.equal(over.status, 'blocked')
+})
+
+test('page fill: several empty lines are yellow, a full page is not', () => {
+  const base = withInventory()
+  const short = fixturePacket() as Packet
+  const result = checkPacket(short, base, resolveResume(short, base), noJob)
+  const free = Math.floor((LAYOUT.pageHeight - estimateResumeHeight(resolveResume(short, base))) / (LAYOUT.body * LAYOUT.leading))
+  assert.ok(free >= UNDERFULL_LINES)
+  const flag = result.flags.find((f) => f.rule === 'underfull')
+  assert.equal(flag?.severity, 'yellow')
+  assert.match(flag!.message, new RegExp(`About ${free} lines`))
+
+  // Add two-line bullets until fewer than UNDERFULL_LINES lines are left: no flag.
+  const b2 = withInventory()
+  const p2 = fixturePacket() as Packet
+  const job = b2.versions['Cloud Security'].experience[0]
+  const text = 'Provisioned identity infrastructure as Terraform across dev, staging and production environments, keeping privileged resources separate.'
+  for (let i = 2; ; i++) {
+    const left = (LAYOUT.pageHeight - estimateResumeHeight(resolveResume(p2, b2))) / (LAYOUT.body * LAYOUT.leading)
+    if (left < UNDERFULL_LINES) break
+    b2.versions['Cloud Security'].experience.push({ ...job, id: `acme-${i}`, bullets: [{ id: `cloudsec:acme-${i}:1`, text }] })
+    p2.experience.push({ id: `acme-${i}`, bullets: [{ from: `cloudsec:acme-${i}:1`, text }] })
+  }
+  const full = checkPacket(p2, b2, resolveResume(p2, b2), noJob)
+  assert.ok(!full.flags.some((f) => f.rule === 'underfull' || f.rule === 'over_one_page'))
 })
 
 test('resume style: no first person, a strong first bullet, a tool named in at most two lines, no repeated project', () => {
