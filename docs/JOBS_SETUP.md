@@ -358,9 +358,10 @@ Contact details, titles, employers, dates and education are copied from the base
    - Then validate and upload it:
    ```bash
    npm run prep:base -- check
-   JOB_PREP_URL=https://PROJECT_REF.supabase.co/functions/v1/job-prep JOB_PREP_TOKEN=… npm run prep:base -- upload
+   npm run prep:base:upload   # token from Doppler (JOB_PREP_TOKEN); URL from JOB_INTAKE_URL
    ```
    Re-upload whenever a base resume changes. The PDFs and this file are separate, so update both.
+   `prep:base:upload` reads `JOB_PREP_TOKEN` from Doppler (save it once with `doppler secrets set JOB_PREP_TOKEN` in your own terminal) and builds the URL from `JOB_INTAKE_URL`, so the token is never typed or shown.
 4. **Create a cloud environment just for this routine** (for example "Job preparation"). It needs its own because a network secret applies to every request to the Supabase host, and the screening environment's secret holds a different token. In **Edit cloud environment**:
    - **Environment variables:** `JOB_PREP_URL=https://PROJECT_REF.supabase.co/functions/v1/job-prep`
    - **Network secrets → Add secret:** type **Bearer**, allowed website `PROJECT_REF.supabase.co`, header `Authorization`, prefix `Bearer`, value = the token from step 2
@@ -398,7 +399,7 @@ A draft was built from your resumes and internship record: tools from your skill
 
 ```bash
 npm run prep:base -- check
-JOB_PREP_URL=https://PROJECT_REF.supabase.co/functions/v1/job-prep JOB_PREP_TOKEN=… npm run prep:base -- upload
+npm run prep:base:upload   # token from Doppler (JOB_PREP_TOKEN); URL from JOB_INTAKE_URL
 ```
 
 Until the inventory is uploaded, every packet carries one yellow "no inventory" flag.
@@ -409,7 +410,7 @@ Until the inventory is uploaded, every packet carries one yellow "no inventory" 
 - **Certifications:** every `earned` certification in your inventory is added to a **Certifications** section on each resume, after Skills. The inventory now has the Mastercard Cybersecurity Job Simulation (Forage, Jan 2025). **Re-upload the base file** for this to take effect:
   ```bash
   npm run prep:base -- check
-  JOB_PREP_URL=https://PROJECT_REF.supabase.co/functions/v1/job-prep JOB_PREP_TOKEN=… npm run prep:base -- upload
+  npm run prep:base:upload   # token from Doppler (JOB_PREP_TOKEN); URL from JOB_INTAKE_URL
   ```
 - **Open to relocation:** the base file's `contact.relocation` ("Open to relocation") is shown right after your location on every resume and cover letter. Remove it from the file to hide it. The same re-upload applies.
 - **PDF copies:** each packet also gets a text-based PDF of the resume and the cover letter (**Resume PDF**, **Cover letter PDF**). Same content and order as the .docx, in standard fonts, with no images. Use them on forms that take PDF only.
