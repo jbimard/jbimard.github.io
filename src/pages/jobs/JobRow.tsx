@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { buildChatGptPrompt, buildClaudePrompt, copyToClipboard } from './prompts'
+import { Fragment, useState } from 'react'
 import { CHECK_LABELS, PREP_ROUTINE_URL, PRIORITY_OPTIONS, PIPELINE_STATUS_OPTIONS, type Job, type JobPriority, type JobStatus, type JobUpdate, type ApplicationPacket } from './types'
 
 type JobRowProps = {
@@ -35,7 +34,7 @@ const packetButtonClass = (packet: ApplicationPacket) => {
 }
 
 const JobRow = ({ job, onEdit, onArchive, onUpdate, packet, onOpenPacket }: JobRowProps) => {
-  const [copied, setCopied] = useState<string | null>(null)
+  const [showDescription, setShowDescription] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingPriority, setEditingPriority] = useState(false)
   const [editingStatus, setEditingStatus] = useState(false)
@@ -57,13 +56,8 @@ const JobRow = ({ job, onEdit, onArchive, onUpdate, packet, onOpenPacket }: JobR
     await updateInline(patch)
   }
 
-  const copyPrompt = async (label: 'Claude' | 'ChatGPT') => {
-    await copyToClipboard(label === 'Claude' ? buildClaudePrompt(job) : buildChatGptPrompt(job))
-    setCopied(label)
-    window.setTimeout(() => setCopied(null), 1600)
-  }
-
   return (
+    <Fragment>
     <tr className={job.archived ? 'bg-slate-50 text-slate-500' : 'bg-white'}>
       <td className="border-b border-slate-200 px-3 py-2 font-medium text-slate-950">{job.company}</td>
       <td className="border-b border-slate-200 px-3 py-2">{job.role_title}</td>
@@ -111,9 +105,7 @@ const JobRow = ({ job, onEdit, onArchive, onUpdate, packet, onOpenPacket }: JobR
         )}
       </td>
       <td className="border-b border-slate-200 px-3 py-2 text-right">{job.match_score ?? '-'}</td>
-      <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">{job.date_found || '-'}</td>
       <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">{job.date_applied || '-'}</td>
-      <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">{job.follow_up_date || '-'}</td>
       <td className="whitespace-nowrap border-b border-slate-200 px-3 py-2">
         <div className="flex flex-nowrap items-center gap-1">
           {packet && (
@@ -137,15 +129,25 @@ const JobRow = ({ job, onEdit, onArchive, onUpdate, packet, onOpenPacket }: JobR
           {job.job_link && (
             <a href={job.job_link} target="_blank" rel="noreferrer" className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">Open</a>
           )}
-          <button type="button" onClick={() => void copyPrompt('Claude')} className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">Claude</button>
-          <button type="button" onClick={() => void copyPrompt('ChatGPT')} className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">ChatGPT</button>
+          <button type="button" onClick={() => setShowDescription((open) => !open)} className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">
+            {showDescription ? 'Hide description' : 'Description'}
+          </button>
           <button type="button" onClick={() => onArchive(job)} className="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50">
             {job.archived ? 'Unarchive' : 'Archive'}
           </button>
-          {copied && <span className="text-xs text-emerald-700">Copied {copied}</span>}
         </div>
       </td>
     </tr>
+    {showDescription && (
+      <tr className="bg-slate-50">
+        <td colSpan={8} className="border-b border-slate-200 px-3 py-3">
+          {job.job_description
+            ? <p className="max-h-80 overflow-y-auto whitespace-pre-wrap text-sm text-slate-700">{job.job_description}</p>
+            : <p className="text-sm text-slate-500">No description saved for this role. Use Edit to add one.</p>}
+        </td>
+      </tr>
+    )}
+    </Fragment>
   )
 }
 

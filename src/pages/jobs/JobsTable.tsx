@@ -21,15 +21,13 @@ const columns: { key: SortKey; label: string; align?: string }[] = [
   { key: 'priority', label: 'Priority' },
   { key: 'status', label: 'Status' },
   { key: 'match_score', label: 'Match', align: 'text-right' },
-  { key: 'date_found', label: 'Found' },
   { key: 'date_applied', label: 'Applied' },
-  { key: 'follow_up_date', label: 'Follow-up' },
 ]
 
 const JobsTable = ({ jobs, sort, onSort, onEdit, onArchive, onUpdate, packets, onOpenPacket }: JobsTableProps) => (
   <section className="overflow-hidden rounded-md border border-slate-200 bg-white">
     <div className="overflow-x-auto">
-      <table className="min-w-[1180px] w-full border-collapse text-left text-sm">
+      <table className="min-w-[1000px] w-full border-collapse text-left text-sm">
         <thead className="bg-slate-100 text-xs uppercase tracking-normal text-slate-600">
           <tr>
             {columns.slice(0, 2).map((column) => (
@@ -64,7 +62,7 @@ const JobsTable = ({ jobs, sort, onSort, onEdit, onArchive, onUpdate, packets, o
           ))}
           {jobs.length === 0 && (
             <tr>
-              <td colSpan={10} className="px-3 py-10 text-center text-sm text-slate-500">No jobs match the current view.</td>
+              <td colSpan={8} className="px-3 py-10 text-center text-sm text-slate-500">No jobs match the current view.</td>
             </tr>
           )}
         </tbody>
