@@ -96,7 +96,7 @@ test('the tier uses the latest complete fiscal year, not the partial one', () =>
 
 test('labels show the USCIS count, other years, and misses', () => {
   assert.equal(lookup('Wells Fargo').label, 'USCIS: 212 new-employment H-1B approvals in FY2025 (FY2026 to date: 95; FY2024: 150).')
-  assert.equal(lookup('Acme').label, 'USCIS: no new-employment H-1B approvals on record for "Acme" (FY2024–FY2025; name match may miss).')
+  assert.equal(lookup('Acme').label, 'USCIS: no new-employment H-1B approvals on record for "Acme" (FY2024–FY2025; name match may miss). Small employers often have none, and OPT/STEM OPT doesn\'t need it: check E-Verify.')
 })
 
 test('the label and tier reach the scored job', () => {

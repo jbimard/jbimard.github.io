@@ -42,7 +42,7 @@ export interface Screening {
         employer: string | null
         fiscalYear: number | null
         count: number | null
-        tier: 'strong' | 'some' | 'rare' | 'none'
+        tier: 'strong' | 'some' | 'rare' | 'none' | 'unknown'
         source: 'discovery' | 'corrected' | 'none'
       }
     }

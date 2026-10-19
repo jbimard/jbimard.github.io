@@ -1,6 +1,6 @@
 export type Ats = 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'icims' | 'jibe' | 'successfactors' | 'oracle' | 'radancy' | 'eightfold'
-// From USCIS New Employment approvals in the latest complete fiscal year (see rules/sponsors.ts).
-export type SponsorTier = 'strong' | 'some' | 'rare' | 'none'
+// From USCIS New Employment approvals in the latest complete fiscal year; 'unknown' means no USCIS record matched at all (see rules/sponsors.ts).
+export type SponsorTier = 'strong' | 'some' | 'rare' | 'none' | 'unknown'
 
 export type Company = {
   name: string

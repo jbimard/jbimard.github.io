@@ -25,6 +25,7 @@ const initialFilters: JobFilters = {
   priority: '',
   job_type: '',
   work_mode: '',
+  sponsor: '',
   archive: 'active',
 }
 
@@ -94,6 +95,8 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
         if (filters.priority && job.priority !== filters.priority) return false
         if (filters.job_type && job.job_type !== filters.job_type) return false
         if (filters.work_mode && job.work_mode !== filters.work_mode) return false
+        if (filters.sponsor === 'unknown' && !job.sponsorship_notes?.includes('no new-employment H-1B approvals on record')) return false
+        if (filters.sponsor === 'everify' && !job.e_verify_notes) return false
         if (!search) return true
         return searchableFields.some((field) => normalized(job[field]).includes(search))
       })
