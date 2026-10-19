@@ -1,5 +1,7 @@
 import { JOB_TYPE_OPTIONS, PRIORITY_OPTIONS, PIPELINE_STATUS_OPTIONS, WORK_MODE_OPTIONS, type JobPriority, type JobStatus, type JobType, type WorkMode } from './types'
 
+// 'unknown': no USCIS record for the company; 'everify': the posting mentions E-Verify (needed for STEM OPT).
+export type SponsorFilter = '' | 'unknown' | 'everify'
 export type ArchiveFilter = 'active' | 'archived' | 'all'
 
 export type JobFilters = {
@@ -8,6 +10,7 @@ export type JobFilters = {
   priority: JobPriority | ''
   job_type: JobType | ''
   work_mode: WorkMode | ''
+  sponsor: SponsorFilter
   archive: ArchiveFilter
 }
 
@@ -28,7 +31,7 @@ const Toolbar = ({ filters, onFiltersChange, onAddJob, onBulkImport, queuedCount
 
   return (
     <section className="flex flex-col gap-3 rounded-md border border-slate-200 bg-white p-3 xl:flex-row xl:items-center xl:justify-between">
-      <div className="grid flex-1 gap-2 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid flex-1 gap-2 md:grid-cols-2 xl:grid-cols-6">
         <input
           type="search"
           placeholder="Search jobs"
@@ -51,6 +54,11 @@ const Toolbar = ({ filters, onFiltersChange, onAddJob, onBulkImport, queuedCount
         <select value={filters.work_mode} onChange={(event) => setFilter('work_mode', event.target.value as JobFilters['work_mode'])} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
           <option value="">All work modes</option>
           {WORK_MODE_OPTIONS.map((workMode) => <option key={workMode} value={workMode}>{workMode}</option>)}
+        </select>
+        <select value={filters.sponsor} onChange={(event) => setFilter('sponsor', event.target.value as SponsorFilter)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+          <option value="">All sponsor data</option>
+          <option value="unknown">No USCIS sponsor data</option>
+          <option value="everify">Mentions E-Verify</option>
         </select>
       </div>
 

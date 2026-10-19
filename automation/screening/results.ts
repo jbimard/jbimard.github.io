@@ -7,7 +7,7 @@ export const RESUME_VERSIONS = ['Cloud', 'Security', 'Cloud Security'] as const
 export const SPONSORSHIP_VERDICTS = ['ok', 'no_sponsorship', 'unclear'] as const
 export const CITIZENSHIP_VERDICTS = ['none', 'required', 'unclear'] as const
 export const CLEARANCE_VERDICTS = ['none', 'conditional', 'required'] as const
-export const USCIS_TIERS = ['strong', 'some', 'rare', 'none'] as const
+export const USCIS_TIERS = ['strong', 'some', 'rare', 'none', 'unknown'] as const
 // discovery: the USCIS line discovery wrote is right. corrected: Claude found the right employer itself.
 export const USCIS_SOURCES = ['discovery', 'corrected', 'none'] as const
 

@@ -171,7 +171,7 @@ const main = async () => {
   ].sort((a, b) => b.job.match_score - a.job.match_score)
   const sent = selected.slice(0, limit ?? selected.length)
   const jobs = sent.map((entry) => entry.job)
-  const sponsorTiers: Record<SponsorTier, number> = { strong: 0, some: 0, rare: 0, none: 0 }
+  const sponsorTiers: Record<SponsorTier, number> = { strong: 0, some: 0, rare: 0, none: 0, unknown: 0 }
   for (const entry of sent) sponsorTiers[entry.sponsorTier] += 1
 
   const counts = {
@@ -218,7 +218,7 @@ const main = async () => {
       `## Job discovery ${dryRun ? '(dry run)' : ''}`,
       `Fetched **${counts.fetched}** postings · blocked (clearance) **${counts.blockedClearance}** · held for graduation date **${counts.heldForGraduation}** · selected **${counts.selected}** (≥ ${profile.minScore})`,
       `Internships ${counts.internships} · citizenship-flagged ${counts.citizenshipFlagged} · no-sponsorship-flagged ${counts.noSponsorshipFlagged}`,
-      `USCIS sponsor tier: strong ${sponsorTiers.strong} · some ${sponsorTiers.some} · rare ${sponsorTiers.rare} · none on record ${sponsorTiers.none}`,
+      `USCIS sponsor tier: strong ${sponsorTiers.strong} · some ${sponsorTiers.some} · rare ${sponsorTiers.rare} · no zero-year record ${sponsorTiers.none} · no USCIS data ${sponsorTiers.unknown}`,
       intake ? `Intake: inserted **${intake.inserted}**, skipped duplicates ${intake.skipped}, invalid ${intake.invalid}` : '',
       failed.length > 0 ? `\n**Failed sources:** ${failed.map((stat) => stat.source).join(', ')}` : '',
       'New rows are queued; the best batch moves to /jobs (status: Found) at 11:00 UTC, and "Next batch" brings more.',

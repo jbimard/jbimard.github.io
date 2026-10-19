@@ -162,7 +162,7 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: 
     pay: weighted(payPoints(annual, flags)),
     fit,
   }
-  const total = breakdown.role + breakdown.sponsor + breakdown.level + breakdown.location + breakdown.pay
+  const total = Math.min(100, breakdown.role + breakdown.sponsor + breakdown.level + breakdown.location + breakdown.pay)
   // He can't truthfully apply to these, so they stay just under the cutoff however good the rest is.
   const score = blocker ? Math.min(total, profile.minScore - 1) : total
 

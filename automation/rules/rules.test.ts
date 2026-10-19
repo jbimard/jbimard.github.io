@@ -23,7 +23,7 @@ const posting = (overrides: Partial<RawPosting> = {}): RawPosting => ({
   ...overrides,
 })
 
-// A company with 50+ USCIS New Employment approvals; NO_SPONSOR_DATA is the "none on record" tier.
+// A company with 50+ USCIS New Employment approvals; NO_SPONSOR_DATA is the "unknown" tier.
 const strongSponsor: SponsorRecord = { ...NO_SPONSOR_DATA, tier: 'strong', fiscalYear: 2025, count: 212, matchedNames: ['ACME INC'] }
 const evaluate = (overrides: Partial<RawPosting>, sponsor: SponsorRecord = NO_SPONSOR_DATA) => evaluatePosting(posting(overrides), profile, sponsor)
 
@@ -90,7 +90,7 @@ test('no-sponsorship postings are kept with a label', () => {
   assert.match(result.job.sponsorship_notes ?? '', /No sponsorship/)
   assert.equal(result.breakdown.sponsor, -5) // strong 25 − 30
   const unknown = evaluateKept({ description: 'We are unable to sponsor visas for this role.' })
-  if (unknown.kind === 'kept') assert.equal(unknown.breakdown.sponsor, -25) // none on record 5 − 30
+  if (unknown.kind === 'kept') assert.equal(unknown.breakdown.sponsor, -18) // unknown tier 12 − 30
 })
 
 test('Simplify sponsorship labels feed the same flags', () => {
@@ -143,13 +143,13 @@ test('seniority and irrelevant titles are dropped, not blocked', () => {
 })
 
 test('location scoring prefers Charlotte/Triangle, then Boston/NYC, then remote US', () => {
-  assert.equal(scoreLocation('Charlotte, NC', profile).points, 15)
+  assert.equal(scoreLocation('Charlotte, NC', profile).points, 18)
   // Suburbs count as their metro; bare "Monroe" or "Wake Forest" could be another state (or Winston-Salem's university).
   for (const place of ['Monroe, NC', 'Waxhaw, NC', 'Concord, North Carolina', 'Wake Forest, NC', 'Apex, North Carolina', 'Huntersville, NC', 'Rock Hill, SC', 'Fuquay-Varina, NC', 'Holly Springs, North Carolina']) {
-    assert.equal(scoreLocation(place, profile).points, 15, place)
+    assert.equal(scoreLocation(place, profile).points, 18, place)
   }
   assert.equal(scoreLocation('Monroe, LA', profile).points, 3)
-  assert.equal(scoreLocation('Austin, TX; Cary, NC', profile).points, 15)
+  assert.equal(scoreLocation('Austin, TX; Cary, NC', profile).points, 18)
   assert.equal(scoreLocation('New York, NY', profile).points, 11)
   assert.equal(scoreLocation('Remote (US)', profile).points, 9)
   assert.equal(scoreLocation('Remote', profile).points, 9)
@@ -193,7 +193,7 @@ test('score adds up to the breakdown and maps to priority', () => {
   const result = evaluateKept({ salaryText: '$130,000 - $150,000' }, strongSponsor)
   if (result.kind !== 'kept') return
   const { role, sponsor, level, location, pay } = result.breakdown
-  assert.deepEqual({ role, sponsor, level, location, pay }, { role: 30, sponsor: 25, level: 15, location: 15, pay: 15 })
+  assert.deepEqual({ role, sponsor, level, location, pay }, { role: 30, sponsor: 25, level: 15, location: 18, pay: 15 })
   assert.equal(result.breakdown.fit, 1)
   assert.equal(result.job.match_score, 100)
   assert.equal(result.job.priority, 'High')

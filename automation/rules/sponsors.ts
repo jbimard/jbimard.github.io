@@ -133,7 +133,7 @@ const sponsorLabel = (record: LabelInput, company: string, data: SponsorData) =>
   const complete = data.fiscalYears.filter((year) => year !== data.partialYear)
   if (!record.matched) {
     const range = complete.length > 1 ? `FY${Math.min(...complete)}–FY${Math.max(...complete)}` : `FY${record.fiscalYear}`
-    return `USCIS: no new-employment H-1B approvals on record for "${company}" (${range}; name match may miss).`
+    return `USCIS: no new-employment H-1B approvals on record for "${company}" (${range}; name match may miss). Small employers often have none, and OPT/STEM OPT doesn't need it: check E-Verify.`
   }
   const others = [...data.fiscalYears]
     .filter((year) => year !== record.fiscalYear)
@@ -160,7 +160,8 @@ export const lookupSponsor = (
   const count = fiscalYear === null ? 0 : (byYear[fiscalYear] ?? 0)
   const matchedNames = keys.map((key) => index.data.employers[key].name)
   return {
-    tier: tierOf(count, thresholds),
+    // No USCIS name matched at all (a small or new employer, or a name the match missed): not the same as 0 approvals.
+    tier: matchedNames.length === 0 ? 'unknown' : tierOf(count, thresholds),
     fiscalYear,
     count,
     byYear,
@@ -169,7 +170,7 @@ export const lookupSponsor = (
   }
 }
 
-export const NO_SPONSOR_DATA: SponsorRecord = { tier: 'none', fiscalYear: null, count: 0, byYear: {}, matchedNames: [], label: null }
+export const NO_SPONSOR_DATA: SponsorRecord = { tier: 'unknown', fiscalYear: null, count: 0, byYear: {}, matchedNames: [], label: null }
 
 // --- Building the trimmed file from the hub's export ---
 
