@@ -209,6 +209,16 @@ The workflow `.github/workflows/discover-jobs.yml` runs daily at 10:00 UTC. To r
 
 **Run lookup button.** The dashboard's **Run lookup** button calls the `discover-run` function, which dispatches this workflow (refusing if a run is already in progress). One-time setup: create a fine-grained GitHub token limited to this repo with **Actions: Read and write**, then `supabase secrets set GITHUB_DISPATCH_TOKEN=…` and `supabase functions deploy discover-run`. New jobs land in the queue after the run finishes (a few minutes); use **Next batch** to see them.
 
+**Adding another user.** Discovery runs once per search profile. Yours stays in `automation/config/profile.json` (jobs go to `JOB_INTAKE_USER_ID`); every other user's profile is a row in `user_profiles`, so their preferences never touch the public repo. Each profile sets its own titles, metros, graduation date, scoring weights and which boards to search (`companyTags` matches `tags` in `companies.json`; untagged boards are `tech`). Setting `"needsSponsorship": false` turns off the USCIS lookup, sponsor and pay points, and the no-sponsorship/citizenship penalties, and makes clearance a note instead of a block. One-time setup per person:
+
+1. Apply the migration and deploy: `supabase db push`, `supabase functions deploy job-intake discovery-profiles`.
+2. Have them sign up on /jobs (or create the user in Supabase → Authentication → Users).
+3. Write their profile as JSON in `automation/private/<name>.profile.json` (gitignored; copy the shape of `config/profile.json`, see the optional fields in `automation/types.ts`).
+4. Preview it without sending anything: `npm run discover -- --profile-file=automation/private/<name>.profile.json` (always a dry run).
+5. Save it: `SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… npm run profile:seed -- --email=them@example.com --name="Name" --file=automation/private/<name>.profile.json`. Run this in your own terminal; the service-role key never goes in the repo, Actions secrets, or chat. Re-running updates the profile; add `--disable` to pause it.
+
+The daily workflow needs no new secrets: it reads profiles through `discovery-profiles` with the same `JOB_INTAKE_TOKEN`. In Actions logs the extra users appear only as "profile 1, 2…". Link checking and Claude screening/prep still run for your account only.
+
 **Running it locally:**
 
 ```bash

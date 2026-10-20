@@ -7,8 +7,8 @@
   { "name": "Fidelity Investments", "ats": "workday", "board": "fmr/wd1/FidelityCareers" },
   { "name": "Red Hat", "ats": "workday", "board": "redhat/wd5/jobs" },
   { "name": "Cisco", "ats": "workday", "board": "cisco/wd5/Cisco_Careers" },
-  { "name": "IQVIA", "ats": "workday", "board": "iqvia/wd1/IQVIA" },
-  { "name": "Labcorp", "ats": "workday", "board": "labcorp/wd1/External", "h1bNames": ["Laboratory Corporation of America", "Labcorp"] },
+  { "name": "IQVIA", "ats": "workday", "board": "iqvia/wd1/IQVIA", "tags": ["tech", "biotech"] },
+  { "name": "Labcorp", "ats": "workday", "board": "labcorp/wd1/External", "h1bNames": ["Laboratory Corporation of America", "Labcorp"], "tags": ["tech", "biotech"] },
   { "name": "Vanguard", "ats": "workday", "board": "vanguard/wd5/vanguard_external" },
   { "name": "State Street", "ats": "workday", "board": "statestreet/wd1/Global", "h1bNames": ["State Street Bank and Trust Company"] },
   { "name": "Citi", "ats": "workday", "board": "citi/wd5/2", "h1bNames": ["Citibank", "Citigroup", "Citigroup Global Markets", "Citigroup Technology"] },
@@ -97,5 +97,15 @@
   { "name": "CrowdStrike", "ats": "workday", "board": "crowdstrike/wd5/crowdstrikecareers" },
   { "name": "Zscaler", "ats": "greenhouse", "board": "zscaler" },
   { "name": "SentinelOne", "ats": "greenhouse", "board": "sentinellabs" },
-  { "name": "Wiz", "ats": "greenhouse", "board": "wizinc" }
+  { "name": "Wiz", "ats": "greenhouse", "board": "wizinc" },
+  { "name": "Amgen", "ats": "workday", "board": "amgen/wd1/Careers", "tags": ["biotech"] },
+  { "name": "GSK", "ats": "workday", "board": "gsk/wd5/GSKCareers", "tags": ["biotech"] },
+  { "name": "Pfizer", "ats": "workday", "board": "pfizer/wd1/PfizerCareers", "tags": ["biotech"] },
+  { "name": "Merck", "ats": "workday", "board": "msd/wd5/SearchJobs", "tags": ["biotech"] },
+  { "name": "Novartis", "ats": "workday", "board": "novartis/wd3/Novartis_Careers", "tags": ["biotech"] },
+  { "name": "Thermo Fisher Scientific", "ats": "workday", "board": "thermofisher/wd5/ThermoFisherCareers", "tags": ["biotech"] },
+  { "name": "Danaher", "ats": "workday", "board": "danaher/wd1/DanaherJobs", "tags": ["biotech"] },
+  { "name": "Lonza", "ats": "workday", "board": "lonza/wd3/Lonza_Careers", "tags": ["biotech"] },
+  { "name": "Medtronic", "ats": "workday", "board": "medtronic/wd1/MedtronicCareers", "tags": ["biotech"] },
+  { "name": "FUJIFILM Biotechnologies", "ats": "icims", "board": "uscareers-fujifilm", "tags": ["biotech"] }
 ]

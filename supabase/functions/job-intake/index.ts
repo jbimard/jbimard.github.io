@@ -33,6 +33,7 @@ const emptyResult = () => ({
 })
 
 const EXISTING_PAGE_SIZE = 1000
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const normalizeUrl = (value: string | null) => value?.trim() ?? ''
 
@@ -89,15 +90,33 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const userId = Deno.env.get('JOB_INTAKE_USER_ID')
-    if (!userId) {
-      return jsonResponse({ error: 'JOB_INTAKE_USER_ID is not configured.' }, 500)
-    }
-
+    const defaultUserId = Deno.env.get('JOB_INTAKE_USER_ID')
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
+
+    // Jobs go to JOB_INTAKE_USER_ID unless the body names another user, who must have an enabled discovery profile
+    // (user_profiles). The bearer token already grants write access to every account, so this only prevents typos.
+    const requestedUserId = !Array.isArray(parsed) ? (parsed as { user_id?: unknown }).user_id : undefined
+    let userId = defaultUserId
+    if (requestedUserId !== undefined && requestedUserId !== defaultUserId) {
+      if (typeof requestedUserId !== 'string' || !UUID.test(requestedUserId)) {
+        return jsonResponse({ error: 'user_id must be a UUID.' }, 400)
+      }
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .eq('user_id', requestedUserId)
+        .eq('enabled', true)
+        .maybeSingle()
+      if (profileError) throw profileError
+      if (!profile) return jsonResponse({ error: 'No enabled discovery profile for that user_id.' }, 403)
+      userId = requestedUserId
+    }
+    if (!userId) {
+      return jsonResponse({ error: 'JOB_INTAKE_USER_ID is not configured.' }, 500)
+    }
 
     // Paged: PostgREST returns at most max_rows (1000) per request, and the queue keeps every job ever found.
     const existingJobs: Array<{ job_link: string | null; company: string | null; role_title: string | null }> = []

@@ -119,7 +119,7 @@ export const scoreLocation = (location: string, profile: Profile): LocationResul
     let candidate: LocationResult | null = null
     if (metro) candidate = { ...base, points: metro.points, metro: metro.label, remote: isRemote }
     else if (remoteUs) candidate = { ...base, points: profile.remoteUsPoints, metro: null, remote: true }
-    else if (isUs) candidate = { ...base, points: profile.otherUsPoints, metro: null, remote: false }
+    else if (isUs && !profile.metroOnly) candidate = { ...base, points: profile.otherUsPoints, metro: null, remote: false }
 
     if (candidate && (best.points === null || (candidate.points ?? 0) > best.points)) best = candidate
   }

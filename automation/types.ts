@@ -16,6 +16,8 @@ export type Company = {
   sponsorNote?: string
   // workday: search filters, for global boards whose US jobs get crowded out (Accenture: locationCountry = US).
   workdayFacets?: Record<string, string[]>
+  // Which profiles search this board (Profile.companyTags). Untagged boards are 'tech', the original list.
+  tags?: string[]
 }
 
 export type MetroConfig = { label: string; points: number; match: string[] }
@@ -46,6 +48,30 @@ export type Profile = {
   // Also used by the other keyword-search boards: iCIMS, Jibe, SuccessFactors, Oracle, Radancy and Eightfold.
   workdaySearchTerms: string[]
   workdayMaxPagesPerTerm: number
+
+  // ---- Optional per-user settings. Omitted = the original behaviour (a tech new grad who needs sponsorship). ----
+  // false = no sponsorship needed: sponsor/pay points and the USCIS lookup are skipped, citizenship and
+  // no-sponsorship wording stops mattering, and clearance roles are noted rather than blocked.
+  needsSponsorship?: boolean
+  // Graduation classes that count as "my year" (title/description wording). Default: the graduation year.
+  targetYears?: number[]
+  // Points for a group A/B/C title (and for an off-target group C title).
+  rolePoints?: { A: number; B: number; C: number; offTarget: number }
+  // Points for a clear entry-level signal; weaker signals scale from it (default 15).
+  levelPoints?: number
+  // Multiplies pay points; 0 turns pay off (default 1).
+  payWeight?: number
+  // Points per matching entry in `skills`, up to max (default: skills aren't scored).
+  skillPoints?: { perMatch: number; max: number }
+  // Employers worth a bonus, matched on the company name as a whole phrase.
+  employerWatchlist?: string[]
+  employerPoints?: number
+  // Locations outside the listed metros (and not remote) are dropped instead of scoring otherUsPoints.
+  metroOnly?: boolean
+  // Boards to search: companies.json entries sharing a tag. Default ['tech'].
+  companyTags?: string[]
+  // Simplify's lists are tech-focused; false skips them.
+  useSimplify?: boolean
 }
 
 // Simplify's own sponsorship label, passed through when the posting came from their list.
