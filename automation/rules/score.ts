@@ -5,8 +5,8 @@ import { findSkills, matchesAny, parseAnnualSalary, scoreLocation } from './text
 
 export type TitleGroup = 'A' | 'B' | 'C'
 
-const ROLE_POINTS: Record<TitleGroup, number> = { A: 30, B: 22, C: 12 }
-const OFF_TARGET_ROLE_POINTS = 6
+const DEFAULT_ROLE_POINTS = { A: 30, B: 22, C: 12, offTarget: 6 }
+const DEFAULT_LEVEL_POINTS = 15
 const DESCRIPTION_LIMIT = 4000
 const QUOTE_LIMIT = 220
 
@@ -27,7 +27,10 @@ const isOffTarget = (title: string, group: TitleGroup, profile: Profile) => (
   group === 'C' && matchesAny(title.toLowerCase().replace(/[–—_]/g, ' '), profile.offTargetTitle)
 )
 
-export type Breakdown = { role: number; sponsor: number; level: number; location: number; pay: number; fit: number }
+export type Breakdown = { role: number; sponsor: number; level: number; location: number; pay: number; skills: number; employer: number; fit: number }
+
+const needsSponsorship = (profile: Profile) => profile.needsSponsorship !== false
+const targetYears = (profile: Profile) => profile.targetYears ?? [Number(profile.graduation.slice(0, 4))]
 
 export type Evaluation =
   | { kind: 'irrelevant'; reason: string }
@@ -38,6 +41,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 const quote = (sentence: string) => `"${sentence.length > QUOTE_LIMIT ? `${sentence.slice(0, QUOTE_LIMIT)}…` : sentence}"`
 
 const sponsorPoints = (sponsor: SponsorRecord, flags: Flags, profile: Profile) => {
+  if (!needsSponsorship(profile)) return 0
   let points = profile.sponsorPoints[sponsor.tier]
   if (flags.sponsorshipOffered || flags.eVerify) points += 5
   // No sponsorship means no H-1B path, and his truthful "now or in the future" answer usually fails the
@@ -48,7 +52,9 @@ const sponsorPoints = (sponsor: SponsorRecord, flags: Flags, profile: Profile) =
   return clamp(points, -30, 25)
 }
 
-const entryLevel = (flags: Flags) => flags.internship || flags.targetYear === 2027 || flags.newGradSignal
+const targetsMyYear = (flags: Flags, profile: Profile) => flags.targetYear !== null && targetYears(profile).includes(flags.targetYear)
+
+const entryLevel = (flags: Flags, profile: Profile) => flags.internship || targetsMyYear(flags, profile) || flags.newGradSignal
 
 const graduationMonth = (profile: Profile) => {
   const [year, month] = profile.graduation.split('-').map(Number)
@@ -82,13 +88,15 @@ const cannotApply = (flags: Flags, profile: Profile) => {
   return null
 }
 
-const levelPoints = (flags: Flags, mismatch: string | null) => {
+const levelPoints = (flags: Flags, mismatch: string | null, profile: Profile) => {
   if (mismatch) return 0
-  if (flags.returnToSchool) return 5
-  if (flags.targetYear !== null && flags.targetYear !== 2027) return 5
-  if (entryLevel(flags)) return 15
+  const full = profile.levelPoints ?? DEFAULT_LEVEL_POINTS
+  const scaled = (points: number) => Math.round((full * points) / DEFAULT_LEVEL_POINTS)
+  if (flags.returnToSchool) return scaled(5)
+  if (flags.targetYear !== null && !targetsMyYear(flags, profile)) return scaled(5)
+  if (entryLevel(flags, profile)) return full
   // No entry-level signal at all usually means an experienced hire.
-  return 3
+  return scaled(3)
 }
 
 const UNKNOWN_PAY_POINTS = 7
@@ -101,26 +109,32 @@ const payBand = (annual: number) => {
   return 5
 }
 
-const payPoints = (annual: number | null, flags: Flags) => {
+const payPoints = (annual: number | null, flags: Flags, profile: Profile) => {
   if (annual === null) return UNKNOWN_PAY_POINTS
   // High pay only helps (H-1B wage weighting) when the role is one Joseph can get;
   // on roles with no entry-level signal, a big number mostly means "senior".
-  if (!entryLevel(flags)) return Math.min(UNKNOWN_PAY_POINTS, payBand(annual))
+  if (!entryLevel(flags, profile)) return Math.min(UNKNOWN_PAY_POINTS, payBand(annual))
   return payBand(annual)
 }
 
-const jobTypeOf = (flags: Flags): IntakeJob['job_type'] => {
+const jobTypeOf = (flags: Flags, profile: Profile): IntakeJob['job_type'] => {
   if (flags.internship) return 'Internship'
   if (flags.rotational) return 'Rotational Program'
-  if (entryLevel(flags)) return 'New Grad'
+  if (entryLevel(flags, profile)) return 'New Grad'
   // No level signal either way — Claude screening decides later.
   return 'Other'
 }
 
 const priorityOf = (score: number): IntakeJob['priority'] => (score >= 75 ? 'High' : score >= 55 ? 'Medium' : 'Low')
 
-const sponsorshipNotes = (sponsor: SponsorRecord, flags: Flags) => {
+const sponsorshipNotes = (sponsor: SponsorRecord, flags: Flags, profile: Profile) => {
   const notes: string[] = []
+  // Nobody to sponsor, so only the clearance warning is worth showing.
+  if (!needsSponsorship(profile)) {
+    if (flags.possibleClearance) notes.push(`⚠ Clearance possibly required: ${quote(flags.possibleClearance)}`)
+    if (flags.clearance) notes.push(`⚠ Clearance mentioned: ${quote(flags.clearance)}`)
+    return notes.length > 0 ? notes.join('\n') : null
+  }
   if (flags.citizenship) notes.push(`⚠ Citizenship stated: ${quote(flags.citizenship)}`)
   if (flags.possibleClearance) notes.push(`⚠ Clearance possibly required: ${quote(flags.possibleClearance)}`)
   if (flags.noSponsorship) notes.push(`No sponsorship (OPT/STEM OPT still applies): ${quote(flags.noSponsorship)}`)
@@ -140,8 +154,8 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: 
   const flags = detectFlags(posting)
   const mismatch = graduationMismatch(flags, profile)
   const blocker = cannotApply(flags, profile)
-  // The one hard block: clearance roles need citizenship and can never work out.
-  if (flags.clearance) return { kind: 'blocked', reason: flags.clearance, posting }
+  // The one hard block: clearance roles need citizenship and can never work out (unless that's not an obstacle).
+  if (flags.clearance && needsSponsorship(profile)) return { kind: 'blocked', reason: flags.clearance, posting }
   if (flags.requiredYears !== null && flags.requiredYears > profile.maxRequiredYears) {
     return { kind: 'irrelevant', reason: 'experience' }
   }
@@ -151,23 +165,26 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: 
   // Title fit scales everything else, so a great sponsor or big salary can't lift an unrelated role.
   const fit = offTarget ? profile.fitWeights.offTarget : profile.fitWeights[group]
   // No new-grad/intern/2027 wording at all: usually an experienced hire, so the whole score shrinks.
-  const noLevelSignal = !entryLevel(flags) && flags.targetYear === null && !flags.returnToSchool
+  const noLevelSignal = !entryLevel(flags, profile) && flags.targetYear === null && !flags.returnToSchool
   const levelFactor = noLevelSignal ? profile.noLevelSignalFactor : 1
   const weighted = (points: number) => Math.round(points * fit * levelFactor)
+  const rolePoints = profile.rolePoints ?? DEFAULT_ROLE_POINTS
+  const description = posting.description ?? ''
+  const skills = findSkills(`${posting.title}\n${description}`, profile.skills)
   const breakdown: Breakdown = {
-    role: Math.round((offTarget ? OFF_TARGET_ROLE_POINTS : ROLE_POINTS[group]) * levelFactor),
+    role: Math.round((offTarget ? rolePoints.offTarget : rolePoints[group]) * levelFactor),
     sponsor: weighted(sponsorPoints(sponsor, flags, profile)),
-    level: weighted(levelPoints(flags, mismatch)),
+    level: weighted(levelPoints(flags, mismatch, profile)),
     location: weighted(location.points),
-    pay: weighted(payPoints(annual, flags)),
+    pay: weighted(payPoints(annual, flags, profile) * (profile.payWeight ?? 1)),
+    skills: profile.skillPoints ? weighted(Math.min(profile.skillPoints.max, skills.length * profile.skillPoints.perMatch)) : 0,
+    employer: profile.employerWatchlist && matchesAny(posting.company, profile.employerWatchlist) ? profile.employerPoints ?? 0 : 0,
     fit,
   }
-  const total = Math.min(100, breakdown.role + breakdown.sponsor + breakdown.level + breakdown.location + breakdown.pay)
+  const total = Math.min(100, breakdown.role + breakdown.sponsor + breakdown.level + breakdown.location + breakdown.pay + breakdown.skills + breakdown.employer)
   // He can't truthfully apply to these, so they stay just under the cutoff however good the rest is.
   const score = blocker ? Math.min(total, profile.minScore - 1) : total
 
-  const description = posting.description ?? ''
-  const skills = findSkills(`${posting.title}\n${description}`, profile.skills)
   const extras = [
     location.metro ? `metro=${location.metro}` : null,
     annual ? `pay≈$${Math.round(annual / 1000)}k` : null,
@@ -185,17 +202,17 @@ export const evaluatePosting = (posting: RawPosting, profile: Profile, sponsor: 
       job_link: posting.url,
       status: 'Queued',
       priority: priorityOf(score),
-      job_type: jobTypeOf(flags),
+      job_type: jobTypeOf(flags, profile),
       work_mode: flags.workMode,
       match_score: score,
       required_skills: skills.length > 0 ? skills.join(', ') : null,
-      sponsorship_notes: sponsorshipNotes(sponsor, flags),
-      e_verify_notes: flags.eVerify ? `Mentions E-Verify: ${quote(flags.eVerify)}` : null,
+      sponsorship_notes: sponsorshipNotes(sponsor, flags, profile),
+      e_verify_notes: flags.eVerify && needsSponsorship(profile) ? `Mentions E-Verify: ${quote(flags.eVerify)}` : null,
       graduation_requirement: flags.graduation ? flags.graduation.slice(0, QUOTE_LIMIT) : null,
       job_description: description ? description.slice(0, DESCRIPTION_LIMIT) : null,
       notes: [
         `[discovery] source=${posting.source}`,
-        `score ${score} = role ${breakdown.role} + sponsor ${breakdown.sponsor} + level ${breakdown.level} + location ${breakdown.location} + pay ${breakdown.pay} (title fit ×${fit}${noLevelSignal ? `, no level signal ×${levelFactor}` : ''})`,
+        `score ${score} = role ${breakdown.role} + sponsor ${breakdown.sponsor} + level ${breakdown.level} + location ${breakdown.location} + pay ${breakdown.pay}${breakdown.skills ? ` + skills ${breakdown.skills}` : ''}${breakdown.employer ? ` + employer ${breakdown.employer}` : ''} (title fit ×${fit}${noLevelSignal ? `, no level signal ×${levelFactor}` : ''})`,
         ...extras,
       ].join(' · '),
     },

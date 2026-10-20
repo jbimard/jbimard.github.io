@@ -1,8 +1,11 @@
 // Daily job discovery: fetch postings → filter/score → send to the job-intake Edge Function.
-// Usage: node automation/discover.ts [--dry-run] [--limit=N]
+// Usage: node automation/discover.ts [--dry-run] [--limit=N] [--profile-file=PATH]
+// Runs once per search profile: the owner's (config/profile.json → JOB_INTAKE_USER_ID) and every enabled row of
+// user_profiles (via the discovery-profiles Edge Function). --profile-file runs just that profile, dry-run only.
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { mapWithConcurrency, postJson } from './http.ts'
+import { parseProfile } from './rules/profile.ts'
 import { evaluatePosting, type Breakdown } from './rules/score.ts'
 import { fromSponsorFile, indexSponsors, lookupSponsor, type SponsorFile, type SponsorRecord } from './rules/sponsors.ts'
 import { scoreLocation, shortLocation } from './rules/text.ts'
@@ -37,6 +40,7 @@ type IntakeResponse = {
   invalid?: Array<{ index: number; errors: string[] }>
   possible_duplicates?: unknown[]
 }
+type Target = { label: string; userId: string | null; profile: Profile }
 type ScoredJob = { job: IntakeJob; breakdown: Breakdown; sponsorTier: SponsorTier }
 
 const readJson = async <T>(file: string) => JSON.parse(await readFile(path.join(ROOT, file), 'utf8')) as T
@@ -88,7 +92,9 @@ const dedupe = (jobs: ScoredJob[]) => {
   return [...new Set(byKey.values())]
 }
 
-const sendToIntake = async (jobs: IntakeJob[]) => {
+const NO_SPONSOR_DATA: SponsorRecord = { tier: 'unknown', fiscalYear: null, count: 0, byYear: {}, matchedNames: [], label: null }
+
+const sendToIntake = async (jobs: IntakeJob[], userId: string | null) => {
   const url = process.env.JOB_INTAKE_URL
   const token = process.env.JOB_INTAKE_TOKEN
   if (!url || !token) throw new Error('JOB_INTAKE_URL and JOB_INTAKE_TOKEN must be set (or pass --dry-run).')
@@ -96,7 +102,8 @@ const sendToIntake = async (jobs: IntakeJob[]) => {
   const totals = { inserted: 0, skipped: 0, invalid: 0, possibleDuplicates: 0 }
   for (let start = 0; start < jobs.length; start += BATCH_SIZE) {
     const batch = jobs.slice(start, start + BATCH_SIZE)
-    const result = await postJson<IntakeResponse>(url, { jobs: batch }, { Authorization: `Bearer ${token}` })
+    // Without user_id, intake files the jobs under JOB_INTAKE_USER_ID (the owner).
+    const result = await postJson<IntakeResponse>(url, userId ? { user_id: userId, jobs: batch } : { jobs: batch }, { Authorization: `Bearer ${token}` })
     totals.inserted += result.inserted_count
     totals.skipped += result.skipped_duplicate_count
     totals.invalid += result.invalid_count
@@ -109,20 +116,53 @@ const sendToIntake = async (jobs: IntakeJob[]) => {
   return totals
 }
 
-const main = async () => {
-  const dryRun = process.argv.includes('--dry-run')
-  // --limit=N sends only the top N jobs, e.g. a one-row test of the intake connection.
-  const limitArg = process.argv.find((arg) => arg.startsWith('--limit='))?.split('=')[1]
-  const limit = limitArg ? Number(limitArg) : null
-  if (limit !== null && (!Number.isInteger(limit) || limit < 1)) throw new Error(`--limit must be a positive integer, got "${limitArg}".`)
-  const profile = await readJson<Profile>('config/profile.json')
-  const companies = await readJson<Company[]>('config/companies.json')
-  const sponsors = indexSponsors(fromSponsorFile(await readJson<SponsorFile>('data/h1b-sponsors.json')))
+// The extra users' profiles live in the database (the repo is public); the run reads them through an Edge Function
+// that shares job-intake's token. Failing to read them must not stop the owner's run.
+const fetchStoredProfiles = async (): Promise<Target[]> => {
+  const intakeUrl = process.env.JOB_INTAKE_URL
+  const token = process.env.JOB_INTAKE_TOKEN
+  if (!intakeUrl || !token) return []
+  const url = process.env.DISCOVERY_PROFILES_URL ?? intakeUrl.replace(/job-intake\/?$/, 'discovery-profiles')
+  try {
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const { profiles } = await response.json() as { profiles: Array<{ user_id: string; display_name: string; profile: unknown }> }
+    const targets: Target[] = []
+    for (const [index, row] of profiles.entries()) {
+      try {
+        targets.push({ label: SHOW_JOBS ? row.display_name : `profile ${index + 1}`, userId: row.user_id, profile: parseProfile(row.profile) })
+      } catch (error) {
+        console.warn(`  Skipping stored profile ${index + 1}: ${String(error)}`)
+      }
+    }
+    return targets
+  } catch (error) {
+    console.warn(`Could not load stored profiles (${url}): ${String(error)}`)
+    return []
+  }
+}
+
+const loadTargets = async (profileFile: string | null): Promise<Target[]> => {
+  if (profileFile) return [{ label: path.basename(profileFile), userId: null, profile: parseProfile(JSON.parse(await readFile(profileFile, 'utf8'))) }]
+  const owner: Target = { label: 'owner', userId: null, profile: parseProfile(await readJson<unknown>('config/profile.json')) }
+  return [owner, ...await fetchStoredProfiles()]
+}
+
+type RunOptions = { dryRun: boolean; limit: number | null; reportFile: string }
+
+const runTarget = async (target: Target, companies: Company[], sponsors: ReturnType<typeof indexSponsors>, options: RunOptions) => {
+  const { profile } = target
+  const { dryRun, limit } = options
+  const needsSponsorship = profile.needsSponsorship !== false
+  // A board is searched when it shares a tag with the profile; untagged boards are the original tech list.
+  const tags = profile.companyTags ?? ['tech']
+  const boards = companies.filter((company) => (company.tags ?? ['tech']).some((tag) => tags.includes(tag)))
   // Board companies may list the USCIS spelling in h1bNames; Simplify jobs at those companies use it too.
   const h1bNames = new Map(companies.map((company) => [company.name.toLowerCase(), company.h1bNames]))
   const sponsorNotes = new Map(companies.filter((company) => company.sponsorNote).map((company) => [company.name.toLowerCase(), company.sponsorNote!]))
   const sponsorCache = new Map<string, SponsorRecord>()
   const sponsorFor = (company: string) => {
+    if (!needsSponsorship) return NO_SPONSOR_DATA
     const key = company.toLowerCase()
     let record = sponsorCache.get(key)
     if (!record) {
@@ -135,19 +175,22 @@ const main = async () => {
   }
   const sourceStats: SourceStat[] = []
 
-  console.log(`Fetching ${companies.length} company boards…`)
-  const perCompany = await mapWithConcurrency(companies, PARALLEL_BOARDS, (company) => (
+  console.log(`\n=== ${target.label} ===\nFetching ${boards.length} company boards…`)
+  const perCompany = await mapWithConcurrency(boards, PARALLEL_BOARDS, (company) => (
     collect(`${company.ats}:${company.name}`, sourceStats, () => fetchCompany(company, profile))
   ))
   const postings: RawPosting[] = perCompany.flat()
 
-  console.log('Fetching Simplify lists…')
-  const simplify = (await collect('simplify', sourceStats, () => fetchSimplify(profile)))
-    // Skip non-US listings before spending enrichment requests on them.
-    .filter((posting) => scoreLocation(posting.location, profile).points !== null)
-  console.log(`Enriching up to ${profile.maxEnrichPerRun} Simplify postings with descriptions…`)
-  const enrichStats = await enrichPostings(simplify, profile.maxEnrichPerRun)
-  postings.push(...simplify)
+  let enrichStats: unknown = null
+  if (profile.useSimplify !== false) {
+    console.log('Fetching Simplify lists…')
+    const simplify = (await collect('simplify', sourceStats, () => fetchSimplify(profile)))
+      // Skip non-US listings before spending enrichment requests on them.
+      .filter((posting) => scoreLocation(posting.location, profile).points !== null)
+    console.log(`Enriching up to ${profile.maxEnrichPerRun} Simplify postings with descriptions…`)
+    enrichStats = await enrichPostings(simplify, profile.maxEnrichPerRun)
+    postings.push(...simplify)
+  }
 
   const dropped: Record<string, number> = {}
   const blocked: Array<{ company: string; title: string; url: string; reason: string }> = []
@@ -201,24 +244,24 @@ const main = async () => {
 
   await mkdir(OUT_DIR, { recursive: true })
   await writeFile(
-    path.join(OUT_DIR, 'report.json'),
-    JSON.stringify({ runAt: new Date().toISOString(), dryRun, counts, enrich: enrichStats, sources: sourceStats, blocked, jobs: selected }, null, 2),
+    path.join(OUT_DIR, options.reportFile),
+    JSON.stringify({ runAt: new Date().toISOString(), profile: target.label, dryRun, counts, enrich: enrichStats, sources: sourceStats, blocked, jobs: selected }, null, 2),
   )
 
   let intake: Awaited<ReturnType<typeof sendToIntake>> | null = null
   if (!dryRun) {
     console.log(`\nSending ${jobs.length} jobs to job-intake…`)
-    intake = await sendToIntake(jobs)
+    intake = await sendToIntake(jobs, target.userId)
     console.log('Intake', JSON.stringify(intake))
   }
 
   if (process.env.GITHUB_STEP_SUMMARY) {
     const failed = sourceStats.filter((stat) => stat.error)
     const lines = [
-      `## Job discovery ${dryRun ? '(dry run)' : ''}`,
+      `## Job discovery — ${target.label} ${dryRun ? '(dry run)' : ''}`,
       `Fetched **${counts.fetched}** postings · blocked (clearance) **${counts.blockedClearance}** · held for graduation date **${counts.heldForGraduation}** · selected **${counts.selected}** (≥ ${profile.minScore})`,
       `Internships ${counts.internships} · citizenship-flagged ${counts.citizenshipFlagged} · no-sponsorship-flagged ${counts.noSponsorshipFlagged}`,
-      `USCIS sponsor tier: strong ${sponsorTiers.strong} · some ${sponsorTiers.some} · rare ${sponsorTiers.rare} · no zero-year record ${sponsorTiers.none} · no USCIS data ${sponsorTiers.unknown}`,
+      needsSponsorship ? `USCIS sponsor tier: strong ${sponsorTiers.strong} · some ${sponsorTiers.some} · rare ${sponsorTiers.rare} · no zero-year record ${sponsorTiers.none} · no USCIS data ${sponsorTiers.unknown}` : '',
       intake ? `Intake: inserted **${intake.inserted}**, skipped duplicates ${intake.skipped}, invalid ${intake.invalid}` : '',
       failed.length > 0 ? `\n**Failed sources:** ${failed.map((stat) => stat.source).join(', ')}` : '',
       'New rows are queued; the best batch moves to /jobs (status: Found) at 11:00 UTC, and "Next batch" brings more.',
@@ -226,7 +269,32 @@ const main = async () => {
     await appendFile(process.env.GITHUB_STEP_SUMMARY, `${lines.filter(Boolean).join('\n')}\n`)
   }
 
-  if (sourceStats.every((stat) => stat.error)) throw new Error('Every source failed.')
+  if (sourceStats.every((stat) => stat.error)) throw new Error(`Every source failed for ${target.label}.`)
+}
+
+const main = async () => {
+  const profileFile = process.argv.find((arg) => arg.startsWith('--profile-file='))?.split('=')[1] ?? null
+  // A profile loaded from a file has no user to file jobs under, so it can only ever be a dry run.
+  const dryRun = process.argv.includes('--dry-run') || profileFile !== null
+  // --limit=N sends only the top N jobs, e.g. a one-row test of the intake connection.
+  const limitArg = process.argv.find((arg) => arg.startsWith('--limit='))?.split('=')[1]
+  const limit = limitArg ? Number(limitArg) : null
+  if (limit !== null && (!Number.isInteger(limit) || limit < 1)) throw new Error(`--limit must be a positive integer, got "${limitArg}".`)
+  const companies = await readJson<Company[]>('config/companies.json')
+  const sponsors = indexSponsors(fromSponsorFile(await readJson<SponsorFile>('data/h1b-sponsors.json')))
+
+  const targets = await loadTargets(profileFile)
+  const failures: string[] = []
+  for (const [index, target] of targets.entries()) {
+    try {
+      await runTarget(target, companies, sponsors, { dryRun, limit, reportFile: index === 0 ? 'report.json' : `report-${index}.json` })
+    } catch (error) {
+      // One user's failure shouldn't stop the others' runs; the job still fails at the end.
+      console.error(`${target.label} failed:`, error)
+      failures.push(target.label)
+    }
+  }
+  if (failures.length > 0) throw new Error(`Discovery failed for: ${failures.join(', ')}`)
 }
 
 main().catch((error) => {
