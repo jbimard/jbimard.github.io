@@ -1,7 +1,7 @@
 import { fetchText } from '../http.ts'
 import { entryLevelTitle } from '../rules/flags.ts'
 import { titleGroup } from '../rules/score.ts'
-import { decodeEntities } from '../rules/text.ts'
+import { decodeEntities, locationTier } from '../rules/text.ts'
 import type { Company, Profile, RawPosting } from '../types.ts'
 import { parseJobPostingLd, type JobPostingLdResult } from './jsonld.ts'
 
@@ -57,7 +57,8 @@ export const fetchIcims = async (company: Company, profile: Profile): Promise<Ra
   const relevant = [...listed.values()]
     .map((item) => ({ item, group: titleGroup(item.title, profile) }))
     .filter((entry): entry is { item: IcimsListItem; group: 'A' | 'B' | 'C' } => entry.group !== null)
-    .sort((a, b) => Number(entryLevelTitle(b.item.title)) - Number(entryLevelTitle(a.item.title)) || rank[a.group] - rank[b.group])
+    .sort((a, b) => locationTier(b.item.location, profile) - locationTier(a.item.location, profile)
+      || Number(entryLevelTitle(b.item.title)) - Number(entryLevelTitle(a.item.title)) || rank[a.group] - rank[b.group])
     .slice(0, MAX_DETAILS_PER_COMPANY)
 
   const postings: RawPosting[] = []

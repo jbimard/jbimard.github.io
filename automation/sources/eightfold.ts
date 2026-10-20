@@ -1,7 +1,7 @@
 import { fetchCookies, fetchJson } from '../http.ts'
 import { entryLevelTitle } from '../rules/flags.ts'
 import { titleGroup } from '../rules/score.ts'
-import { htmlToText } from '../rules/text.ts'
+import { htmlToText, locationTier } from '../rules/text.ts'
 import type { Company, Profile, RawPosting } from '../types.ts'
 
 // Eightfold career sites (Microsoft's apply.careers.microsoft.com). The site's own search JSON answers once the session
@@ -46,7 +46,8 @@ export const fetchEightfold = async (company: Company, profile: Profile): Promis
   const relevant = [...listed.values()]
     .map((position) => ({ position, group: titleGroup(position.name, profile) }))
     .filter((entry): entry is { position: EightfoldPosition; group: 'A' | 'B' | 'C' } => entry.group !== null)
-    .sort((a, b) => Number(entryLevelTitle(b.position.name)) - Number(entryLevelTitle(a.position.name)) || rank[a.group] - rank[b.group])
+    .sort((a, b) => locationTier((b.position.locations ?? []).join('; '), profile) - locationTier((a.position.locations ?? []).join('; '), profile)
+      || Number(entryLevelTitle(b.position.name)) - Number(entryLevelTitle(a.position.name)) || rank[a.group] - rank[b.group])
     .slice(0, MAX_DETAILS_PER_COMPANY)
 
   const postings: RawPosting[] = []
