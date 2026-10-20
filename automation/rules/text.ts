@@ -126,6 +126,15 @@ export const scoreLocation = (location: string, profile: Profile): LocationResul
   return best
 }
 
+// Which postings to spend the per-company detail budget on first. Only metro-only profiles use it (everyone else gets 0
+// and keeps their existing order): 2 = a listed metro or remote US, 1 = location not stated clearly ("2 Locations"), 0 = elsewhere.
+export const locationTier = (location: string | null | undefined, profile: Profile) => {
+  if (!profile.metroOnly) return 0
+  const text = location ?? ''
+  if (scoreLocation(text, profile).points !== null) return 2
+  return !text.trim() || /\b\d+ locations?\b|multiple|various/i.test(text) ? 1 : 0
+}
+
 // "Durham, NC +9 more" — for printing; the full list still goes to /jobs.
 export const shortLocation = (location: string | null, profile: Profile) => {
   if (!location) return '?'

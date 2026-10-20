@@ -6,7 +6,9 @@ import type { Profile, RawPosting } from '../types.ts'
 import { parseProfile, profileProblems } from './profile.ts'
 import { evaluatePosting } from './score.ts'
 import { NO_SPONSOR_DATA, type SponsorRecord } from './sponsors.ts'
-import { scoreLocation } from './text.ts'
+import { recruiteePosting } from '../sources/recruitee.ts'
+import { metroFacets } from '../sources/workday.ts'
+import { locationTier, scoreLocation } from './text.ts'
 
 const owner = JSON.parse(readFileSync(path.join(import.meta.dirname, '../config/profile.json'), 'utf8')) as Profile
 
@@ -125,4 +127,53 @@ test('parseProfile names what is wrong', () => {
   const { titleGroups: _groups, ...broken } = owner
   assert.match(profileProblems({ ...broken, graduation: 'May 2027' }).join('; '), /titleGroups.*graduation/)
   assert.throws(() => parseProfile({ ...owner, needsSponsorship: true, sponsorTiers: undefined }), /sponsorTiers/)
+})
+
+test('locationTier ranks in-scope postings first for metro-only profiles and is inert for others', () => {
+  assert.equal(locationTier('US - North Carolina - Durham', labProfile), 2)
+  assert.equal(locationTier('Durham, NC; Boston, MA', labProfile), 2)
+  assert.equal(locationTier('2 Locations', labProfile), 1)
+  assert.equal(locationTier('', labProfile), 1)
+  assert.equal(locationTier('Thousand Oaks, CA', labProfile), 0)
+  assert.equal(locationTier('Durham, NC', owner), 0)
+})
+
+test('metroFacets picks the board\'s Triangle and remote location ids, however it labels them', () => {
+  const profile: Profile = { ...labProfile, metros: { core: { label: 'Triangle', points: 20, match: ['durham', 'holly springs, nc', 'research triangle'] } } }
+  const facets = [
+    { descriptor: 'Country/Territory', facetParameter: 'LocationCountry', values: [{ descriptor: 'United States of America', id: 'c1' }] },
+    {
+      facetParameter: 'locationMainGroup',
+      values: [{
+        facetParameter: 'locations',
+        values: [
+          { descriptor: 'US - North Carolina - Holly Springs', id: 'a' },
+          { descriptor: 'Durham, North Carolina, USA', id: 'b' },
+          { descriptor: 'US - California - Thousand Oaks', id: 'c' },
+          { descriptor: 'Durham, United Kingdom', id: 'd' },
+          { descriptor: 'US - Remote', id: 'e' },
+        ],
+      }],
+    },
+  ]
+  assert.deepEqual(metroFacets(facets, profile), { locations: ['a', 'b', 'e'] })
+  // A board with location filters but nothing in the metros → {} (nothing to fetch); no location filter at all → null.
+  assert.deepEqual(metroFacets([{ facetParameter: 'locations', values: [{ descriptor: 'US - Texas - Austin', id: 'x' }] }], profile), {})
+  assert.equal(metroFacets([{ descriptor: 'Job Type', facetParameter: 'workerSubType', values: [{ descriptor: 'Regular', id: 'r' }] }], profile), null)
+})
+
+test('Recruitee offers become postings with their location and description', () => {
+  const company = { name: 'Locus', ats: 'recruitee' as const, board: 'locus' }
+  const posting = recruiteePosting(company, {
+    title: ' Research Technician ',
+    description: '<p>Run <b>PCR</b>.</p>',
+    requirements: '<ul><li>BS in biology</li></ul>',
+    location: 'Research Triangle Park, North Carolina, United States',
+    on_site: true,
+    careers_url: 'https://locus.recruitee.com/o/research-technician',
+  })
+  assert.equal(posting.title, 'Research Technician')
+  assert.equal(posting.location, 'Research Triangle Park, North Carolina, United States')
+  assert.equal(posting.workplaceHint, 'Onsite')
+  assert.match(posting.description ?? '', /Run PCR\s?\.\n• BS in biology/)
 })

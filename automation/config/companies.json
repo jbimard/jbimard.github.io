@@ -107,5 +107,8 @@
   { "name": "Danaher", "ats": "workday", "board": "danaher/wd1/DanaherJobs", "tags": ["biotech"] },
   { "name": "Lonza", "ats": "workday", "board": "lonza/wd3/Lonza_Careers", "tags": ["biotech"] },
   { "name": "Medtronic", "ats": "workday", "board": "medtronic/wd1/MedtronicCareers", "tags": ["biotech"] },
-  { "name": "FUJIFILM Biotechnologies", "ats": "icims", "board": "uscareers-fujifilm", "tags": ["biotech"] }
+  { "name": "FUJIFILM Biotechnologies", "ats": "icims", "board": "uscareers-fujifilm", "tags": ["biotech"] },
+  { "name": "BioAgilytix", "ats": "lever", "board": "bioagilytix", "tags": ["biotech"] },
+  { "name": "Grifols", "ats": "successfactors", "board": "jobsearch.grifols.com", "tags": ["biotech"] },
+  { "name": "Locus Biosciences", "ats": "recruitee", "board": "locusbiosciences", "tags": ["biotech"] }
 ]
