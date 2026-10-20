@@ -20,6 +20,9 @@ verify_jwt = false
 [functions.packet-edit]
 verify_jwt = false
 
+[functions.discover-run]
+verify_jwt = false
+
 [api]
 enabled = true
 # Port to use for the API URL.

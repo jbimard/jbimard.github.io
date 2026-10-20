@@ -207,6 +207,8 @@ Automatic intake only adds new jobs. Everything else, including status changes, 
 
 The workflow `.github/workflows/discover-jobs.yml` runs daily at 10:00 UTC. To run it by hand, use Actions → Daily job discovery → Run workflow; tick **dry_run** to fetch and score without sending anything. Because this repo is public, its Actions logs are public too. The script prints only counts in CI and never company or job names.
 
+**Run lookup button.** The dashboard's **Run lookup** button calls the `discover-run` function, which dispatches this workflow (refusing if a run is already in progress). One-time setup: create a fine-grained GitHub token limited to this repo with **Actions: Read and write**, then `supabase secrets set GITHUB_DISPATCH_TOKEN=…` and `supabase functions deploy discover-run`. New jobs land in the queue after the run finishes (a few minutes); use **Next batch** to see them.
+
 **Running it locally:**
 
 ```bash
