@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import type { Session } from '@supabase/supabase-js'
+import { FunctionsHttpError, type Session } from '@supabase/supabase-js'
+import { supabase } from '../../lib/supabaseClient'
 import ConfirmDialog from './ConfirmDialog'
 import BulkImportDialog from './import/BulkImportDialog'
 import JobFormDrawer from './JobFormDrawer'
@@ -59,6 +60,8 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
   const [sort, setSort] = useState<SortState>({ key: 'date_found', direction: 'desc' })
   const [editingJob, setEditingJob] = useState<Job | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [lookupRunning, setLookupRunning] = useState(false)
+  const [lookupNotice, setLookupNotice] = useState<string | null>(null)
   const [bulkImportOpen, setBulkImportOpen] = useState(false)
   const [archiveTarget, setArchiveTarget] = useState<Job | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -151,6 +154,26 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
     }
   }
 
+  const handleRunLookup = async () => {
+    setActionError(null)
+    setLookupNotice(null)
+    setLookupRunning(true)
+    try {
+      if (!supabase) throw new Error('Supabase is not configured.')
+      const { data, error: lookupError } = await supabase.functions.invoke('discover-run')
+      if (lookupError) {
+        const detail = lookupError instanceof FunctionsHttpError ? (await lookupError.context.json().catch(() => null))?.error : null
+        throw new Error(detail ?? lookupError.message)
+      }
+      if (!data?.started) throw new Error('The lookup did not start.')
+      setLookupNotice('Lookup started. New jobs reach the queue in a few minutes; then use Next batch.')
+    } catch (runError) {
+      setActionError(runError instanceof Error ? runError.message : 'Unable to start the lookup.')
+    } finally {
+      setLookupRunning(false)
+    }
+  }
+
   const handleReviewDecision = async (job: Job, decision: ReviewDecision) => {
     if (decision === 'later') return
     setActionError(null)
@@ -212,8 +235,13 @@ const JobsDashboard = ({ session, signOut }: JobsDashboardProps) => {
           queuedCount={queuedCount}
           promoting={promoting}
           onNextBatch={() => void handleNextBatch()}
+          lookupRunning={lookupRunning}
+          onRunLookup={() => void handleRunLookup()}
         />}
 
+        {lookupNotice && (
+          <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{lookupNotice}</p>
+        )}
         {(error || actionError) && (
           <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error || actionError}</p>
         )}
