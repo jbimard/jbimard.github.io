@@ -3,6 +3,7 @@ import ConfirmDialog from './ConfirmDialog'
 import PacketEditor from './PacketEditor'
 import { buildApplyPrompt } from './applyPrompt'
 import { fetchGreenhouseForm, greenhouseRef, type ApplicationForm } from './applicationForm'
+import ParseCheckPanel from './ParseCheckPanel'
 import { copyToClipboard } from './prompts'
 import { CHECK_LABELS, type ApplicationPacket, type Job, type PacketEdit } from './types'
 
@@ -329,7 +330,25 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
           ? <PacketEditor key={packet.revision} packet={packet} onSave={onEdit} />
           : <p className="text-sm text-slate-500">This packet was prepared before editing existed. Regenerate it, and the next preparation run writes one you can edit.</p>)}
 
-        {tab === 'resume' && <ResumePreview path={packet.resume_path} fileBlob={fileBlob} />}
+        {tab === 'resume' && (
+          <>
+            <ParseCheckPanel
+              docxPath={packet.resume_path}
+              pdfPath={packet.resume_pdf_path}
+              expected={{
+                summary: packet.packet?.summary.text ?? null,
+                // Tailored bullets come from the stored packet; headings and dates from the resolved entry at the same position.
+                entries: (['experience', 'projects'] as const).flatMap((kind) => (packet.packet?.[kind] ?? []).map((entry, i) => ({
+                  heading: packet.resume_content[kind][i]?.heading ?? '',
+                  right: packet.resume_content[kind][i]?.right ?? null,
+                  bullets: entry.bullets.map((bullet) => bullet.text),
+                }))),
+              }}
+              fileBlob={fileBlob}
+            />
+            <ResumePreview path={packet.resume_path} fileBlob={fileBlob} />
+          </>
+        )}
 
         {tab === 'changes' && (
           <div className="flex flex-col gap-3">
