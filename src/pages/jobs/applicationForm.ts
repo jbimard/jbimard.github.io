@@ -10,6 +10,11 @@ export type FormQuestion = {
   options: string[]
   // Work authorization, sponsorship, citizenship, clearance or legal-eligibility wording: answer from the packet's fixed answers only.
   eligibility: boolean
+  // Only from a form read off the page: the field's length limit and accepted file types.
+  maxlength?: number
+  accept?: string
+  // The real number of choices when the list was cut (a university dropdown).
+  optionCount?: number
 }
 
 export type ApplicationForm = {
@@ -25,6 +30,8 @@ type RawJob = { questions?: RawQuestion[]; demographic_questions?: { questions?:
 
 // Only the questions the packet's fixed answers cover or that can screen someone out.
 const ELIGIBILITY = /sponsor|visa|work authori[sz]|authori[sz]ed to work|legally (?:authori[sz]ed|eligible|permitted)|right to work|immigration|citizen|permanent resident|green card|security clearance|\bclearance\b|export control|\bitar\b|\bead\b|\bopt\b|h-?1b/i
+
+export const isEligibility = (label: string, options: string[] = []) => ELIGIBILITY.test(label) || options.some((option) => ELIGIBILITY.test(option) && /sponsor|visa/i.test(option))
 
 const STANDARD = new Set(['first_name', 'last_name', 'preferred_name', 'email', 'phone', 'resume', 'resume_text', 'cover_letter', 'cover_letter_text', 'location'])
 
@@ -71,7 +78,7 @@ export const summarizeForm = (raw: RawJob): ApplicationForm => {
       required: question.required === true,
       kind: kindOf(first),
       options: (first.values ?? []).map((value) => (value.label ?? '').trim()).filter(Boolean),
-      eligibility: ELIGIBILITY.test(label) || (first.values ?? []).some((value) => ELIGIBILITY.test(value.label ?? '') && /sponsor|visa/i.test(value.label ?? '')),
+      eligibility: isEligibility(label, (first.values ?? []).map((value) => value.label ?? '')),
     })
   }
   return { questions, standardCount, deadline: raw.application_deadline ?? null }
@@ -89,8 +96,10 @@ export const formPromptBlock = (form: ApplicationForm) => {
   if (form.questions.length === 0) return ''
   const lines = form.questions.map((question) => {
     const tags = [question.required ? 'required' : 'optional', question.kind.replace('_', ' '), question.eligibility ? 'ELIGIBILITY: use my fixed work-authorization answers only' : ''].filter(Boolean)
-    const choices = question.options.length > 0 ? ` Options: ${question.options.join(' / ')}.` : ''
-    return `- ${question.label} (${tags.join(', ')}).${choices}`
+    const more = question.optionCount && question.optionCount > question.options.length ? ` (+${question.optionCount - question.options.length} more)` : ''
+    const choices = question.options.length > 0 ? ` Options: ${question.options.join(' / ')}${more}.` : ''
+    const limits = [question.maxlength ? `max ${question.maxlength} characters` : '', question.accept ? `accepts ${question.accept}` : ''].filter(Boolean)
+    return `- ${question.label} (${[...tags, ...limits].join(', ')}).${choices}`
   })
-  return `\n\nThe form's own questions, read from the employer's public form (anything not listed here that appears on the page is new: stop and ask me):\n${lines.join('\n')}`
+  return `\n\nThe form's own questions, read from the employer's form (anything not listed here that appears on the page is new: stop and ask me):\n${lines.join('\n')}`
 }

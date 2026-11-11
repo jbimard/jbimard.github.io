@@ -3,6 +3,8 @@ import ConfirmDialog from './ConfirmDialog'
 import PacketEditor from './PacketEditor'
 import { buildApplyPrompt } from './applyPrompt'
 import { fetchGreenhouseForm, greenhouseRef, type ApplicationForm } from './applicationForm'
+import FormInspectorBox from './FormInspectorBox'
+import FormQuestionList from './FormQuestionList'
 import ParseCheckPanel from './ParseCheckPanel'
 import { copyToClipboard } from './prompts'
 import { CHECK_LABELS, type ApplicationPacket, type Job, type PacketEdit } from './types'
@@ -203,26 +205,13 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
                       >
                         {formState === 'loading' ? 'Reading the form…' : 'Read the application form'}
                       </button>
-                    ) : form.questions.length === 0 ? (
-                      <p>No custom questions. Only the standard fields ({form.standardCount}).</p>
                     ) : (
-                      <>
-                        <p className="font-medium text-slate-950">{form.questions.length} custom question{form.questions.length === 1 ? '' : 's'} (added to the copied instructions)</p>
-                        <ul className="mt-1 space-y-1">
-                          {form.questions.map((question) => (
-                            <li key={question.label}>
-                              {question.eligibility && <span className="mr-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">eligibility</span>}
-                              {question.label}
-                              <span className="text-slate-500"> · {question.required ? 'required' : 'optional'} · {question.kind.replace('_', ' ')}{question.options.length > 0 ? ` · ${question.options.join(' / ')}` : ''}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        {form.deadline && <p className="mt-1 text-slate-600">Deadline on the form: {form.deadline}</p>}
-                      </>
+                      <FormQuestionList form={form} />
                     )}
                     {formState !== 'idle' && formState !== 'loading' && <p className="mt-1 text-red-700">{formState}</p>}
                   </div>
                 )}
+                {job.job_link && !greenhouseRef(job.job_link) && <FormInspectorBox form={form} onForm={setForm} />}
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button type="button" onClick={() => void copy('apply', buildApplyPrompt(job, packet, form))} className="rounded-md bg-slate-950 px-3 py-2 text-white hover:bg-slate-800">
                     {copied === 'apply' ? 'Copied' : 'Copy instructions for Claude in Chrome'}
