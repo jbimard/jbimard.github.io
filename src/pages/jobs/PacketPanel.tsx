@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import ConfirmDialog from './ConfirmDialog'
 import PacketEditor from './PacketEditor'
 import { buildApplyPrompt } from './applyPrompt'
+import { fetchGreenhouseForm, greenhouseRef, type ApplicationForm } from './applicationForm'
 import { copyToClipboard } from './prompts'
 import { CHECK_LABELS, type ApplicationPacket, type Job, type PacketEdit } from './types'
 
@@ -74,6 +75,8 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
   const [copied, setCopied] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [form, setForm] = useState<ApplicationForm | null>(null)
+  const [formState, setFormState] = useState<'idle' | 'loading' | string>('idle')
   const [confirmRegenerate, setConfirmRegenerate] = useState(false)
   const [acknowledged, setAcknowledged] = useState<Set<string>>(new Set(packet.acknowledged_flags))
   // A saved edit is a new revision with its own flags; start from what the server kept ticked.
@@ -181,8 +184,46 @@ const PacketPanel = ({ job, packet, fileUrl, fileBlob, onApprove, onRegenerate, 
                   <li>Sign in or create the account yourself, and upload the resume (and cover letter) when it asks.</li>
                   <li>Check every field, submit it yourself, then mark it applied here.</li>
                 </ol>
+                {greenhouseRef(job.job_link) && (
+                  <div className="mt-3 rounded-md border border-emerald-200 bg-white px-3 py-2">
+                    {!form ? (
+                      <button
+                        type="button"
+                        disabled={formState === 'loading'}
+                        onClick={() => {
+                          const ref = greenhouseRef(job.job_link)
+                          if (!ref) return
+                          setFormState('loading')
+                          fetchGreenhouseForm(ref.board, ref.id)
+                            .then((loaded) => { setForm(loaded); setFormState('idle') })
+                            .catch((cause: unknown) => setFormState(cause instanceof Error ? cause.message : 'Could not read the form.'))
+                        }}
+                        className="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        {formState === 'loading' ? 'Reading the form…' : 'Read the application form'}
+                      </button>
+                    ) : form.questions.length === 0 ? (
+                      <p>No custom questions. Only the standard fields ({form.standardCount}).</p>
+                    ) : (
+                      <>
+                        <p className="font-medium text-slate-950">{form.questions.length} custom question{form.questions.length === 1 ? '' : 's'} (added to the copied instructions)</p>
+                        <ul className="mt-1 space-y-1">
+                          {form.questions.map((question) => (
+                            <li key={question.label}>
+                              {question.eligibility && <span className="mr-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">eligibility</span>}
+                              {question.label}
+                              <span className="text-slate-500"> · {question.required ? 'required' : 'optional'} · {question.kind.replace('_', ' ')}{question.options.length > 0 ? ` · ${question.options.join(' / ')}` : ''}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        {form.deadline && <p className="mt-1 text-slate-600">Deadline on the form: {form.deadline}</p>}
+                      </>
+                    )}
+                    {formState !== 'idle' && formState !== 'loading' && <p className="mt-1 text-red-700">{formState}</p>}
+                  </div>
+                )}
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <button type="button" onClick={() => void copy('apply', buildApplyPrompt(job, packet))} className="rounded-md bg-slate-950 px-3 py-2 text-white hover:bg-slate-800">
+                  <button type="button" onClick={() => void copy('apply', buildApplyPrompt(job, packet, form))} className="rounded-md bg-slate-950 px-3 py-2 text-white hover:bg-slate-800">
                     {copied === 'apply' ? 'Copied' : 'Copy instructions for Claude in Chrome'}
                   </button>
                   {job.job_link && (
