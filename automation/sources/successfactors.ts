@@ -45,7 +45,8 @@ export const fetchSuccessFactors = async (company: Company, profile: Profile): P
   const host = company.board
   const listed = new Map<string, SuccessFactorsListItem>()
   let failedTerms = 0
-  for (const searchText of profile.workdaySearchTerms) {
+  const terms = [...profile.workdaySearchTerms, ...(company.extraTerms ?? [])]
+  for (const searchText of terms) {
     try {
       for (let page = 0; page < profile.workdayMaxPagesPerTerm; page++) {
         const url = `https://${host}/search/?q=${encodeURIComponent(searchText)}&sortColumn=referencedate&sortDirection=desc&startrow=${page * PAGE_SIZE}`
@@ -58,7 +59,7 @@ export const fetchSuccessFactors = async (company: Company, profile: Profile): P
       console.warn(`  successfactors:${host} search "${searchText}" failed: ${String(error)}`)
     }
   }
-  if (failedTerms === profile.workdaySearchTerms.length) throw new Error(`every search failed for successfactors:${host}`)
+  if (failedTerms === terms.length) throw new Error(`every search failed for successfactors:${host}`)
 
   const rank = { A: 0, B: 1, C: 2 }
   const relevant = [...listed.values()]

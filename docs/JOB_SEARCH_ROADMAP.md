@@ -23,6 +23,7 @@ Work through the steps in order. Update the status column as each step lands, an
 | 2c | More Charlotte companies | Done — 12 companies on existing adapters (#31); Oracle + Radancy + SuccessFactors entries for Honeywell, Charter, Nucor, Brighthouse (#32); Eightfold adapter for Microsoft, with a PERM-suspension warning (#33) |
 | 4 | Visa timeline card | Done — #34: `visa_profile` table, "My timeline" card, rules-to-watch list with the OPT fee proposal. Migration pushed 2026-10-16 |
 | 5 | Supervised applying | Built — this PR: Apply box in the packet panel (instructions for Claude in Chrome, Open posting, Mark applied with a follow-up a week out). First supervised run still to do |
+| 2d | Triangle focus: schools as safety nets | Built — this PR: PeopleAdmin adapter (NC State, UNC-Chapel Hill), State of NC on Workday, Duke extra search terms, IT-analyst/GRC titles |
 
 Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 2c → 4 → 5.** Next: **the first supervised application**, then use the pipeline daily.
 
@@ -274,6 +275,17 @@ Work-authorization questions are always answered truthfully, never with whatever
 
 - **He uploads the files**, not Claude, so the exact approved file is the one sent. Claude says which format the field takes.
 - **He signs in and creates accounts.** Claude never types passwords or handles verification codes.
+
+### 2d. Triangle focus: schools as safety nets (2026-11-11)
+
+Why: he wants to stay in Raleigh/RTP after May 2027. A Codex research pass found that universities are cap-exempt for H-1B (NC State 71 new approvals in FY2025, UNC 48, Duke ~82) and that discovery was missing them: NC State and UNC weren't covered, and Duke titles IT jobs "Consultant, IT" / "IT Analyst", which the title terms missed.
+
+- **`sources/peopleadmin.ts`:** reads PeopleAdmin search pages (30 per page, `?query=&page=`) and each posting's field table; NC State (`jobs.ncsu.edu`) and UNC (`unc.peopleadmin.com`). The posting text keeps the "not eligible for visa sponsorship" notices.
+- **State of NC** on Workday (`nc/wd108/NC_Careers`). Not cap-exempt; many state roles are citizens-only or SHRA, so screening decides.
+- **`extraTerms`** on a company adds search terms for that board only (universities: IT analyst, systems, identity, devops, research computing), so the 80-odd other boards don't pay for them.
+- **Titles:** group B gains IT analyst, IT consultant, "Consultant, IT", GRC, IT auditor, technology support analyst; group C gains systems analyst, systems programmer, research computing. Faculty titles (professor, lecturer, dean, faculty, postdoctoral) are excluded.
+- **Still to do:** the blanket `II` title exclusion (a master's can substitute for experience at some employers); NetApp backend check; RTI and Lenovo.
+- Cap exemption only helps if the hiring department agrees to sponsor: ask each department before investing in an application.
 
 ---
 

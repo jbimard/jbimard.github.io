@@ -93,7 +93,8 @@ export const fetchWorkday = async (company: Company, profile: Profile): Promise<
 
   const listed = new Map<string, WorkdayListItem>()
   let failedTerms = 0
-  for (const searchText of profile.workdaySearchTerms) {
+  const terms = [...profile.workdaySearchTerms, ...(company.extraTerms ?? [])]
+  for (const searchText of terms) {
     try {
       for (let page = 0; page < profile.workdayMaxPagesPerTerm; page++) {
         const { jobPostings = [], total = 0 } = await postJson<{ jobPostings?: WorkdayListItem[]; total?: number }>(
@@ -109,7 +110,7 @@ export const fetchWorkday = async (company: Company, profile: Profile): Promise<
       console.warn(`  workday:${tenant} search "${searchText}" failed: ${String(error)}`)
     }
   }
-  if (failedTerms === profile.workdaySearchTerms.length) throw new Error(`every search failed for workday:${tenant}`)
+  if (failedTerms === terms.length) throw new Error(`every search failed for workday:${tenant}`)
 
   const rank = { A: 0, B: 1, C: 2 }
   const relevant = [...listed.values()]

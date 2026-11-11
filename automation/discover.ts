@@ -18,6 +18,7 @@ import { fetchJibe } from './sources/jibe.ts'
 import { fetchLever } from './sources/lever.ts'
 import { fetchOracle } from './sources/oracle.ts'
 import { fetchRadancy } from './sources/radancy.ts'
+import { fetchPeopleAdmin } from './sources/peopleadmin.ts'
 import { fetchRecruitee } from './sources/recruitee.ts'
 import { fetchSimplify, linkKey } from './sources/simplify.ts'
 import { fetchSuccessFactors } from './sources/successfactors.ts'
@@ -59,6 +60,7 @@ const fetchCompany = (company: Company, profile: Profile) => {
     case 'radancy': return fetchRadancy(company, profile)
     case 'eightfold': return fetchEightfold(company, profile)
     case 'recruitee': return fetchRecruitee(company)
+    case 'peopleadmin': return fetchPeopleAdmin(company, profile)
   }
 }
 
