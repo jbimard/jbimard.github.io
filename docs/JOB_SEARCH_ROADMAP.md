@@ -23,6 +23,7 @@ Work through the steps in order. Update the status column as each step lands, an
 | 2c | More Charlotte companies | Done — 12 companies on existing adapters (#31); Oracle + Radancy + SuccessFactors entries for Honeywell, Charter, Nucor, Brighthouse (#32); Eightfold adapter for Microsoft, with a PERM-suspension warning (#33) |
 | 4 | Visa timeline card | Done — #34: `visa_profile` table, "My timeline" card, rules-to-watch list with the OPT fee proposal. Migration pushed 2026-10-16 |
 | 5 | Supervised applying | Built — this PR: Apply box in the packet panel (instructions for Claude in Chrome, Open posting, Mark applied with a follow-up a week out). First supervised run still to do |
+| 6 | Form and parser intelligence (open-source review, 6 parts) | 6.1 built — this PR: read a Greenhouse job's real application questions in the Apply box; 6.2–6.6 to do, one PR each |
 | 2d | Triangle focus: schools as safety nets | Built — this PR: PeopleAdmin adapter (NC State, UNC-Chapel Hill), State of NC on Workday, Duke extra search terms, IT-analyst/GRC titles |
 
 Order: **1 → 2a → 1b → 3a → 1c → 3b → 3c-A → 3c-B1 + 3c-ATS → 3c-B2 → 2b → 2c → 4 → 5.** Next: **the first supervised application**, then use the pipeline daily.
@@ -286,6 +287,19 @@ Why: he wants to stay in Raleigh/RTP after May 2027. A Codex research pass found
 - **Titles:** group B gains IT analyst, IT consultant, "Consultant, IT", GRC, IT auditor, technology support analyst; group C gains systems analyst, systems programmer, research computing. Faculty titles (professor, lecturer, dean, faculty, postdoctoral) are excluded.
 - **Still to do:** the blanket `II` title exclusion (a master's can substitute for experience at some employers); NetApp backend check; RTI and Lenovo.
 - Cap exemption only helps if the hiring department agrees to sponsor: ask each department before investing in an application.
+
+## 6. Form and parser intelligence (2026-11-11)
+
+From a Codex review of open-source tools. Employer-side ranking stays proprietary, so this only does what is knowable: read each job's real form, and check our own files the way a parser reads them. One PR per part, in this order:
+
+1. **Application questions (built).** `src/pages/jobs/applicationForm.ts` reads a Greenhouse job's `?questions=true` from the browser (the API allows CORS), drops standard fields, keeps custom questions with required flags and choices, and flags eligibility wording (sponsorship, work authorization, citizenship, clearance). The Apply box shows them and appends them to the Claude in Chrome instructions. Nothing is stored. Lever's public API has no custom questions; Ashby, Workable and SmartRecruiters need employer credentials; Workday, iCIMS, Jibe, SuccessFactors and PeopleAdmin have no verified public question API.
+2. **Parse check on the stored files.** PDF.js on the PDF and Mammoth.js on the DOCX, comparing extracted text with the packet (contact, section order, dates).
+3. **Resume Matcher's deterministic checks** (Apache-2.0): extraction, headings and round trip, kept as a separate score from the ATS estimate.
+4. **Read-only form inspector** for non-Greenhouse boards, borrowing job_app_filler's field discovery (BSD-3). Reads labels and constraints only; never fills.
+5. **Skill extraction from postings** (ESCO Skill Extractor, spaCy rules) to find requirements the keyword list misses, shown for review before any alias is added.
+6. **OpenResume as a manual readability test** (AGPL: run it, never copy its code).
+
+Rejected: `rea` (binary reverse engineering), LinkedIn/Indeed scrapers, GPL or unlicensed autofill and parser repos.
 
 ---
 

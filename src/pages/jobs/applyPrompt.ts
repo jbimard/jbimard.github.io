@@ -1,6 +1,7 @@
 // Step 5: supervised applying. The packet panel copies these instructions for a Claude in Chrome session, which fills
 // the employer's form from the approved packet and stops before Submit. Only approved packet text goes in; nothing
 // from the private base file beyond what the packet already holds.
+import { formPromptBlock, type ApplicationForm } from './applicationForm.ts'
 import type { ApplicationPacket, Job } from './types.ts'
 
 // Follow up a week after applying (the roadmap allows 7–10 days; the row's date can be changed afterwards).
@@ -16,7 +17,7 @@ const block = (items: Array<{ question: string; answer: string }>) => items
   .map((item) => `Q: ${item.question}\nA: ${item.answer.trim()}`)
   .join('\n\n')
 
-export const buildApplyPrompt = (job: Job, packet: ApplicationPacket) => `Help me apply to this job in Chrome. I'm watching and I submit it myself.
+export const buildApplyPrompt = (job: Job, packet: ApplicationPacket, form: ApplicationForm | null = null) => `Help me apply to this job in Chrome. I'm watching and I submit it myself.
 
 Job: ${job.company} — ${job.role_title}
 Posting: ${job.job_link ?? 'no link saved; ask me for it'}
@@ -38,4 +39,4 @@ Application answers:
 ${block(packet.answers)}
 
 Cover letter (for a text box; if the form wants a file, it's mine to upload):
-${packet.cover_letter.trim()}`
+${packet.cover_letter.trim()}${form ? formPromptBlock(form) : ''}`

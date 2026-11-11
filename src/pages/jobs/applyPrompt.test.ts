@@ -33,3 +33,9 @@ test('blank answers are left out and a missing link asks for one', () => {
   assert.doesNotMatch(prompt, /Anything else\?/)
   assert.match(prompt, /no link saved; ask me for it/)
 })
+
+test('a loaded form adds its questions; without one the prompt is unchanged', () => {
+  const form = { questions: [{ label: 'Do you require sponsorship?', required: true, kind: 'choice' as const, options: ['Yes', 'No'], eligibility: true }], standardCount: 5, deadline: null }
+  assert.match(buildApplyPrompt(job, packet, form), /Do you require sponsorship\? \(required, choice, ELIGIBILITY/)
+  assert.equal(buildApplyPrompt(job, packet, null), buildApplyPrompt(job, packet))
+})
