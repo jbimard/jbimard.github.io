@@ -1,4 +1,4 @@
-export type Ats = 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'icims' | 'jibe' | 'successfactors' | 'oracle' | 'radancy' | 'eightfold' | 'recruitee'
+export type Ats = 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'icims' | 'jibe' | 'successfactors' | 'oracle' | 'radancy' | 'eightfold' | 'recruitee' | 'peopleadmin'
 // From USCIS New Employment approvals in the latest complete fiscal year; 'unknown' means no USCIS record matched at all (see rules/sponsors.ts).
 export type SponsorTier = 'strong' | 'some' | 'rare' | 'none' | 'unknown'
 
@@ -9,6 +9,7 @@ export type Company = {
   // ("globalcareers-sas" for globalcareers-sas.icims.com). jibe: the client code ("firstcitizens" for firstcitizens.jibeapply.com).
   // successfactors: the Career Site Builder host ("careers.duke.edu"). oracle: "{host}/{siteNumber}".
   // recruitee: the subdomain ("locusbiosciences" for locusbiosciences.recruitee.com). radancy: the career site host ("jobs.spectrum.com"). eightfold: "{host}/{domain}" ("apply.careers.microsoft.com/microsoft.com").
+  // peopleadmin: the site host ("jobs.ncsu.edu").
   board: string
   // Names to look up in the USCIS data instead of `name`, when they differ (e.g. Fidelity → "FMR").
   h1bNames?: string[]
@@ -18,6 +19,8 @@ export type Company = {
   workdayFacets?: Record<string, string[]>
   // Which profiles search this board (Profile.companyTags). Untagged boards are 'tech', the original list.
   tags?: string[]
+  // workday, successfactors, peopleadmin: search terms added to the profile's, for employers whose titles the shared terms miss (universities: "IT analyst").
+  extraTerms?: string[]
 }
 
 export type MetroConfig = { label: string; points: number; match: string[] }

@@ -4,6 +4,7 @@ import { eightfoldUrl } from './eightfold.ts'
 import { parseIcimsSearch } from './icims.ts'
 import { jibePosting } from './jibe.ts'
 import { parseJobPostingLd } from './jsonld.ts'
+import { parsePeopleAdminJob, parsePeopleAdminSearch } from './peopleadmin.ts'
 import { oracleDescription, oracleLocation, oracleUrl } from './oracle.ts'
 import { parseRadancyResults } from './radancy.ts'
 import { parseSuccessFactorsJob, parseSuccessFactorsSearch } from './successfactors.ts'
@@ -131,4 +132,34 @@ test('Radancy results: links, titles, locations, total', () => {
 test('Eightfold: public link when given, else built from the id', () => {
   assert.equal(eightfoldUrl('apply.careers.microsoft.com', { id: 1, name: 'x', publicUrl: 'https://apply.careers.microsoft.com/careers/job/1' }), 'https://apply.careers.microsoft.com/careers/job/1')
   assert.equal(eightfoldUrl('apply.careers.microsoft.com', { id: 1970393556942310, name: 'x' }), 'https://apply.careers.microsoft.com/careers/job/1970393556942310')
+})
+
+// Trimmed from jobs.ncsu.edu (2026-11-11).
+test('PeopleAdmin search: rows, links and the result count', () => {
+  const row = (id: string, title: string) => `<div class='job-item job-item-posting' data-posting-title="${title}">
+<div class='col-md-4 job-title'><h3>
+    <a href="/postings/${id}">${title}</a>
+</h3></div></div>`
+  const html = `<h2 id='search-results'>View Results
+<span class='smaller muted'>(414
+)</h2><div id="search_results">${row('237133', 'IT Analyst &amp; Security')}${row('237085', 'Linux Systems Administrator')}</div>`
+  assert.deepEqual(parsePeopleAdminSearch(html, 'jobs.ncsu.edu'), {
+    items: [
+      { id: '237133', title: 'IT Analyst & Security', url: 'https://jobs.ncsu.edu/postings/237133' },
+      { id: '237085', title: 'Linux Systems Administrator', url: 'https://jobs.ncsu.edu/postings/237085' },
+    ],
+    total: 414,
+  })
+  assert.deepEqual(parsePeopleAdminSearch('<p>No results</p>', 'jobs.ncsu.edu'), { items: [], total: 0 })
+})
+
+test('PeopleAdmin posting: location from the field table, notice kept in the text', () => {
+  const html = `<html><nav>Menu</nav><main><div><strong>This position is not eligible for visa sponsorship.</strong></div>
+<table><tr><th>Posting Number</th><td>PG195025EP</td></tr>
+<tr><th>Job Location</th><td>Raleigh, NC</td></tr></table></main></html>`
+  const { location, description } = parsePeopleAdminJob(html)
+  assert.equal(location, 'Raleigh, NC')
+  assert.match(description ?? '', /not eligible for visa sponsorship/)
+  assert.doesNotMatch(description ?? '', /Menu/)
+  assert.deepEqual(parsePeopleAdminJob('<p>gone</p>'), { location: '', description: 'gone' })
 })
