@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { checkDocxStructure } from './docxStructure'
 import { checkExtraction, overall, type Expected, type Finding } from './parseCheck'
 import { extractDocxText, extractPdfText } from './parseExtract'
 
@@ -27,14 +28,15 @@ const ParseCheckPanel = ({ docxPath, pdfPath, expected, fileBlob }: {
       const next: Result[] = []
       if (pdfPath) {
         const { text, pages } = await extractPdfText(await fileBlob(pdfPath))
-        const findings = checkExtraction(text, expected)
-        if (pages > 1) findings.push({ id: 'pages', status: 'fail', label: 'One page', detail: `The PDF has ${pages} pages.` })
+        const findings = checkExtraction(text, expected, pages)
+        if (pages.length > 1) findings.push({ id: 'pages', status: 'fail', label: 'One page', detail: `The PDF has ${pages.length} pages.` })
         next.push({ label: 'PDF (PDF.js)', findings, text, note: null })
       }
-      const docxText = await extractDocxText(await fileBlob(docxPath))
+      const docxBlob = await fileBlob(docxPath)
+      const docxText = await extractDocxText(docxBlob)
       next.push({
         label: 'Word (Mammoth)',
-        findings: checkExtraction(docxText, expected),
+        findings: [...checkExtraction(docxText, expected), ...checkDocxStructure(new Uint8Array(await docxBlob.arrayBuffer()))],
         text: docxText,
         note: pdfPath ? null : 'This packet has no PDF copy; regenerate it to check the PDF too.',
       })

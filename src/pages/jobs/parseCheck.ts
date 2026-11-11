@@ -1,6 +1,8 @@
 // Parse check: reads the stored resume back the way a resume parser would (PDF.js for the PDF, Mammoth for the DOCX)
 // and compares what comes out with what the packet says should be there. It tests our own files for clean extraction.
 // It is not an employer's parser: the check says whether text survives and stays in order, not how anyone scores it.
+import { FOUND, GARBLED, roundTrip } from './roundTrip.ts'
+
 export type ExpectedEntry = { heading: string; right: string | null; bullets: string[] }
 export type Expected = { summary: string | null; entries: ExpectedEntry[] }
 export type Finding = { id: string; status: 'pass' | 'warn' | 'fail'; label: string; detail: string }
@@ -28,7 +30,7 @@ const PHONE = /(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/
 
 const listed = (items: string[], max = 3) => `${items.slice(0, max).map((item) => `“${item.length > 60 ? `${item.slice(0, 57)}…` : item}”`).join(', ')}${items.length > max ? ` and ${items.length - max} more` : ''}`
 
-export const checkExtraction = (extracted: string, expected: Expected): Finding[] => {
+export const checkExtraction = (extracted: string, expected: Expected, pages: string[] = []): Finding[] => {
   const findings: Finding[] = []
   const add = (id: string, status: Finding['status'], label: string, detail: string) => findings.push({ id, status, label, detail })
   const lines = extracted.split('\n').map((line) => line.trim()).filter(Boolean)
@@ -86,12 +88,21 @@ export const checkExtraction = (extracted: string, expected: Expected): Finding[
   }
   if (wanted.some((item) => item.kind === 'bullet')) add('reading_order', outOfOrder === 0 ? 'pass' : 'fail', 'Reading order', outOfOrder === 0 ? 'Bullets come out in the order the file shows them.' : `${outOfOrder} bullet${outOfOrder === 1 ? '' : 's'} come out in a different order than the file. Layout (columns, text boxes) is scrambling the read.`)
 
-  // Characters that mean a font or encoding problem.
-  const junk = (extracted.match(/[�-]/g) ?? []).length
+  // Characters that mean a font or encoding problem: replacement characters, private-use glyphs and PDF.js "(cid:12)" codes.
+  const junk = (extracted.match(/\(cid:\d+\)|[\uFFFD\uE000-\uF8FF]/g) ?? []).length
   const spaced = lines.filter((line) => /^(?:\S ){6,}\S$/.test(line)).length
   add('encoding', junk === 0 && spaced === 0 ? 'pass' : 'fail', 'Clean characters',
     junk === 0 && spaced === 0 ? 'No broken glyphs or letter-spaced words.' : `${junk} broken glyph${junk === 1 ? '' : 's'} and ${spaced} letter-spaced line${spaced === 1 ? '' : 's'}. The font or encoding is not reading back as text.`)
 
+  // A page with almost no text next to a full one: content drawn as an image, or a font that does not extract.
+  const sparse = pages.map((page, i) => ({ page: i + 1, chars: squeeze(page).length })).filter((entry) => entry.chars < 200)
+  if (pages.length > 1 && sparse.length > 0) add('sparse_pages', 'warn', 'Text on every page', `Page ${sparse.map((entry) => entry.page).join(', ')} has very little text (${sparse[0].chars} characters).`)
+
+  const trip = roundTrip(extracted, expected)
+  const partial = trip.fields.filter((field) => field.status === 'garbled')
+  const percent = (value: number) => `${Math.round(value * 100)}%`
+  add('round_trip', trip.recall >= FOUND && trip.orderFidelity >= FOUND && partial.length === 0 ? 'pass' : trip.recall >= GARBLED ? 'warn' : 'fail', 'Round trip',
+    `Content recall ${percent(trip.recall)}, order fidelity ${percent(trip.orderFidelity)}.${partial.length > 0 ? ` Partly extracted: ${listed(partial.map((field) => field.text))}.` : ''}`)
   return findings
 }
 

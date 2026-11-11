@@ -1,7 +1,7 @@
 // Reads text back out of the stored files, the way a parser would. Both libraries load only when the check is run.
 
 // PDF.js: text items grouped into lines by their vertical position, so a column layout shows up as it would to a parser.
-export const extractPdfText = async (blob: Blob): Promise<{ text: string; pages: number }> => {
+export const extractPdfText = async (blob: Blob): Promise<{ text: string; pages: string[] }> => {
   const [pdfjs, { default: workerSrc }] = await Promise.all([
     import('pdfjs-dist'),
     import('pdfjs-dist/build/pdf.worker.min.mjs?url'),
@@ -21,7 +21,7 @@ export const extractPdfText = async (blob: Blob): Promise<{ text: string; pages:
     pages.push(line)
   }
   await task.destroy()
-  return { text: pages.join('\n'), pages: document.numPages }
+  return { text: pages.join('\n'), pages }
 }
 
 // Mammoth: the document's raw text. Headers, footers and text boxes are not part of it, which is the point: whatever
