@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import PostingRequirementsPanel from './PostingRequirementsPanel'
 import { CHECK_LABELS, PREP_ROUTINE_URL, PRIORITY_OPTIONS, PIPELINE_STATUS_OPTIONS, type Job, type JobPriority, type JobStatus, type JobUpdate, type ApplicationPacket } from './types'
 
 type JobRowProps = {
@@ -142,7 +143,12 @@ const JobRow = ({ job, onEdit, onArchive, onUpdate, packet, onOpenPacket }: JobR
       <tr className="bg-slate-50">
         <td colSpan={8} className="border-b border-slate-200 px-3 py-3">
           {job.job_description
-            ? <p className="max-h-80 overflow-y-auto whitespace-pre-wrap text-sm text-slate-700">{job.job_description}</p>
+            ? (
+              <>
+                <p className="max-h-80 overflow-y-auto whitespace-pre-wrap text-sm text-slate-700">{job.job_description}</p>
+                <PostingRequirementsPanel job={job} />
+              </>
+            )
             : <p className="text-sm text-slate-500">No description saved for this role. Use Edit to add one.</p>}
         </td>
       </tr>
